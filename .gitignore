@@ -39,6 +39,10 @@ build/
 .env.test.local
 .env.production.local
 
+# Cau hinh moi truong cua backend — secret dat bang User Secrets, khong commit
+appsettings.Development.json
+appsettings.Production.json
+
 # ================================
 # Logs
 # ================================
@@ -79,6 +83,7 @@ Logs/
 # ================================
 docs/
 DECISIONS.md
+
 *.docx
 
 # Thư mục làm việc của Postman (không phải mã nguồn)
