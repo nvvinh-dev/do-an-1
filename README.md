@@ -149,7 +149,8 @@ Với 02 thành viên và 2.5 tháng, phạm vi in-scope là rất lớn. Thứ 
 |---|---|
 | **Backend** | ASP.NET Core Web API, Entity Framework Core, ASP.NET Identity, FluentValidation, Serilog, Swagger/OpenAPI |
 | **Database** | Supabase (PostgreSQL hosting), EFCore.NamingConventions |
-| **Lưu trữ file** | Supabase Storage |
+| **Lưu trữ file** | Supabase Storage, gọi qua `HttpClient` |
+| **Gửi email** | SMTP Gmail, MailKit |
 | **Authentication** | JWT Authentication |
 | **Frontend** | React + TypeScript, Tailwind CSS, React Router, React Hook Form, TanStack Query, Axios |
 | **Kiến trúc** | Web không truy cập database trực tiếp, giao tiếp hoàn toàn qua Backend API |
@@ -268,6 +269,19 @@ dotnet user-secrets set "Jwt:Key" "<chuoi-ngau-nhien-toi-thieu-32-ky-tu>"
 dotnet user-secrets set "Seed:AdminEmail" "<email-quan-tri>"
 dotnet user-secrets set "Seed:AdminPassword" "<mat-khau-quan-tri>"
 ```
+
+Ngoài ra cần thêm các giá trị cho Supabase Storage và gửi email:
+
+```bash
+dotnet user-secrets set "Supabase:Url" "https://<project-id>.supabase.co"
+dotnet user-secrets set "Supabase:ServiceRoleKey" "<service-role-key>"
+dotnet user-secrets set "Smtp:User" "<dia-chi-gmail>"
+dotnet user-secrets set "Smtp:AppPassword" "<app-password-16-ky-tu>"
+```
+
+`Supabase:ServiceRoleKey` lấy ở **Project Settings → API Keys**, phần `service_role`. Key này có toàn quyền trên database và storage — không bao giờ đưa vào frontend.
+
+`Smtp:AppPassword` tạo tại tài khoản Google: bật xác minh 2 bước, rồi vào **Bảo mật → Mật khẩu ứng dụng**. Không dùng mật khẩu Gmail thường.
 
 Hai giá trị `Seed:*` dùng để tạo tài khoản Admin đầu tiên khi ứng dụng khởi động lần đầu — không ai tự đăng ký làm Admin được. Thiếu chúng thì ứng dụng vẫn chạy nhưng bỏ qua bước tạo Admin. Mật khẩu phải có tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt.
 

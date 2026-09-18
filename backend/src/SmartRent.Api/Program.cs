@@ -1,6 +1,9 @@
 using System.Globalization;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
@@ -8,6 +11,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Serilog;
 using SmartRent.Api;
+using SmartRent.Api.Services;
+using SmartRent.Api.Validators;
 using SmartRent.Infrastructure;
 using SmartRent.Infrastructure.Identity;
 using SmartRent.Infrastructure.Persistence;
@@ -27,6 +32,11 @@ builder.Services.AddIdentityCore<AppUser>(options =>
        {
            options.User.RequireUniqueEmail = true;
            options.Password.RequiredLength = 8;
+
+           // Chỉ đếm những lần đăng nhập SAI, đúng theo docs/security-design.md mục 6.
+           options.Lockout.AllowedForNewUsers = true;
+           options.Lockout.MaxFailedAccessAttempts = 5;
+           options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
        })
        .AddRoles<AppRole>()
        .AddEntityFrameworkStores<AppDbContext>()
@@ -80,9 +90,8 @@ builder.Services.AddRateLimiter(options =>
             cancellationToken);
     };
 
-    // LƯU Ý: theo thiết kế, nhóm đăng nhập chỉ tính các lần ĐĂNG NHẬP SAI.
-    // Middleware đếm mọi request, nên phần "chỉ đếm lần sai" phải được xử lý
-    // trong luồng đăng nhập khi hiện thực BP-01.
+    // Đây là lớp chặn theo địa chỉ IP. Lớp thứ hai là khóa tạm theo tài khoản của
+    // Identity (5 lần sai trong 15 phút) và chỉ đếm những lần đăng nhập SAI — xem AuthService.
     options.AddPolicy(RateLimitPolicies.AuthLogin, context =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: GetClientIp(context),
@@ -122,8 +131,26 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
+// ------------------------------------------------- Service nghiệp vụ
+builder.Services.AddScoped<TokenService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<AuditLogger>();
+builder.Services.AddScoped<Notifier>();
+builder.Services.AddScoped<LandlordApplicationService>();
+builder.Services.AddScoped<UserAdminService>();
+
 // ---------------------------------------------------------------- MVC + API
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+       .AddJsonOptions(options =>
+       {
+           // Enum đi ra và đi vào dưới dạng TÊN trạng thái, không phải số thứ tự.
+           // Database cũng lưu dạng text nên hai bên khớp nhau, và chèn thêm một giá trị
+           // vào giữa enum sau này không làm lệch dữ liệu cũ.
+           options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+       });
+
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
 builder.Services.AddProblemDetails();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -144,9 +171,11 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Nhập token, không kèm tiền tố Bearer."
     });
 
-    options.AddSecurityRequirement(_ => new OpenApiSecurityRequirement
+    // Phải truyền document vào tham chiếu, nếu không khối "security" sinh ra sẽ rỗng
+    // và Swagger UI không gắn header Authorization vào request.
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
-        { new OpenApiSecuritySchemeReference("Bearer"), new List<string>() }
+        { new OpenApiSecuritySchemeReference("Bearer", document), new List<string>() }
     });
 });
 
