@@ -152,6 +152,10 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+// --------------------------------------------------- Dữ liệu nền
+// Tạo 3 vai trò, tài khoản Admin đầu tiên và danh mục tiện ích nếu chưa có.
+await DatabaseSeeder.SeedAsync(app.Services);
+
 // ------------------------------------------------------------ Pipeline
 app.UseSerilogRequestLogging();
 app.UseExceptionHandler();

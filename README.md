@@ -265,7 +265,11 @@ Chuỗi kết nối database và khóa ký JWT **không nằm trong repository**
 cd backend/src/SmartRent.Api
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=<host>;Database=postgres;Username=<user>;Password=<password>"
 dotnet user-secrets set "Jwt:Key" "<chuoi-ngau-nhien-toi-thieu-32-ky-tu>"
+dotnet user-secrets set "Seed:AdminEmail" "<email-quan-tri>"
+dotnet user-secrets set "Seed:AdminPassword" "<mat-khau-quan-tri>"
 ```
+
+Hai giá trị `Seed:*` dùng để tạo tài khoản Admin đầu tiên khi ứng dụng khởi động lần đầu — không ai tự đăng ký làm Admin được. Thiếu chúng thì ứng dụng vẫn chạy nhưng bỏ qua bước tạo Admin. Mật khẩu phải có tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt.
 
 Lấy thông số kết nối tại Supabase: **Project Settings → Database → Connection string**.
 
