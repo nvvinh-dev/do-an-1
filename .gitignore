@@ -83,6 +83,9 @@ Logs/
 # ================================
 docs/
 DECISIONS.md
+CLAUDE.md
+CLAUDE.local.md
+.claude/
 
 *.docx
 
