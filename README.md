@@ -150,6 +150,7 @@ Với 02 thành viên và 2.5 tháng, phạm vi in-scope là rất lớn. Thứ 
 | **Backend** | ASP.NET Core Web API, Entity Framework Core, ASP.NET Identity, FluentValidation, Serilog, Swagger/OpenAPI |
 | **Database** | Supabase (PostgreSQL hosting), EFCore.NamingConventions |
 | **Lưu trữ file** | Supabase Storage |
+| **Trợ lý AI** | Google Gemini API, gọi qua `HttpClient` |
 | **Authentication** | JWT Authentication |
 | **Frontend** | React + TypeScript, Tailwind CSS, React Router, React Hook Form, TanStack Query, Axios |
 | **Kiến trúc** | Web không truy cập database trực tiếp, giao tiếp hoàn toàn qua Backend API |
