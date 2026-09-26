@@ -151,6 +151,7 @@ Với 02 thành viên và 2.5 tháng, phạm vi in-scope là rất lớn. Thứ 
 | **Database** | Supabase (PostgreSQL hosting), EFCore.NamingConventions |
 | **Lưu trữ file** | Supabase Storage, gọi qua `HttpClient` |
 | **Gửi email** | SMTP Gmail, MailKit |
+| **Trợ lý AI** | Google Gemini API, gọi qua `HttpClient` |
 | **Authentication** | JWT Authentication |
 | **Frontend** | React + TypeScript, Tailwind CSS, React Router, React Hook Form, TanStack Query, Axios, qrcode (vẽ mã VietQR) |
 | **Kiến trúc** | Web không truy cập database trực tiếp, giao tiếp hoàn toàn qua Backend API |
