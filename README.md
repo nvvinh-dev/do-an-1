@@ -92,13 +92,13 @@ Các quy tắc chi phối thiết kế dữ liệu và luồng xử lý:
 
 ### Trong phạm vi
 
-Đăng ký/đăng nhập và phân quyền theo vai trò · Admin duyệt hồ sơ Chủ trọ và quản lý người dùng · Quản lý khu trọ, phòng trọ, trạng thái khai thác và hiển thị · Tìm kiếm bằng bộ lọc và bằng ngôn ngữ tự nhiên · Đặt lịch xem phòng · Yêu cầu thuê, tiền cọc, hợp đồng · Gia hạn hợp đồng · Chốt chỉ số, hóa đơn, ghi nhận và xác nhận thanh toán · Chấm dứt hợp đồng, hóa đơn thanh lý, tất toán cọc · Sự cố và sửa chữa có xác nhận hai chiều · Hồ sơ ở ghép, điểm phù hợp và giải thích bằng AI · Trợ lý AI tra cứu · Thông báo trong ứng dụng · Nhật ký hệ thống · Dashboard cho cả ba vai trò · Báo cáo, khiếu nại và xử lý vi phạm.
+Đăng ký/đăng nhập và phân quyền theo vai trò · Admin duyệt hồ sơ Chủ trọ và quản lý người dùng · Quản lý khu trọ, phòng trọ, trạng thái khai thác và hiển thị · Tìm kiếm bằng bộ lọc và bằng ngôn ngữ tự nhiên · Đặt lịch xem phòng · Yêu cầu thuê, tiền cọc, hợp đồng · Gia hạn hợp đồng · Chốt chỉ số, hóa đơn, ghi nhận và xác nhận thanh toán · Hiển thị mã VietQR của Chủ trọ để người thuê chuyển khoản · Chấm dứt hợp đồng, hóa đơn thanh lý, tất toán cọc · Sự cố và sửa chữa có xác nhận hai chiều · Hồ sơ ở ghép, điểm phù hợp và giải thích bằng AI · Trợ lý AI tra cứu · Thông báo trong ứng dụng · Nhật ký hệ thống · Dashboard cho cả ba vai trò · Báo cáo, khiếu nại và xử lý vi phạm.
 
 ### Ngoài phạm vi
 
 | # | Nội dung loại trừ | Lý do |
 |---|---|---|
-| 1 | Tích hợp cổng thanh toán trực tuyến | Hệ thống chỉ ghi nhận: người thuê báo đã trả kèm minh chứng → chủ trọ xác nhận |
+| 1 | Tích hợp cổng thanh toán trực tuyến và đối soát tự động với ngân hàng | Hệ thống chỉ hiển thị mã VietQR của chủ trọ để hỗ trợ chuyển khoản; việc ghi nhận vẫn là: người thuê báo đã trả kèm minh chứng → chủ trọ xác nhận |
 | 2 | Đồng thuê (nhiều người cùng đứng tên) và chia hóa đơn giữa bạn cùng phòng | Làm phình mô hình dữ liệu và luồng thanh toán |
 | 3 | Chữ ký số và giá trị pháp lý của hợp đồng | Cần hạ tầng pháp lý và chứng thư số |
 | 4 | Khai báo tạm trú tạm vắng với cơ quan công an | Cần tích hợp hệ thống cơ quan nhà nước |
@@ -149,9 +149,10 @@ Với 02 thành viên và 2.5 tháng, phạm vi in-scope là rất lớn. Thứ 
 |---|---|
 | **Backend** | ASP.NET Core Web API, Entity Framework Core, ASP.NET Identity, FluentValidation, Serilog, Swagger/OpenAPI |
 | **Database** | Supabase (PostgreSQL hosting), EFCore.NamingConventions |
-| **Lưu trữ file** | Supabase Storage |
+| **Lưu trữ file** | Supabase Storage, gọi qua `HttpClient` |
+| **Gửi email** | SMTP Gmail, MailKit |
 | **Authentication** | JWT Authentication |
-| **Frontend** | React + TypeScript, Tailwind CSS, React Router, React Hook Form, TanStack Query, Axios |
+| **Frontend** | React + TypeScript, Tailwind CSS, React Router, React Hook Form, TanStack Query, Axios, qrcode (vẽ mã VietQR) |
 | **Kiến trúc** | Web không truy cập database trực tiếp, giao tiếp hoàn toàn qua Backend API |
 | **Công cụ** | Trello (tiến độ), GitHub (mã nguồn), Postman (kiểm thử), PlantUML (thiết kế CSDL/UML) |
 
@@ -169,20 +170,50 @@ SmartRent_System/
 │   │   ├── SmartRent.Api/              # Controller, service, cấu hình, JWT
 │   │   │   ├── Controllers/
 │   │   │   ├── Services/               # Service điều phối nghiệp vụ
-│   │   │   └── Contracts/              # Kiểu dữ liệu vào/ra của API
+│   │   │   ├── Contracts/              # Kiểu dữ liệu vào/ra của API
+│   │   │   └── Validators/             # Kiểm tra dữ liệu đầu vào (FluentValidation)
 │   │   ├── SmartRent.Domain/           # Entity, quy tắc nghiệp vụ
 │   │   │   ├── Entities/
 │   │   │   └── Enums/
 │   │   └── SmartRent.Infrastructure/   # EF Core, truy cập dữ liệu
 │   │       ├── Identity/               # Tài khoản và vai trò
-│   │       └── Persistence/            # DbContext, migration
+│   │       ├── Persistence/            # DbContext, migration
+│   │       ├── Email/                  # Gửi email qua SMTP
+│   │       └── Storage/                # Lưu trữ file trên Supabase Storage
 │   └── tests/
 │       └── SmartRent.UnitTests/
 ├── frontend/                            # React + TypeScript + Tailwind
 │   └── src/
-│       └── lib/                         # Cấu hình gọi API
+│       ├── assets/                      # Ảnh, icon, font
+│       ├── components/                  # Thành phần giao diện dùng lại: nút, ô nhập, hộp thoại
+│       ├── layouts/                     # Khung trang: header, sidebar theo từng vai trò
+│       ├── pages/                       # Mỗi màn hình một file, chia thư mục con theo vai trò
+│       │   ├── public/                  # Khách: trang chủ, tìm phòng, chi tiết phòng
+│       │   ├── auth/                    # Đăng ký, đăng nhập, mật khẩu
+│       │   ├── tenant/                  # Người thuê
+│       │   ├── landlord/                # Chủ trọ
+│       │   ├── admin/                   # Admin
+│       │   └── shared/                  # Dùng chung mọi vai trò: thông báo, hồ sơ cá nhân
+│       ├── services/                    # Hàm gọi API, nhóm theo nghiệp vụ
+│       ├── types/                       # Kiểu dữ liệu TypeScript của request/response, nhóm theo nghiệp vụ
+│       ├── hooks/                       # Custom hook
+│       ├── lib/                         # Cấu hình gọi API (axios)
+│       ├── utils/                       # Hàm tiện ích: định dạng tiền, ngày
+│       └── App.tsx                      # Khai báo toàn bộ route (URL → trang)
 └── docs/                                # Tài liệu phân tích và thiết kế (không đưa lên Git)
 ```
+
+**Nguyên tắc sắp xếp file:** mỗi thư mục chỉ chứa một loại code, và tên file ghép từ **chức năng nghiệp vụ + vai trò của file** — nhìn tên là biết file thuộc chức năng nào, làm nhiệm vụ gì. Không đặt tên chung chung như `Helper`, `Utils`, `Common`.
+
+| Loại file | Quy ước tên | Ví dụ |
+|---|---|---|
+| Backend (C#) | PascalCase, trùng tên class | `AuthController.cs`, `AuthService.cs`, `AuthValidators.cs` |
+| Trang (`pages/`) | PascalCase, hậu tố `Page` | `LoginPage.tsx`, `LandlordApplicationPage.tsx` |
+| Component, layout | PascalCase | `RoomCard.tsx`, `AdminLayout.tsx` |
+| Gọi API (`services/`) | camelCase, hậu tố `Service` | `authService.ts`, `landlordApplicationService.ts` |
+| Kiểu dữ liệu (`types/`) | camelCase, hậu tố `Types`, cùng nghiệp vụ với file service | `authTypes.ts`, `invoiceTypes.ts` |
+| Hook (`hooks/`) | camelCase, tiền tố `use` | `useCurrentUser.ts` |
+| Tiện ích (`utils/`) | camelCase, nêu rõ việc làm | `formatCurrency.ts`, `formatDate.ts` |
 
 **Quy tắc phụ thuộc giữa các tầng:**
 
@@ -269,6 +300,19 @@ dotnet user-secrets set "Seed:AdminEmail" "<email-quan-tri>"
 dotnet user-secrets set "Seed:AdminPassword" "<mat-khau-quan-tri>"
 ```
 
+Ngoài ra cần thêm các giá trị cho Supabase Storage và gửi email:
+
+```bash
+dotnet user-secrets set "Supabase:Url" "https://<project-id>.supabase.co"
+dotnet user-secrets set "Supabase:ServiceRoleKey" "<service-role-key>"
+dotnet user-secrets set "Smtp:User" "<dia-chi-gmail>"
+dotnet user-secrets set "Smtp:AppPassword" "<app-password-16-ky-tu>"
+```
+
+`Supabase:ServiceRoleKey` lấy ở **Project Settings → API Keys**, phần `service_role`. Key này có toàn quyền trên database và storage — không bao giờ đưa vào frontend.
+
+`Smtp:AppPassword` tạo tại tài khoản Google: bật xác minh 2 bước, rồi vào **Bảo mật → Mật khẩu ứng dụng**. Không dùng mật khẩu Gmail thường.
+
 Hai giá trị `Seed:*` dùng để tạo tài khoản Admin đầu tiên khi ứng dụng khởi động lần đầu — không ai tự đăng ký làm Admin được. Thiếu chúng thì ứng dụng vẫn chạy nhưng bỏ qua bước tạo Admin. Mật khẩu phải có tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt.
 
 Lấy thông số kết nối tại Supabase: **Project Settings → Database → Connection string**.
@@ -316,7 +360,7 @@ Tài liệu thiết kế cho Phase 1 đã hoàn tất trong `docs/`: đặc tả
 
 ## 14. Tài liệu
 
-README này là bản tóm tắt phục vụ người đọc nhanh. Nguồn nghiệp vụ đầy đủ là tài liệu **System & Business Analysis — Hệ thống Quản lý và Cho thuê Phòng trọ **, bao gồm phân tích chi tiết 13 quy trình nghiệp vụ, 25 quy tắc nghiệp vụ, 9 vòng đời trạng thái, danh mục sự kiện thông báo và ranh giới quyền hạn của AI.
+README này là bản tóm tắt phục vụ người đọc nhanh. Nguồn nghiệp vụ đầy đủ là tài liệu **System & Business Analysis — Hệ thống Quản lý và Cho thuê Phòng trọ **, bao gồm phân tích chi tiết 13 quy trình nghiệp vụ, 26 quy tắc nghiệp vụ, 9 vòng đời trạng thái, danh mục sự kiện thông báo và ranh giới quyền hạn của AI.
 
 Tài liệu phân tích và thiết kế được lưu trong thư mục `docs/` trên máy từng thành viên và **không được đưa lên Git** — hai thành viên trao đổi trực tiếp với nhau. Bao gồm: tài liệu phân tích nghiệp vụ, đặc tả yêu cầu chức năng, sơ đồ use case, kiến trúc phần mềm, thiết kế cơ sở dữ liệu, thiết kế API và thiết kế an toàn.
 
