@@ -32,7 +32,8 @@ public class Room
 
     public RoomOccupancyStatus OccupancyStatus { get; set; }
 
-    public RoomVisibilityStatus VisibilityStatus { get; set; }
+    /// <summary>Phòng mới tạo chưa hiển thị cho tới khi Chủ trọ chủ động bật (BP-03).</summary>
+    public RoomVisibilityStatus VisibilityStatus { get; set; } = RoomVisibilityStatus.DaAnBoiChuTro;
 
     public ICollection<RoomServiceFee> ServiceFees { get; set; } = [];
 
