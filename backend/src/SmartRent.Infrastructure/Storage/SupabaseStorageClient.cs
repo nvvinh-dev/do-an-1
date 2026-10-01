@@ -6,21 +6,6 @@ using SmartRent.Domain.Enums;
 
 namespace SmartRent.Infrastructure.Storage;
 
-public class SupabaseStorageOptions
-{
-    public const string SectionName = "Supabase";
-
-    /// <summary>Ví dụ: https://abcdefgh.supabase.co</summary>
-    public string Url { get; set; } = string.Empty;
-
-    /// <summary>Khóa có toàn quyền trên Storage. Chỉ dùng ở backend, không bao giờ gửi ra client.</summary>
-    public string ServiceRoleKey { get; set; } = string.Empty;
-
-    public string PublicBucket { get; set; } = "public-media";
-
-    public string PrivateBucket { get; set; } = "private-documents";
-}
-
 /// <summary>
 /// Gọi thẳng REST API của Supabase Storage bằng HttpClient.
 /// Hệ thống chỉ cần ba thao tác nên không dùng thư viện client ngoài.
@@ -57,17 +42,18 @@ public class SupabaseStorageClient : IFileStorage
 
     public async Task<StoredFile> UploadAsync(
         FilePurpose purpose,
-        string fileName,
+        long ownerUserId,
+        string extension,
         Stream content,
         string contentType,
         CancellationToken cancellationToken = default)
     {
         var bucket = BucketOf(purpose);
 
-        // Tên file do người dùng đặt không được dùng trực tiếp: tránh trùng tên,
+        // Tên file do người dùng đặt không được dùng: tránh trùng tên,
         // tránh ký tự lạ và tránh lộ thông tin qua tên file.
-        var extension = Path.GetExtension(fileName);
-        var objectPath = $"{purpose}/{DateTime.UtcNow:yyyy/MM}/{Guid.NewGuid():N}{extension}";
+        // Thư mục theo purpose và id người tải để kiểm tra lại được ở request nghiệp vụ.
+        var objectPath = $"{purpose}/{ownerUserId}/{DateTime.UtcNow:yyyy/MM}/{Guid.NewGuid():N}{extension}";
 
         using var payload = new StreamContent(content);
         payload.Headers.ContentType = new MediaTypeHeaderValue(contentType);
@@ -82,6 +68,15 @@ public class SupabaseStorageClient : IFileStorage
             : await CreateSignedUrlAsync(storedPath, TimeSpan.FromHours(1), cancellationToken);
 
         return new StoredFile(storedPath, url);
+    }
+
+    public bool IsOwnedBy(string path, FilePurpose purpose, long ownerUserId)
+    {
+        var expectedPrefix = $"{BucketOf(purpose)}/{purpose}/{ownerUserId}/";
+
+        // Chặn cả các đoạn "." và ".." để đường dẫn không trỏ ra ngoài thư mục đã kiểm tra.
+        return path.StartsWith(expectedPrefix, StringComparison.Ordinal)
+               && path.Split('/').All(segment => segment is not ("" or "." or ".."));
     }
 
     public async Task<string> CreateSignedUrlAsync(

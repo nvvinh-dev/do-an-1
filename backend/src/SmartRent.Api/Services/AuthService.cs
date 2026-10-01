@@ -63,8 +63,8 @@ public class AuthService
     }
 
     /// <summary>
-    /// FR-03, FR-04. Chỉ những lần đăng nhập SAI mới bị tính vào ngưỡng khóa tạm,
-    /// nên người dùng thật đăng nhập đúng không bao giờ bị chặn nhầm.
+    /// FR-03, FR-04. Giới hạn đăng nhập sai nằm ở <see cref="LoginAttemptLimiter"/>,
+    /// dựa trên mã 401 mà hàm này trả về.
     /// </summary>
     public async Task<ServiceResult<LoginResponse>> LoginAsync(LoginRequest request)
     {
@@ -73,32 +73,19 @@ public class AuthService
         // Không tiết lộ email có tồn tại trong hệ thống hay không.
         const string invalidCredentials = "Email hoac mat khau khong dung.";
 
-        if (user is null)
+        if (user is null || !await _userManager.CheckPasswordAsync(user, request.Password))
         {
             return ServiceResult<LoginResponse>.Fail(StatusCodes.Status401Unauthorized, invalidCredentials);
         }
 
+        // Kiểm tra khóa SAU khi mật khẩu đúng: chỉ chủ tài khoản mới thấy lý do khóa,
+        // người ngoài không dò được email nào đang bị khóa.
         if (user.IsLocked)
         {
             return ServiceResult<LoginResponse>.Fail(
                 StatusCodes.Status403Forbidden,
                 $"Tai khoan da bi khoa. Ly do: {user.LockReason ?? "khong duoc ghi nhan"}.");
         }
-
-        if (await _userManager.IsLockedOutAsync(user))
-        {
-            return ServiceResult<LoginResponse>.Fail(
-                StatusCodes.Status429TooManyRequests,
-                "Ban da nhap sai qua nhieu lan. Vui long thu lai sau 15 phut.");
-        }
-
-        if (!await _userManager.CheckPasswordAsync(user, request.Password))
-        {
-            await _userManager.AccessFailedAsync(user);
-            return ServiceResult<LoginResponse>.Fail(StatusCodes.Status401Unauthorized, invalidCredentials);
-        }
-
-        await _userManager.ResetAccessFailedCountAsync(user);
 
         var roles = await _userManager.GetRolesAsync(user);
         var (token, expiresAt) = _tokenService.Create(user, roles);
@@ -214,16 +201,9 @@ public class AuthService
 
         var reset = await _userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
 
-        if (!reset.Succeeded)
-        {
-            return ServiceResult.Fail(StatusCodes.Status400BadRequest, invalid);
-        }
-
-        // Đặt lại mật khẩu thành công thì gỡ luôn trạng thái khóa tạm do nhập sai nhiều lần.
-        await _userManager.ResetAccessFailedCountAsync(user);
-        await _userManager.SetLockoutEndDateAsync(user, null);
-
-        return ServiceResult.Ok();
+        return reset.Succeeded
+            ? ServiceResult.Ok()
+            : ServiceResult.Fail(StatusCodes.Status400BadRequest, invalid);
     }
 
     private static string Describe(IdentityResult result)

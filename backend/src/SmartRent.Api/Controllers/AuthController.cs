@@ -1,4 +1,4 @@
-using System.Security.Claims;
+using System.Globalization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -12,10 +12,12 @@ namespace SmartRent.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly AuthService _authService;
+    private readonly LoginAttemptLimiter _loginLimiter;
 
-    public AuthController(AuthService authService)
+    public AuthController(AuthService authService, LoginAttemptLimiter loginLimiter)
     {
         _authService = authService;
+        _loginLimiter = loginLimiter;
     }
 
     [HttpPost("register")]
@@ -29,10 +31,32 @@ public class AuthController : ControllerBase
 
     [HttpPost("login")]
     [AllowAnonymous]
-    [EnableRateLimiting(RateLimitPolicies.AuthLogin)]
     public async Task<IActionResult> Login(LoginRequest request)
     {
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        if (_loginLimiter.GetBlockedFor(request.Email, ip) is { } blockedFor)
+        {
+            Response.Headers.RetryAfter =
+                ((int)Math.Ceiling(blockedFor.TotalSeconds)).ToString(CultureInfo.InvariantCulture);
+
+            return Problem(
+                detail: "Ban da nhap sai qua nhieu lan. Vui long thu lai sau.",
+                statusCode: StatusCodes.Status429TooManyRequests);
+        }
+
         var result = await _authService.LoginAsync(request);
+
+        // Chỉ lần sai email hoặc mật khẩu mới bị đếm.
+        if (result.StatusCode == StatusCodes.Status401Unauthorized)
+        {
+            _loginLimiter.RegisterFailure(request.Email, ip);
+        }
+        else
+        {
+            _loginLimiter.Reset(request.Email, ip);
+        }
+
         return result.Succeeded ? Ok(result.Value) : Problem(result);
     }
 
@@ -82,18 +106,4 @@ public class AuthController : ControllerBase
 
     private IActionResult Problem(ServiceResult result)
         => Problem(detail: result.Error, statusCode: result.StatusCode);
-}
-
-/// <summary>Đọc danh tính người gọi từ token — không bao giờ lấy từ body hay query.</summary>
-public static class ControllerUserExtensions
-{
-    public static long CurrentUserId(this ControllerBase controller)
-    {
-        var value = controller.User.FindFirstValue(ClaimTypes.NameIdentifier)
-                    ?? controller.User.FindFirstValue("sub");
-
-        return long.TryParse(value, out var id)
-            ? id
-            : throw new InvalidOperationException("Token khong chua danh tinh nguoi dung hop le.");
-    }
 }

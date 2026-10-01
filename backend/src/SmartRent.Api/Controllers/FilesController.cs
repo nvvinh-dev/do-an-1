@@ -30,7 +30,7 @@ public class FilesController : ControllerBase
     }
 
     [HttpPost]
-    [EnableRateLimiting(RateLimitPolicies.BusinessWrite)]
+    [EnableRateLimiting(RateLimitPolicies.FileUpload)]
     [RequestSizeLimit(PrivateMaxBytes)]
     public async Task<IActionResult> Upload(
         IFormFile file,
@@ -58,29 +58,67 @@ public class FilesController : ControllerBase
                 statusCode: StatusCodes.Status422UnprocessableEntity);
         }
 
-        // Không tin Content-Type do client khai — chỉ chấp nhận danh sách đã cho phép.
+        await using var stream = file.OpenReadStream();
+
+        // Không tin Content-Type hay phần mở rộng do client khai — loại file được
+        // xác định từ các byte đầu của chính nội dung file.
+        var header = new byte[12];
+        var headerLength = await stream.ReadAtLeastAsync(header, header.Length, throwOnEndOfStream: false, cancellationToken);
+        stream.Position = 0;
+
+        var detected = DetectFileType(header.AsSpan(0, headerLength));
         var allowed = isPublic ? ImageTypes : [.. ImageTypes, "application/pdf"];
 
-        if (!allowed.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase))
+        if (detected is null || !allowed.Contains(detected.Value.ContentType))
         {
             return Problem(
                 detail: "Dinh dang file khong duoc chap nhan.",
                 statusCode: StatusCodes.Status422UnprocessableEntity);
         }
 
-        await using var stream = file.OpenReadStream();
-
         var stored = await _fileStorage.UploadAsync(
-            purpose, file.FileName, stream, file.ContentType, cancellationToken);
+            purpose, this.CurrentUserId(), detected.Value.Extension, stream, detected.Value.ContentType, cancellationToken);
 
-        return Ok(new FileUploadResponse(stored.Path, stored.Url, purpose));
+        // FR-10: ảnh giấy tờ nhân thân chỉ Admin được xem, kể cả người vừa tải lên cũng
+        // không nhận URL xem lại — giao diện xem trước bằng file đang có trong trình duyệt.
+        var url = purpose == FilePurpose.GiayToNhanThan ? null : stored.Url;
+
+        return Ok(new FileUploadResponse(stored.Path, url, purpose));
+    }
+
+    /// <summary>
+    /// Nhận diện loại file qua chữ ký ở đầu file. Trả về null khi không phải
+    /// jpeg, png, webp hoặc pdf.
+    /// </summary>
+    private static (string ContentType, string Extension)? DetectFileType(ReadOnlySpan<byte> header)
+    {
+        if (header.StartsWith((ReadOnlySpan<byte>)[0xFF, 0xD8, 0xFF]))
+        {
+            return ("image/jpeg", ".jpg");
+        }
+
+        if (header.StartsWith((ReadOnlySpan<byte>)[0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))
+        {
+            return ("image/png", ".png");
+        }
+
+        if (header.Length >= 12 && header[..4].SequenceEqual("RIFF"u8) && header[8..12].SequenceEqual("WEBP"u8))
+        {
+            return ("image/webp", ".webp");
+        }
+
+        if (header.StartsWith("%PDF-"u8))
+        {
+            return ("application/pdf", ".pdf");
+        }
+
+        return null;
     }
 
     /// <summary>Mỗi loại file chỉ vai trò có nghiệp vụ tương ứng mới được tải lên.</summary>
     private bool IsAllowedForRole(FilePurpose purpose) => purpose switch
     {
-        FilePurpose.GiayToNhanThan => true,
-        FilePurpose.MinhChungThanhToan => User.IsInRole(AppRoles.Tenant),
+        FilePurpose.GiayToNhanThan or FilePurpose.MinhChungThanhToan => User.IsInRole(AppRoles.Tenant),
         FilePurpose.AnhKhuTro or FilePurpose.AnhPhong or FilePurpose.AnhDongHo or FilePurpose.AnhHuHong
             => User.IsInRole(AppRoles.Landlord),
         _ => false

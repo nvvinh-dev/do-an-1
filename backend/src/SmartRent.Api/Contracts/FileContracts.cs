@@ -4,6 +4,7 @@ namespace SmartRent.Api.Contracts;
 
 /// <summary>
 /// Kết quả tải file lên. <paramref name="Path"/> là giá trị client gửi lại trong request
-/// nghiệp vụ tiếp theo; <paramref name="Url"/> chỉ để hiển thị xem trước.
+/// nghiệp vụ tiếp theo; <paramref name="Url"/> chỉ để hiển thị xem trước và là null
+/// với giấy tờ nhân thân (FR-10).
 /// </summary>
-public record FileUploadResponse(string Path, string Url, FilePurpose Purpose);
+public record FileUploadResponse(string Path, string? Url, FilePurpose Purpose);

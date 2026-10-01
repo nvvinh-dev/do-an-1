@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
@@ -33,10 +34,9 @@ builder.Services.AddIdentityCore<AppUser>(options =>
            options.User.RequireUniqueEmail = true;
            options.Password.RequiredLength = 8;
 
-           // Chỉ đếm những lần đăng nhập SAI, đúng theo docs/security-design.md mục 6.
-           options.Lockout.AllowedForNewUsers = true;
-           options.Lockout.MaxFailedAccessAttempts = 5;
-           options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+           // Không dùng khóa tạm theo tài khoản của Identity: ai biết email cũng khóa được
+           // tài khoản người khác. Giới hạn đăng nhập sai tính theo email + IP ở LoginAttemptLimiter.
+           options.Lockout.AllowedForNewUsers = false;
        })
        .AddRoles<AppRole>()
        .AddEntityFrameworkStores<AppDbContext>()
@@ -71,7 +71,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 // ------------------------------------------------------------ Rate limiting
-// Ngưỡng theo docs/security-design.md mục 6.
+// Ngưỡng theo docs/security-design.md mục 6. Riêng nhóm đăng nhập chỉ đếm lần SAI nên
+// không dùng được middleware — xem LoginAttemptLimiter.
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<LoginAttemptLimiter>();
+
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -90,17 +94,6 @@ builder.Services.AddRateLimiter(options =>
             cancellationToken);
     };
 
-    // Đây là lớp chặn theo địa chỉ IP. Lớp thứ hai là khóa tạm theo tài khoản của
-    // Identity (5 lần sai trong 15 phút) và chỉ đếm những lần đăng nhập SAI — xem AuthService.
-    options.AddPolicy(RateLimitPolicies.AuthLogin, context =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: GetClientIp(context),
-            factory: _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = 5,
-                Window = TimeSpan.FromMinutes(15)
-            }));
-
     options.AddPolicy(RateLimitPolicies.AuthAccount, context =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: GetClientIp(context),
@@ -110,14 +103,27 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromHours(1)
             }));
 
+    // Tính theo tài khoản đăng nhập. Id người dùng đọc từ claim "sub" của token,
+    // nên middleware rate limiting phải chạy SAU UseAuthentication.
     options.AddPolicy(RateLimitPolicies.BusinessWrite, context =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: context.User.Identity?.IsAuthenticated == true
-                ? context.User.Identity.Name ?? GetClientIp(context)
-                : GetClientIp(context),
+            partitionKey: GetUserId(context) is { } userId
+                ? $"user:{userId}"
+                : $"ip:{GetClientIp(context)}",
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 10,
+                Window = TimeSpan.FromHours(1)
+            }));
+
+    options.AddPolicy(RateLimitPolicies.FileUpload, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: GetUserId(context) is { } userId
+                ? $"user:{userId}"
+                : $"ip:{GetClientIp(context)}",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 20,
                 Window = TimeSpan.FromHours(1)
             }));
 
@@ -195,8 +201,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseRateLimiter();
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 app.MapControllers();
 
@@ -204,3 +210,6 @@ app.Run();
 
 static string GetClientIp(HttpContext context)
     => context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+static string? GetUserId(HttpContext context)
+    => context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? context.User.FindFirstValue("sub");
