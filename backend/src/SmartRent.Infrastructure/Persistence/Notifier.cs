@@ -1,7 +1,6 @@
 using SmartRent.Domain.Entities;
-using SmartRent.Infrastructure.Persistence;
 
-namespace SmartRent.Api.Services;
+namespace SmartRent.Infrastructure.Persistence;
 
 /// <summary>
 /// Tạo thông báo trong ứng dụng. Phase 1 chỉ gửi cho các sự kiện ở mức Cao

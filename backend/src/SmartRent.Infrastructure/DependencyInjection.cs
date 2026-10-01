@@ -30,6 +30,9 @@ public static class DependencyInjection
             options.UseNpgsql(connectionString)
                    .UseSnakeCaseNamingConvention());
 
+        services.AddScoped<AuditLogger>();
+        services.AddScoped<Notifier>();
+
         services.Configure<SupabaseStorageOptions>(
             configuration.GetSection(SupabaseStorageOptions.SectionName));
 

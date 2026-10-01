@@ -1,8 +1,7 @@
 using System.Text.Json;
 using SmartRent.Domain.Entities;
-using SmartRent.Infrastructure.Persistence;
 
-namespace SmartRent.Api.Services;
+namespace SmartRent.Infrastructure.Persistence;
 
 /// <summary>
 /// Ghi nhật ký cho các thao tác thuộc danh sách BR-23.
