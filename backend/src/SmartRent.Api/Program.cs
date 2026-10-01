@@ -135,6 +135,7 @@ builder.Services.AddRateLimiter(options =>
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LandlordApplicationService>();
+builder.Services.AddScoped<LandlordBankAccountService>();
 builder.Services.AddScoped<UserAdminService>();
 
 // ---------------------------------------------------------------- MVC + API

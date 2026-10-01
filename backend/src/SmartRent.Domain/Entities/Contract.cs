@@ -51,6 +51,16 @@ public class Contract
 
     public string? DepositReceivedMethod { get; set; }
 
+    /// <summary>
+    /// Số tiền cọc Chủ trọ đã hoàn cho Người thuê — do server tính: toàn bộ cọc khi hủy trước
+    /// ngày bắt đầu, hoặc phần cọc dư khi hóa đơn thanh lý có số dư âm.
+    /// </summary>
+    public decimal? DepositRefundedAmount { get; set; }
+
+    public DateTimeOffset? DepositRefundedAt { get; set; }
+
+    public string? DepositRefundMethod { get; set; }
+
     /// <summary>Chỉ có giá trị khi cả hai điều kiện hiệu lực đã hoàn tất.</summary>
     public DateTimeOffset? ActivatedAt { get; set; }
 
