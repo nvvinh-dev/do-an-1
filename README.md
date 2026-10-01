@@ -117,13 +117,13 @@ Với 02 thành viên và 2.5 tháng, phạm vi in-scope là rất lớn. Thứ 
 
 **Phase 1 — Core (~60% quỹ thời gian).** Mục tiêu: một vòng đời thuê phòng chạy được trọn vẹn từ đầu đến cuối.
 
-> BP-01 · BP-02 · BP-03 · BP-04 (chỉ bộ lọc truyền thống, chưa có AI) · BP-06 · BP-07 · BP-10 · thông báo cho sự kiện mức Cao · nhật ký hệ thống · dashboard cơ bản cho 3 vai trò.
+> BP-01 · BP-02 · BP-03 · BP-04 (chỉ bộ lọc truyền thống, chưa có AI) · BP-06 · BP-07 (gồm thanh toán một phần và theo dõi công nợ) · BP-10 · thông báo cho sự kiện mức Cao · nhật ký hệ thống · dashboard cơ bản cho 3 vai trò.
 >
 > Phase 1 **phải** bao gồm tiền cọc và thanh lý — đây là nỗi đau chính của người dùng.
 
 **Phase 2 — Value-added (~30%).** BP-04 A1 (tìm kiếm NLP) · BP-08 · BP-11 · BP-12 · BP-13 · dashboard nâng cao.
 
-**Phase 3 — Nếu còn thời gian (~10%).** BP-05 · BP-09 · thanh toán một phần và theo dõi công nợ · tách Tin đăng thành thực thể riêng.
+**Phase 3 — Nếu còn thời gian (~10%).** BP-05 · BP-09 · tách Tin đăng thành thực thể riêng.
 
 **Nguyên tắc dừng:** Không bắt đầu Phase 2 khi Phase 1 chưa chạy được end-to-end trên dữ liệu thật. Nếu buộc phải cắt, cắt từ Phase 3 lên.
 
@@ -139,7 +139,7 @@ Với 02 thành viên và 2.5 tháng, phạm vi in-scope là rất lớn. Thứ 
 | **QR-04** | Ảnh giấy tờ nhân thân chỉ hiển thị cho Admin trong quá trình duyệt hồ sơ |
 | **QR-05** | Giao diện dùng được trên màn hình rộng từ 360px |
 | **QR-06** | Mọi thao tác không thể hoàn tác phải có bước xác nhận rõ ràng |
-| **QR-07** | Thông tin liên hệ cá nhân chỉ tiết lộ khi có cơ sở nghiệp vụ |
+| **QR-07** | Thông tin liên hệ cá nhân chỉ tiết lộ khi có cơ sở nghiệp vụ: yêu cầu thuê đã được duyệt, hợp đồng chưa kết thúc, lịch hẹn đã xác nhận, kết nối ở ghép đã đồng thuận |
 
 ---
 
@@ -178,7 +178,7 @@ SmartRent_System/
 │   │   │   └── Enums/
 │   │   └── SmartRent.Infrastructure/   # EF Core, truy cập dữ liệu
 │   │       ├── Identity/               # Tài khoản và vai trò
-│   │       ├── Persistence/            # DbContext, migration
+│   │       ├── Persistence/            # DbContext, migration, ghi nhật ký và thông báo
 │   │       ├── Email/                  # Gửi email qua SMTP
 │   │       └── Storage/                # Lưu trữ file trên Supabase Storage
 │   └── tests/
@@ -208,7 +208,7 @@ SmartRent_System/
 
 | Loại file | Quy ước tên | Ví dụ |
 |---|---|---|
-| Backend (C#) | PascalCase, trùng tên class | `AuthController.cs`, `AuthService.cs`, `AuthValidators.cs` |
+| Backend (C#) | PascalCase, mỗi file một class (hoặc interface, enum) và tên file trùng tên class. Riêng `Contracts/` và `Validators/` gom các kiểu cùng nghiệp vụ vào một file tên *nghiệp vụ* + `Contracts` / `Validators` | `AuthController.cs`, `AuthService.cs`, `ContractStatus.cs`, `AuthContracts.cs`, `AuthValidators.cs` |
 | Trang (`pages/`) | PascalCase, hậu tố `Page` | `LoginPage.tsx`, `LandlordApplicationPage.tsx` |
 | Component, layout | PascalCase | `RoomCard.tsx`, `AdminLayout.tsx` |
 | Gọi API (`services/`) | camelCase, hậu tố `Service` | `authService.ts`, `landlordApplicationService.ts` |
@@ -314,13 +314,15 @@ dotnet user-secrets set "Smtp:AppPassword" "<app-password-16-ky-tu>"
 
 `Smtp:AppPassword` tạo tại tài khoản Google: bật xác minh 2 bước, rồi vào **Bảo mật → Mật khẩu ứng dụng**. Không dùng mật khẩu Gmail thường.
 
+`Frontend:BaseUrl` là địa chỉ frontend, dùng để dựng đường dẫn trong email đặt lại mật khẩu. Giá trị trong `appsettings.json` là `http://localhost:5173`; chỉ cần đặt lại khi frontend chạy ở địa chỉ khác.
+
 Hai giá trị `Seed:*` dùng để tạo tài khoản Admin đầu tiên khi ứng dụng khởi động lần đầu — không ai tự đăng ký làm Admin được. Thiếu chúng thì ứng dụng vẫn chạy nhưng bỏ qua bước tạo Admin. Mật khẩu phải có tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt.
 
 Lấy thông số kết nối tại Supabase: **Project Settings → Database → Connection string**.
 
 Hai thành viên **dùng chung một project Supabase** — cùng một database và cùng một Storage. Vì vậy phải tuân thủ quy tắc migration ở mục 11: một người chạy migration, người kia pull về trước khi đổi schema.
 
-Ứng dụng **không khởi động được** nếu thiếu một trong hai giá trị trên. Đây là hành vi cố ý: thà dừng ngay còn hơn chạy với cấu hình sai.
+Ứng dụng **không khởi động được** nếu thiếu `ConnectionStrings:DefaultConnection` hoặc `Jwt:Key`. Đây là hành vi cố ý: thà dừng ngay còn hơn chạy với cấu hình sai. Thiếu các giá trị `Supabase:*` hoặc `Smtp:*` thì ứng dụng vẫn khởi động, nhưng các chức năng dùng tới file (tải file, hồ sơ Chủ trọ) và gửi email đặt lại mật khẩu sẽ báo lỗi khi được gọi.
 
 ### 12.2 Chạy backend
 
@@ -353,7 +355,11 @@ dotnet test
 
 ## 13. Trạng thái hiện tại
 
-Khung dự án đã dựng xong: solution backend với 3 project và 1 project test, frontend Vite + React + TypeScript + Tailwind, cấu hình JWT và rate limiting. **Chưa có chức năng nghiệp vụ nào được hiện thực** — chưa có entity, chưa có controller, chưa có migration.
+**Backend:** solution 3 project và 1 project test (chưa có test); cấu hình JWT, rate limiting, Serilog, Swagger. Toàn bộ 18 entity của Phase 1 đã có, cùng hai migration: `InitialPhase1` (25 bảng) và `AddBankAccountDepositRefundAuditGuard` (tài khoản nhận tiền của Chủ trọ, thông tin hoàn cọc, trigger chặn sửa và xóa nhật ký hệ thống). Khi khởi động, ứng dụng tạo dữ liệu nền: 3 vai trò, tài khoản Admin đầu tiên và danh mục 16 tiện ích.
+
+**BP-01 đã hiện thực ở backend:** đăng ký, đăng nhập, đổi và đặt lại mật khẩu, xem và sửa thông tin cá nhân, nộp và duyệt hồ sơ Chủ trọ, khóa và mở khóa tài khoản, khai báo tài khoản ngân hàng nhận tiền của Chủ trọ, tải file dùng chung.
+
+**Frontend:** khung Vite + React + TypeScript + Tailwind và lớp gọi API; chưa có màn hình chức năng.
 
 Tài liệu thiết kế cho Phase 1 đã hoàn tất trong `docs/`: đặc tả yêu cầu chức năng, sơ đồ use case, kiến trúc phần mềm, thiết kế cơ sở dữ liệu, thiết kế API và thiết kế an toàn. Sơ đồ tuần tự chưa được thực hiện.
 
@@ -361,7 +367,7 @@ Tài liệu thiết kế cho Phase 1 đã hoàn tất trong `docs/`: đặc tả
 
 ## 14. Tài liệu
 
-README này là bản tóm tắt phục vụ người đọc nhanh. Nguồn nghiệp vụ đầy đủ là tài liệu **System & Business Analysis — Hệ thống Quản lý và Cho thuê Phòng trọ **, bao gồm phân tích chi tiết 13 quy trình nghiệp vụ, 26 quy tắc nghiệp vụ, 9 vòng đời trạng thái, danh mục sự kiện thông báo và ranh giới quyền hạn của AI.
+README này là bản tóm tắt phục vụ người đọc nhanh. Nguồn nghiệp vụ đầy đủ là tài liệu **System & Business Analysis — Hệ thống Quản lý và Cho thuê Phòng trọ **, bao gồm phân tích chi tiết 13 quy trình nghiệp vụ, 29 quy tắc nghiệp vụ, 9 vòng đời trạng thái, danh mục sự kiện thông báo và ranh giới quyền hạn của AI.
 
 Tài liệu phân tích và thiết kế được lưu trong thư mục `docs/` trên máy từng thành viên và **không được đưa lên Git** — hai thành viên trao đổi trực tiếp với nhau. Bao gồm: tài liệu phân tích nghiệp vụ, đặc tả yêu cầu chức năng, sơ đồ use case, kiến trúc phần mềm, thiết kế cơ sở dữ liệu, thiết kế API và thiết kế an toàn.
 
