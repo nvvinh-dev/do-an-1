@@ -111,6 +111,7 @@ public class AuthService
             new CurrentUserResponse(user.Id, user.Email!, user.FullName, user.PhoneNumber, [.. roles]));
     }
 
+    /// <summary>FR-83: cập nhật họ tên và số điện thoại.</summary>
     public async Task<ServiceResult<CurrentUserResponse>> UpdateProfileAsync(long userId, UpdateProfileRequest request)
     {
         var user = await _userManager.FindByIdAsync(userId.ToString());
@@ -121,7 +122,13 @@ public class AuthService
         }
 
         user.FullName = request.FullName;
-        user.PhoneNumber = request.PhoneNumber;
+
+        // BR-01: số điện thoại đã được Admin xác minh; đổi số thì phải xác minh lại.
+        if (user.PhoneNumber != request.PhoneNumber)
+        {
+            user.PhoneNumber = request.PhoneNumber;
+            user.PhoneNumberConfirmed = false;
+        }
 
         var updated = await _userManager.UpdateAsync(user);
 

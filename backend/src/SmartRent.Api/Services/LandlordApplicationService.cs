@@ -65,11 +65,19 @@ public class LandlordApplicationService
                 StatusCodes.Status409Conflict, "Ban dang co mot ho so cho duyet.");
         }
 
-        // Đường dẫn file phải do chính hệ thống sinh ra ở bước tải lên,
-        // không nhận đường dẫn tùy ý từ client.
+        // BR-01: số điện thoại do Admin xác minh khi duyệt, nên tài khoản phải có số trước khi nộp.
+        if (string.IsNullOrWhiteSpace(user.PhoneNumber))
+        {
+            return ServiceResult<LandlordApplicationResponse>.Fail(
+                StatusCodes.Status422UnprocessableEntity,
+                "Tai khoan chua co so dien thoai. Hay cap nhat thong tin ca nhan truoc khi nop ho so.");
+        }
+
+        // Đường dẫn file phải do hệ thống sinh ra ở bước tải lên, đúng loại giấy tờ
+        // và do chính người nộp tải lên — không nhận đường dẫn tùy ý từ client.
         foreach (var path in new[] { request.IdCardFrontPath, request.IdCardBackPath, request.OwnershipDocumentPath })
         {
-            if (!path.StartsWith("private-documents/", StringComparison.Ordinal))
+            if (!_fileStorage.IsOwnedBy(path, FilePurpose.GiayToNhanThan, userId))
             {
                 return ServiceResult<LandlordApplicationResponse>.Fail(
                     StatusCodes.Status422UnprocessableEntity, "Duong dan giay to khong hop le.");
@@ -179,7 +187,10 @@ public class LandlordApplicationService
             a.RejectReason));
     }
 
-    /// <summary>FR-08: duyệt hồ sơ và cấp vai trò Chủ trọ.</summary>
+    /// <summary>
+    /// FR-08: duyệt hồ sơ, cấp vai trò Chủ trọ thay cho vai trò Người thuê,
+    /// và ghi nhận số điện thoại đã được Admin xác minh (BR-01).
+    /// </summary>
     public async Task<ServiceResult> ApproveAsync(
         long adminUserId,
         long applicationId,
@@ -205,6 +216,12 @@ public class LandlordApplicationService
             return ServiceResult.Fail(StatusCodes.Status404NotFound, "Khong tim thay nguoi nop ho so.");
         }
 
+        if (string.IsNullOrWhiteSpace(applicant.PhoneNumber))
+        {
+            return ServiceResult.Fail(
+                StatusCodes.Status409Conflict, "Nguoi nop ho so chua co so dien thoai de xac minh.");
+        }
+
         await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
 
         var previous = application.Status;
@@ -212,13 +229,16 @@ public class LandlordApplicationService
         application.ReviewedByUserId = adminUserId;
         application.ReviewedAt = DateTimeOffset.UtcNow;
 
+        // Admin đã gọi xác minh số điện thoại trong lúc duyệt hồ sơ.
+        applicant.PhoneNumberConfirmed = true;
+
         _auditLogger.Write(
             adminUserId,
             "DuyetHoSoChuTro",
             nameof(LandlordApplication),
             application.Id,
-            new { Status = previous.ToString() },
-            new { Status = application.Status.ToString() });
+            new { Status = previous.ToString(), Role = AppRoles.Tenant },
+            new { Status = application.Status.ToString(), Role = AppRoles.Landlord, PhoneNumberConfirmed = true });
 
         _notifier.Notify(
             application.UserId,
@@ -230,7 +250,13 @@ public class LandlordApplicationService
 
         await _db.SaveChangesAsync(cancellationToken);
 
+        // Mỗi tài khoản có đúng một vai trò: Chủ trọ thay cho Người thuê.
         var roleResult = await _userManager.AddToRoleAsync(applicant, AppRoles.Landlord);
+
+        if (roleResult.Succeeded)
+        {
+            roleResult = await _userManager.RemoveFromRoleAsync(applicant, AppRoles.Tenant);
+        }
 
         if (!roleResult.Succeeded)
         {
