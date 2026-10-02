@@ -3,12 +3,14 @@ using Microsoft.AspNetCore.Identity;
 using SmartRent.Api.Contracts;
 using SmartRent.Infrastructure.Email;
 using SmartRent.Infrastructure.Identity;
+using SmartRent.Infrastructure.Persistence;
 
 namespace SmartRent.Api.Services;
 
 /// <summary>Đăng ký, đăng nhập và các thao tác về mật khẩu — BP-01.</summary>
 public class AuthService
 {
+    private readonly AppDbContext _db;
     private readonly UserManager<AppUser> _userManager;
     private readonly TokenService _tokenService;
     private readonly IEmailSender _emailSender;
@@ -16,12 +18,14 @@ public class AuthService
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
+        AppDbContext db,
         UserManager<AppUser> userManager,
         TokenService tokenService,
         IEmailSender emailSender,
         IConfiguration configuration,
         ILogger<AuthService> logger)
     {
+        _db = db;
         _userManager = userManager;
         _tokenService = tokenService;
         _emailSender = emailSender;
@@ -29,13 +33,16 @@ public class AuthService
         _logger = logger;
     }
 
-    /// <summary>FR-01, FR-02: tài khoản mới luôn nhận vai trò Tenant.</summary>
+    /// <summary>
+    /// FR-01, FR-02: tài khoản mới luôn nhận vai trò Tenant. Tạo tài khoản và gán vai trò
+    /// trong cùng một transaction — không bao giờ để lại tài khoản không có vai trò.
+    /// </summary>
     public async Task<ServiceResult<CurrentUserResponse>> RegisterAsync(RegisterRequest request)
     {
         if (await _userManager.FindByEmailAsync(request.Email) is not null)
         {
             return ServiceResult<CurrentUserResponse>.Fail(
-                StatusCodes.Status409Conflict, "Email nay da duoc su dung.");
+                StatusCodes.Status409Conflict, "Email này đã được sử dụng.");
         }
 
         var user = new AppUser
@@ -48,6 +55,8 @@ public class AuthService
             RegisteredAt = DateTimeOffset.UtcNow
         };
 
+        await using var transaction = await _db.Database.BeginTransactionAsync();
+
         var created = await _userManager.CreateAsync(user, request.Password);
 
         if (!created.Succeeded)
@@ -56,7 +65,18 @@ public class AuthService
                 StatusCodes.Status400BadRequest, Describe(created));
         }
 
-        await _userManager.AddToRoleAsync(user, AppRoles.Tenant);
+        var roleAdded = await _userManager.AddToRoleAsync(user, AppRoles.Tenant);
+
+        if (!roleAdded.Succeeded)
+        {
+            await transaction.RollbackAsync();
+
+            _logger.LogError("Khong gan duoc vai tro Tenant khi dang ky: {Errors}", Describe(roleAdded));
+            return ServiceResult<CurrentUserResponse>.Fail(
+                StatusCodes.Status500InternalServerError, "Không tạo được tài khoản. Vui lòng thử lại sau.");
+        }
+
+        await transaction.CommitAsync();
 
         return ServiceResult<CurrentUserResponse>.Ok(
             new CurrentUserResponse(user.Id, user.Email!, user.FullName, user.PhoneNumber, [AppRoles.Tenant]));
@@ -71,7 +91,7 @@ public class AuthService
         var user = await _userManager.FindByEmailAsync(request.Email);
 
         // Không tiết lộ email có tồn tại trong hệ thống hay không.
-        const string invalidCredentials = "Email hoac mat khau khong dung.";
+        const string invalidCredentials = "Email hoặc mật khẩu không đúng.";
 
         if (user is null || !await _userManager.CheckPasswordAsync(user, request.Password))
         {
@@ -84,7 +104,7 @@ public class AuthService
         {
             return ServiceResult<LoginResponse>.Fail(
                 StatusCodes.Status403Forbidden,
-                $"Tai khoan da bi khoa. Ly do: {user.LockReason ?? "khong duoc ghi nhan"}.");
+                $"Tài khoản đã bị khóa. Lý do: {user.LockReason ?? "không được ghi nhận"}.");
         }
 
         var roles = await _userManager.GetRolesAsync(user);
@@ -102,7 +122,7 @@ public class AuthService
 
         if (user is null)
         {
-            return ServiceResult<CurrentUserResponse>.Fail(StatusCodes.Status404NotFound, "Khong tim thay tai khoan.");
+            return ServiceResult<CurrentUserResponse>.Fail(StatusCodes.Status404NotFound, "Không tìm thấy tài khoản.");
         }
 
         var roles = await _userManager.GetRolesAsync(user);
@@ -118,7 +138,7 @@ public class AuthService
 
         if (user is null)
         {
-            return ServiceResult<CurrentUserResponse>.Fail(StatusCodes.Status404NotFound, "Khong tim thay tai khoan.");
+            return ServiceResult<CurrentUserResponse>.Fail(StatusCodes.Status404NotFound, "Không tìm thấy tài khoản.");
         }
 
         user.FullName = request.FullName;
@@ -150,7 +170,7 @@ public class AuthService
 
         if (user is null)
         {
-            return ServiceResult.Fail(StatusCodes.Status404NotFound, "Khong tim thay tai khoan.");
+            return ServiceResult.Fail(StatusCodes.Status404NotFound, "Không tìm thấy tài khoản.");
         }
 
         var changed = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
@@ -162,8 +182,8 @@ public class AuthService
 
     /// <summary>
     /// FR-05: gửi liên kết đặt lại mật khẩu qua email.
-    /// Luôn trả về thành công dù email có tồn tại hay không, để không biến endpoint này
-    /// thành công cụ dò tài khoản.
+    /// Luôn trả về thành công và trả về ngay, dù email có tồn tại hay không, để không biến
+    /// endpoint này thành công cụ dò tài khoản — kể cả qua thời gian phản hồi.
     /// </summary>
     public async Task<ServiceResult> ForgotPasswordAsync(ForgotPasswordRequest request)
     {
@@ -189,7 +209,21 @@ public class AuthService
             <p>Nếu không phải bạn yêu cầu, hãy bỏ qua email này — mật khẩu hiện tại vẫn giữ nguyên.</p>
             """;
 
-        await _emailSender.SendAsync(user.Email!, "Dat lai mat khau SmartRent", body);
+        // Gửi nền: SMTP mất vài giây, nếu chờ thì email có thật sẽ phản hồi chậm hơn email
+        // không tồn tại, và lỗi SMTP sẽ thành 500. Lỗi gửi chỉ được ghi log.
+        var email = user.Email!;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _emailSender.SendAsync(email, "Đặt lại mật khẩu SmartRent", body);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Khong gui duoc email dat lai mat khau");
+            }
+        });
 
         return ServiceResult.Ok();
     }
@@ -199,7 +233,7 @@ public class AuthService
         var user = await _userManager.FindByEmailAsync(request.Email);
 
         // Thông báo giống nhau cho mọi trường hợp thất bại, không tiết lộ email có tồn tại không.
-        const string invalid = "Yeu cau dat lai mat khau khong hop le hoac da het han.";
+        const string invalid = "Yêu cầu đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.";
 
         if (user is null)
         {

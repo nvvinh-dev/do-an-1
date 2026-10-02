@@ -39,7 +39,8 @@ public static class DependencyInjection
         services.AddHttpClient<IFileStorage, SupabaseStorageClient>();
 
         services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
-        services.AddScoped<IEmailSender, SmtpEmailSender>();
+        // Singleton: email được gửi nền sau khi request kết thúc, và SmtpEmailSender không giữ trạng thái.
+        services.AddSingleton<IEmailSender, SmtpEmailSender>();
 
         return services;
     }
