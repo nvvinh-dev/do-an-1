@@ -119,6 +119,12 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
                   .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasIndex(a => new { a.UserId, a.Status });
+
+            // FR-07: mỗi người chỉ có tối đa một hồ sơ chờ duyệt — chặn cả hai lượt nộp gửi cùng lúc.
+            entity.HasIndex(a => a.UserId)
+                  .IsUnique()
+                  .HasFilter("status = 'ChoDuyet'")
+                  .HasDatabaseName("ux_landlord_applications_user_cho_duyet");
         });
     }
 

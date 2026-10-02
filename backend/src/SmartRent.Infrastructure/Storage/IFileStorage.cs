@@ -17,10 +17,15 @@ public interface IFileStorage
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Đường dẫn client gửi lên có đúng là file do hệ thống sinh ra, đúng bucket,
-    /// đúng loại <paramref name="purpose"/> và do chính <paramref name="ownerUserId"/> tải lên hay không.
+    /// Đường dẫn client gửi lên có đúng định dạng hệ thống sinh ra, đúng bucket,
+    /// đúng loại <paramref name="purpose"/>, do chính <paramref name="ownerUserId"/> tải lên,
+    /// và file thực sự tồn tại trên kho lưu trữ hay không.
     /// </summary>
-    bool IsOwnedBy(string path, FilePurpose purpose, long ownerUserId);
+    Task<bool> IsOwnedByAsync(
+        string path,
+        FilePurpose purpose,
+        long ownerUserId,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Tạo URL có chữ ký, có hạn cho một file trong bucket riêng tư.

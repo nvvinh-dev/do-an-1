@@ -43,9 +43,13 @@ public class AdminLandlordApplicationsController : ControllerBase
     }
 
     [HttpPost("{id:long}/approve")]
-    public async Task<IActionResult> Approve(long id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Approve(
+        long id,
+        ApproveLandlordApplicationRequest request,
+        CancellationToken cancellationToken)
     {
-        var result = await _service.ApproveAsync(this.CurrentUserId(), id, cancellationToken);
+        var result = await _service.ApproveAsync(
+            this.CurrentUserId(), id, request.VerifiedPhoneNumber, cancellationToken);
 
         return result.Succeeded
             ? NoContent()

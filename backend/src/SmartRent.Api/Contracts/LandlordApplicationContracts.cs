@@ -48,3 +48,9 @@ public record LandlordApplicationListItemResponse(
     DateTimeOffset SubmittedAt);
 
 public record RejectLandlordApplicationRequest(string Reason);
+
+/// <summary>
+/// Số điện thoại Admin đã gọi xác minh. Phải trùng số hiện tại của người nộp — nếu người nộp
+/// đổi số trong lúc Admin đang xác minh thì không duyệt (BR-01).
+/// </summary>
+public record ApproveLandlordApplicationRequest(string VerifiedPhoneNumber);

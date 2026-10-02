@@ -1,6 +1,8 @@
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json.Serialization;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Options;
 using SmartRent.Domain.Enums;
 
@@ -8,7 +10,7 @@ namespace SmartRent.Infrastructure.Storage;
 
 /// <summary>
 /// Gọi thẳng REST API của Supabase Storage bằng HttpClient.
-/// Hệ thống chỉ cần ba thao tác nên không dùng thư viện client ngoài.
+/// Hệ thống chỉ cần vài thao tác nên không dùng thư viện client ngoài.
 /// </summary>
 public class SupabaseStorageClient : IFileStorage
 {
@@ -70,13 +72,35 @@ public class SupabaseStorageClient : IFileStorage
         return new StoredFile(storedPath, url);
     }
 
-    public bool IsOwnedBy(string path, FilePurpose purpose, long ownerUserId)
+    public async Task<bool> IsOwnedByAsync(
+        string path,
+        FilePurpose purpose,
+        long ownerUserId,
+        CancellationToken cancellationToken = default)
     {
-        var expectedPrefix = $"{BucketOf(purpose)}/{purpose}/{ownerUserId}/";
+        // Khớp đúng định dạng UploadAsync sinh ra:
+        // <bucket>/<purpose>/<userId>/<yyyy>/<MM>/<32 ký tự hex>.<phần mở rộng>.
+        // Không nhận ký tự nào ngoài định dạng này, nên "..", "%2e%2e" hay đường dẫn tự chế đều bị loại.
+        var extensions = IsPublic(purpose) ? "jpg|png|webp" : "jpg|png|webp|pdf";
+        var pattern = $@"^{Regex.Escape(BucketOf(purpose))}/{purpose}/{ownerUserId}/[0-9]{{4}}/[0-9]{{2}}/[0-9a-f]{{32}}\.({extensions})$";
 
-        // Chặn cả các đoạn "." và ".." để đường dẫn không trỏ ra ngoài thư mục đã kiểm tra.
-        return path.StartsWith(expectedPrefix, StringComparison.Ordinal)
-               && path.Split('/').All(segment => segment is not ("" or "." or ".."));
+        if (!Regex.IsMatch(path, pattern, RegexOptions.CultureInvariant))
+        {
+            return false;
+        }
+
+        // Đúng định dạng nhưng có thể là đường dẫn chưa từng được tải lên.
+        var (bucket, objectPath) = SplitPath(path);
+        using var request = new HttpRequestMessage(HttpMethod.Head, $"object/{bucket}/{objectPath}");
+        using var response = await _http.SendAsync(request, cancellationToken);
+
+        if (response.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.BadRequest)
+        {
+            return false;
+        }
+
+        await EnsureSuccessAsync(response, "kiem tra file ton tai", cancellationToken);
+        return true;
     }
 
     public async Task<string> CreateSignedUrlAsync(
