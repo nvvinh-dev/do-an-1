@@ -7,7 +7,10 @@ namespace SmartRent.Api;
 /// </summary>
 public static class RateLimitPolicies
 {
-    /// <summary>Đăng ký, quên mật khẩu, đặt lại mật khẩu — 3 lần mỗi giờ.</summary>
+    /// <summary>
+    /// Đăng ký, quên mật khẩu, đặt lại mật khẩu — mỗi endpoint 3 lần mỗi giờ theo IP;
+    /// ngưỡng đặt ở cấu hình RateLimiting:AuthAccountPerHour.
+    /// </summary>
     public const string AuthAccount = "auth-account";
 
     /// <summary>Gửi yêu cầu thuê, báo đã thanh toán, nộp hồ sơ Chủ trọ — 10 lần mỗi giờ.</summary>

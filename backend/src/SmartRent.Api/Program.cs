@@ -76,6 +76,9 @@ builder.Services.AddAuthorization();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<LoginAttemptLimiter>();
 
+// Ngưỡng nhóm đăng ký / quên / đặt lại mật khẩu đặt ở cấu hình, để nâng được khi demo dùng chung mạng.
+var authAccountPerHour = builder.Configuration.GetValue("RateLimiting:AuthAccountPerHour", 3);
+
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -88,18 +91,21 @@ builder.Services.AddRateLimiter(options =>
                 ((int)retryAfter.TotalSeconds).ToString(CultureInfo.InvariantCulture);
         }
 
+        // Trả về dạng ProblemDetails như mọi lỗi khác (api-design.md mục 1).
         // Không tiết lộ tài khoản có tồn tại hay không.
-        await context.HttpContext.Response.WriteAsJsonAsync(
-            new { title = "Quá nhiều yêu cầu. Vui lòng thử lại sau." },
-            cancellationToken);
+        await Results.Problem(
+                detail: "Quá nhiều yêu cầu. Vui lòng thử lại sau.",
+                statusCode: StatusCodes.Status429TooManyRequests)
+            .ExecuteAsync(context.HttpContext);
     };
 
+    // Mỗi endpoint một bộ đếm riêng: đăng ký, quên mật khẩu và đặt lại mật khẩu không dùng chung lượt.
     options.AddPolicy(RateLimitPolicies.AuthAccount, context =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: GetClientIp(context),
+            partitionKey: $"{context.Request.Path.Value?.ToLowerInvariant()}|{GetClientIp(context)}",
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 3,
+                PermitLimit = authAccountPerHour,
                 Window = TimeSpan.FromHours(1)
             }));
 
