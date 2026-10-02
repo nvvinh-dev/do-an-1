@@ -1,15 +1,17 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SmartRent.Infrastructure.Email;
 using SmartRent.Infrastructure.Persistence;
+using SmartRent.Infrastructure.Storage;
 
 namespace SmartRent.Infrastructure;
 
 public static class DependencyInjection
 {
     /// <summary>
-    /// Đăng ký tầng truy cập dữ liệu.
-    /// Chuỗi kết nối KHÔNG nằm trong source code — xem docs/security-design.md mục 5.3.
+    /// Đăng ký tầng truy cập dữ liệu và các dịch vụ ngoài.
+    /// Mọi secret KHÔNG nằm trong source code — xem docs/security-design.md mục 5.3.
     /// </summary>
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
@@ -20,13 +22,25 @@ public static class DependencyInjection
         if (string.IsNullOrWhiteSpace(connectionString))
         {
             throw new InvalidOperationException(
-                "Thiếu ConnectionStrings:DefaultConnection. " +
-                "Khi phát triển, đặt bằng: dotnet user-secrets set \"ConnectionStrings:DefaultConnection\" \"...\"");
+                "Thieu ConnectionStrings:DefaultConnection. " +
+                "Khi phat trien, dat bang: dotnet user-secrets set \"ConnectionStrings:DefaultConnection\" \"...\"");
         }
 
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(connectionString)
                    .UseSnakeCaseNamingConvention());
+
+        services.AddScoped<AuditLogger>();
+        services.AddScoped<Notifier>();
+
+        services.Configure<SupabaseStorageOptions>(
+            configuration.GetSection(SupabaseStorageOptions.SectionName));
+
+        services.AddHttpClient<IFileStorage, SupabaseStorageClient>();
+
+        services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
+        // Singleton: email được gửi nền sau khi request kết thúc, và SmtpEmailSender không giữ trạng thái.
+        services.AddSingleton<IEmailSender, SmtpEmailSender>();
 
         return services;
     }

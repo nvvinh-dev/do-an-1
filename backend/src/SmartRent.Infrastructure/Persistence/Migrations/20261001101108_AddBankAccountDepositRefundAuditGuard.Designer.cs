@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SmartRent.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using SmartRent.Infrastructure.Persistence;
 namespace SmartRent.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261001101108_AddBankAccountDepositRefundAuditGuard")]
+    partial class AddBankAccountDepositRefundAuditGuard
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -658,11 +661,6 @@ namespace SmartRent.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("ReviewedByUserId")
                         .HasDatabaseName("ix_landlord_applications_reviewed_by_user_id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique()
-                        .HasDatabaseName("ux_landlord_applications_user_cho_duyet")
-                        .HasFilter("status = 'ChoDuyet'");
 
                     b.HasIndex("UserId", "Status")
                         .HasDatabaseName("ix_landlord_applications_user_id_status");

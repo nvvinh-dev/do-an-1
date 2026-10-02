@@ -1,6 +1,10 @@
 using System.Globalization;
+using System.Security.Claims;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
@@ -8,6 +12,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using Serilog;
 using SmartRent.Api;
+using SmartRent.Api.Services;
+using SmartRent.Api.Validators;
 using SmartRent.Infrastructure;
 using SmartRent.Infrastructure.Identity;
 using SmartRent.Infrastructure.Persistence;
@@ -27,6 +33,10 @@ builder.Services.AddIdentityCore<AppUser>(options =>
        {
            options.User.RequireUniqueEmail = true;
            options.Password.RequiredLength = 8;
+
+           // Không dùng khóa tạm theo tài khoản của Identity: ai biết email cũng khóa được
+           // tài khoản người khác. Giới hạn đăng nhập sai tính theo email + IP ở LoginAttemptLimiter.
+           options.Lockout.AllowedForNewUsers = false;
        })
        .AddRoles<AppRole>()
        .AddEntityFrameworkStores<AppDbContext>()
@@ -61,7 +71,14 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddAuthorization();
 
 // ------------------------------------------------------------ Rate limiting
-// Ngưỡng theo docs/security-design.md mục 6.
+// Ngưỡng theo docs/security-design.md mục 6. Riêng nhóm đăng nhập chỉ đếm lần SAI nên
+// không dùng được middleware — xem LoginAttemptLimiter.
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<LoginAttemptLimiter>();
+
+// Ngưỡng nhóm đăng ký / quên / đặt lại mật khẩu đặt ở cấu hình, để nâng được khi demo dùng chung mạng.
+var authAccountPerHour = builder.Configuration.GetValue("RateLimiting:AuthAccountPerHour", 3);
+
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -74,41 +91,45 @@ builder.Services.AddRateLimiter(options =>
                 ((int)retryAfter.TotalSeconds).ToString(CultureInfo.InvariantCulture);
         }
 
+        // Trả về dạng ProblemDetails như mọi lỗi khác (api-design.md mục 1).
         // Không tiết lộ tài khoản có tồn tại hay không.
-        await context.HttpContext.Response.WriteAsJsonAsync(
-            new { title = "Quá nhiều yêu cầu. Vui lòng thử lại sau." },
-            cancellationToken);
+        await Results.Problem(
+                detail: "Quá nhiều yêu cầu. Vui lòng thử lại sau.",
+                statusCode: StatusCodes.Status429TooManyRequests)
+            .ExecuteAsync(context.HttpContext);
     };
 
-    // LƯU Ý: theo thiết kế, nhóm đăng nhập chỉ tính các lần ĐĂNG NHẬP SAI.
-    // Middleware đếm mọi request, nên phần "chỉ đếm lần sai" phải được xử lý
-    // trong luồng đăng nhập khi hiện thực BP-01.
-    options.AddPolicy(RateLimitPolicies.AuthLogin, context =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: GetClientIp(context),
-            factory: _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = 5,
-                Window = TimeSpan.FromMinutes(15)
-            }));
-
+    // Mỗi endpoint một bộ đếm riêng: đăng ký, quên mật khẩu và đặt lại mật khẩu không dùng chung lượt.
     options.AddPolicy(RateLimitPolicies.AuthAccount, context =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: GetClientIp(context),
+            partitionKey: $"{context.Request.Path.Value?.ToLowerInvariant()}|{GetClientIp(context)}",
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 3,
+                PermitLimit = authAccountPerHour,
                 Window = TimeSpan.FromHours(1)
             }));
 
+    // Tính theo tài khoản đăng nhập. Id người dùng đọc từ claim "sub" của token,
+    // nên middleware rate limiting phải chạy SAU UseAuthentication.
     options.AddPolicy(RateLimitPolicies.BusinessWrite, context =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: context.User.Identity?.IsAuthenticated == true
-                ? context.User.Identity.Name ?? GetClientIp(context)
-                : GetClientIp(context),
+            partitionKey: GetUserId(context) is { } userId
+                ? $"user:{userId}"
+                : $"ip:{GetClientIp(context)}",
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 10,
+                Window = TimeSpan.FromHours(1)
+            }));
+
+    options.AddPolicy(RateLimitPolicies.FileUpload, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: GetUserId(context) is { } userId
+                ? $"user:{userId}"
+                : $"ip:{GetClientIp(context)}",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 20,
                 Window = TimeSpan.FromHours(1)
             }));
 
@@ -122,8 +143,25 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
+// ------------------------------------------------- Service nghiệp vụ
+builder.Services.AddScoped<TokenService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<LandlordApplicationService>();
+builder.Services.AddScoped<LandlordBankAccountService>();
+builder.Services.AddScoped<UserAdminService>();
+
 // ---------------------------------------------------------------- MVC + API
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+       .AddJsonOptions(options =>
+       {
+           // Enum đi ra và đi vào dưới dạng TÊN trạng thái, không phải số thứ tự.
+           // Database cũng lưu dạng text nên hai bên khớp nhau, và chèn thêm một giá trị
+           // vào giữa enum sau này không làm lệch dữ liệu cũ.
+           options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+       });
+
+builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
 builder.Services.AddProblemDetails();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -144,9 +182,11 @@ builder.Services.AddSwaggerGen(options =>
         Description = "Nhập token, không kèm tiền tố Bearer."
     });
 
-    options.AddSecurityRequirement(_ => new OpenApiSecurityRequirement
+    // Phải truyền document vào tham chiếu, nếu không khối "security" sinh ra sẽ rỗng
+    // và Swagger UI không gắn header Authorization vào request.
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
     {
-        { new OpenApiSecuritySchemeReference("Bearer"), new List<string>() }
+        { new OpenApiSecuritySchemeReference("Bearer", document), new List<string>() }
     });
 });
 
@@ -167,8 +207,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseRateLimiter();
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 app.MapControllers();
 
@@ -176,3 +216,6 @@ app.Run();
 
 static string GetClientIp(HttpContext context)
     => context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+static string? GetUserId(HttpContext context)
+    => context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? context.User.FindFirstValue("sub");

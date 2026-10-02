@@ -64,7 +64,11 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
     {
         builder.Entity<AppUser>(entity =>
         {
-            entity.ToTable("users");
+            entity.ToTable("users", t => t.HasCheckConstraint(
+                "ck_users_bank_account",
+                "(bank_bin IS NULL AND bank_account_number IS NULL AND bank_account_name IS NULL) OR " +
+                "(bank_bin IS NOT NULL AND bank_account_number IS NOT NULL AND bank_account_name IS NOT NULL)"));
+
             entity.Property(u => u.FullName).IsRequired();
         });
 
@@ -115,6 +119,12 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
                   .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasIndex(a => new { a.UserId, a.Status });
+
+            // FR-07: mỗi người chỉ có tối đa một hồ sơ chờ duyệt — chặn cả hai lượt nộp gửi cùng lúc.
+            entity.HasIndex(a => a.UserId)
+                  .IsUnique()
+                  .HasFilter("status = 'ChoDuyet'")
+                  .HasDatabaseName("ux_landlord_applications_user_cho_duyet");
         });
     }
 
@@ -311,6 +321,7 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
             entity.Property(c => c.ElectricityUnitPrice).HasColumnType(Money);
             entity.Property(c => c.WaterUnitPrice).HasColumnType(Money);
             entity.Property(c => c.DepositAmount).HasColumnType(Money);
+            entity.Property(c => c.DepositRefundedAmount).HasColumnType(Money);
             entity.Property(c => c.Status).HasConversion<string>().IsRequired();
 
             entity.ToTable(t => t.HasCheckConstraint(

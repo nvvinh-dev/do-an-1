@@ -14,27 +14,3 @@ public class Amenity
 
     public AmenityScope Scope { get; set; }
 }
-
-/// <summary>Bảng nối giữa khu trọ và tiện ích.</summary>
-public class PropertyAmenity
-{
-    public long PropertyId { get; set; }
-
-    public Property Property { get; set; } = null!;
-
-    public long AmenityId { get; set; }
-
-    public Amenity Amenity { get; set; } = null!;
-}
-
-/// <summary>Bảng nối giữa phòng và tiện ích.</summary>
-public class RoomAmenity
-{
-    public long RoomId { get; set; }
-
-    public Room Room { get; set; } = null!;
-
-    public long AmenityId { get; set; }
-
-    public Amenity Amenity { get; set; } = null!;
-}
