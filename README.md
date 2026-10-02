@@ -216,6 +216,8 @@ SmartRent_System/
 | Hook (`hooks/`) | camelCase, tiền tố `use` | `useCurrentUser.ts` |
 | Tiện ích (`utils/`) | camelCase, nêu rõ việc làm | `formatCurrency.ts`, `formatDate.ts` |
 
+**Chữ hiển thị cho người dùng viết tiếng Việt có dấu:** `detail` của lỗi trả về, tiêu đề và nội dung thông báo, tiêu đề và nội dung email, dữ liệu danh mục. Log và thông báo lỗi cấu hình dành cho lập trình viên (thiếu secret, lỗi gọi Supabase Storage) không bắt buộc có dấu. Commit message vẫn viết không dấu (mục 11).
+
 **Quy tắc phụ thuộc giữa các tầng:**
 
 ```

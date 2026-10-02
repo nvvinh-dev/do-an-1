@@ -63,7 +63,7 @@ public static class DatabaseSeeder
     {
         var email = configuration["Seed:AdminEmail"];
         var password = configuration["Seed:AdminPassword"];
-        var fullName = configuration["Seed:AdminFullName"] ?? "Quan tri vien";
+        var fullName = configuration["Seed:AdminFullName"] ?? "Quản trị viên";
 
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
@@ -121,13 +121,13 @@ public static class DatabaseSeeder
 
         string[] propertyAmenities =
         [
-            "Bai de xe", "Thang may", "Bao ve 24/7", "Camera an ninh", "May giat chung", "San phoi"
+            "Bãi để xe", "Thang máy", "Bảo vệ 24/7", "Camera an ninh", "Máy giặt chung", "Sân phơi"
         ];
 
         string[] roomAmenities =
         [
-            "May lanh", "Nong lanh", "Wifi", "Gac lung", "Ban cong",
-            "Nha ve sinh rieng", "Bep rieng", "Tu lanh", "Giuong", "Tu quan ao"
+            "Máy lạnh", "Nóng lạnh", "Wifi", "Gác lửng", "Ban công",
+            "Nhà vệ sinh riêng", "Bếp riêng", "Tủ lạnh", "Giường", "Tủ quần áo"
         ];
 
         db.Amenities.AddRange(propertyAmenities.Select(name => new Amenity

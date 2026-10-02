@@ -39,13 +39,13 @@ public class FilesController : ControllerBase
     {
         if (file is null || file.Length == 0)
         {
-            return Problem(detail: "Chua chon file.", statusCode: StatusCodes.Status400BadRequest);
+            return Problem(detail: "Chưa chọn file.", statusCode: StatusCodes.Status400BadRequest);
         }
 
         if (!IsAllowedForRole(purpose))
         {
             return Problem(
-                detail: "Vai tro cua ban khong duoc phep tai loai file nay.",
+                detail: "Vai trò của bạn không được phép tải loại file này.",
                 statusCode: StatusCodes.Status403Forbidden);
         }
 
@@ -54,7 +54,7 @@ public class FilesController : ControllerBase
         if (file.Length > (isPublic ? PublicMaxBytes : PrivateMaxBytes))
         {
             return Problem(
-                detail: $"File vuot qua gioi han {(isPublic ? 5 : 10)} MB.",
+                detail: $"File vượt quá giới hạn {(isPublic ? 5 : 10)} MB.",
                 statusCode: StatusCodes.Status422UnprocessableEntity);
         }
 
@@ -72,7 +72,7 @@ public class FilesController : ControllerBase
         if (detected is null || !allowed.Contains(detected.Value.ContentType))
         {
             return Problem(
-                detail: "Dinh dang file khong duoc chap nhan.",
+                detail: "Định dạng file không được chấp nhận.",
                 statusCode: StatusCodes.Status422UnprocessableEntity);
         }
 

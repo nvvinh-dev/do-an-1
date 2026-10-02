@@ -28,7 +28,7 @@ public partial class LandlordBankAccountService
             .FirstOrDefaultAsync(u => u.Id == landlordUserId, cancellationToken);
 
         return user is null
-            ? ServiceResult<BankAccountResponse?>.Fail(StatusCodes.Status404NotFound, "Khong tim thay tai khoan.")
+            ? ServiceResult<BankAccountResponse?>.Fail(StatusCodes.Status404NotFound, "Không tìm thấy tài khoản.")
             : ServiceResult<BankAccountResponse?>.Ok(ToResponse(user));
     }
 
@@ -45,26 +45,26 @@ public partial class LandlordBankAccountService
         if (!VietQrBankBins.Contains(bankBin))
         {
             return ServiceResult<BankAccountResponse>.Fail(
-                StatusCodes.Status422UnprocessableEntity, "Ma ngan hang khong co trong danh sach VietQR.");
+                StatusCodes.Status422UnprocessableEntity, "Mã ngân hàng không có trong danh sách VietQR.");
         }
 
         if (!AccountNumberPattern().IsMatch(accountNumber))
         {
             return ServiceResult<BankAccountResponse>.Fail(
-                StatusCodes.Status422UnprocessableEntity, "So tai khoan chi duoc gom chu so.");
+                StatusCodes.Status422UnprocessableEntity, "Số tài khoản chỉ được gồm chữ số.");
         }
 
         if (!AccountNamePattern().IsMatch(accountName))
         {
             return ServiceResult<BankAccountResponse>.Fail(
-                StatusCodes.Status422UnprocessableEntity, "Ten chu tai khoan phai viet hoa, khong dau.");
+                StatusCodes.Status422UnprocessableEntity, "Tên chủ tài khoản phải viết hoa, không dấu.");
         }
 
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == landlordUserId, cancellationToken);
 
         if (user is null)
         {
-            return ServiceResult<BankAccountResponse>.Fail(StatusCodes.Status404NotFound, "Khong tim thay tai khoan.");
+            return ServiceResult<BankAccountResponse>.Fail(StatusCodes.Status404NotFound, "Không tìm thấy tài khoản.");
         }
 
         var previous = ToResponse(user);
