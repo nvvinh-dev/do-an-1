@@ -81,8 +81,9 @@ public class SupabaseStorageClient : IFileStorage
         // Khớp đúng định dạng UploadAsync sinh ra:
         // <bucket>/<purpose>/<userId>/<yyyy>/<MM>/<32 ký tự hex>.<phần mở rộng>.
         // Không nhận ký tự nào ngoài định dạng này, nên "..", "%2e%2e" hay đường dẫn tự chế đều bị loại.
+        // Kết thúc bằng \z chứ không phải $: trong .NET, $ vẫn khớp khi chuỗi có "\n" ở cuối.
         var extensions = IsPublic(purpose) ? "jpg|png|webp" : "jpg|png|webp|pdf";
-        var pattern = $@"^{Regex.Escape(BucketOf(purpose))}/{purpose}/{ownerUserId}/[0-9]{{4}}/[0-9]{{2}}/[0-9a-f]{{32}}\.({extensions})$";
+        var pattern = $@"^{Regex.Escape(BucketOf(purpose))}/{purpose}/{ownerUserId}/[0-9]{{4}}/[0-9]{{2}}/[0-9a-f]{{32}}\.({extensions})\z";
 
         if (!Regex.IsMatch(path, pattern, RegexOptions.CultureInvariant))
         {
