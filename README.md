@@ -369,7 +369,7 @@ Tài liệu thiết kế cho Phase 1 đã hoàn tất trong `docs/`: đặc tả
 
 ## 14. Tài liệu
 
-README này là bản tóm tắt phục vụ người đọc nhanh. Nguồn nghiệp vụ đầy đủ là tài liệu **System & Business Analysis — Hệ thống Quản lý và Cho thuê Phòng trọ **, bao gồm phân tích chi tiết 13 quy trình nghiệp vụ, 29 quy tắc nghiệp vụ, 9 vòng đời trạng thái, danh mục sự kiện thông báo và ranh giới quyền hạn của AI.
+README này là bản tóm tắt phục vụ người đọc nhanh. Nguồn nghiệp vụ đầy đủ là tài liệu **System & Business Analysis — Hệ thống Quản lý và Cho thuê Phòng trọ **, bao gồm phân tích chi tiết 13 quy trình nghiệp vụ, 30 quy tắc nghiệp vụ, 9 vòng đời trạng thái, danh mục sự kiện thông báo và ranh giới quyền hạn của AI.
 
 Tài liệu phân tích và thiết kế được lưu trong thư mục `docs/` trên máy từng thành viên và **không được đưa lên Git** — hai thành viên trao đổi trực tiếp với nhau. Bao gồm: tài liệu phân tích nghiệp vụ, đặc tả yêu cầu chức năng, sơ đồ use case, kiến trúc phần mềm, thiết kế cơ sở dữ liệu, thiết kế API và thiết kế an toàn.
 
