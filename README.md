@@ -76,11 +76,11 @@ Ba nỗi đau lớn nhất mà hệ thống nhắm tới:
 Các quy tắc chi phối thiết kế dữ liệu và luồng xử lý:
 
 - **Chốt cứng giá theo hợp đồng.** Giá thuê, đơn giá điện/nước và phí dịch vụ được chốt vào Hợp đồng tại thời điểm tạo. Chủ trọ đổi giá ở mức Phòng sau đó không ảnh hưởng tới hợp đồng đang hiệu lực và hóa đơn đã phát hành.
-- **Một phòng, một hợp đồng.** Tại một thời điểm, một Phòng chỉ có tối đa một Hợp đồng ở trạng thái *Đang hiệu lực* hoặc *Đang thanh lý*.
+- **Một phòng, một hợp đồng.** Tại một thời điểm, một Phòng chỉ có tối đa một Hợp đồng ở trạng thái *Đang hiệu lực*, *Sắp hết hạn* hoặc *Đang thanh lý*.
 - **Một hợp đồng, một người đứng tên.** Những người khác ở trong phòng được ghi nhận là *Người ở cùng* — có thông tin nhưng không có nghĩa vụ trên hệ thống.
-- **Tiền cọc là điều kiện hiệu lực.** Mọi hợp đồng bắt buộc ghi nhận số tiền cọc. Hợp đồng chỉ *Đang hiệu lực* khi Chủ trọ đã xác nhận nhận đủ cọc **và** Người thuê đã đồng ý điều khoản. Cọc chỉ được khấu trừ qua Hóa đơn thanh lý, mỗi khoản khấu trừ là một dòng riêng có lý do.
-- **Chỉ số điện nước liên tục.** Tiền điện/nước = (chỉ số mới − chỉ số cũ) × đơn giá đã chốt. Chỉ số cũ của một kỳ bắt buộc bằng chỉ số mới của kỳ liền trước; hệ thống từ chối lưu khi chỉ số mới nhỏ hơn chỉ số cũ.
-- **Hóa đơn đã thanh toán là bất biến.** Mọi điều chỉnh sau đó phải thực hiện bằng một hóa đơn điều chỉnh riêng có tham chiếu tới hóa đơn gốc. Mỗi hợp đồng chỉ có một hóa đơn cho mỗi kỳ.
+- **Tiền cọc là điều kiện hiệu lực.** Mọi hợp đồng bắt buộc ghi nhận số tiền cọc, có thể bằng 0. Hợp đồng chỉ *Đang hiệu lực* khi Người thuê đã đồng ý điều khoản **và**, nếu cọc lớn hơn 0, Chủ trọ đã xác nhận nhận đủ cọc. Ngoài trường hợp Người thuê hủy hợp đồng trước ngày bắt đầu, cọc chỉ được khấu trừ qua Hóa đơn thanh lý, mỗi khoản khấu trừ là một dòng riêng có lý do.
+- **Chỉ số điện nước liên tục.** Tiền điện/nước = (chỉ số mới − chỉ số cũ) × đơn giá đã chốt. Chỉ số cũ của một kỳ bắt buộc bằng chỉ số mới của kỳ liền trước; kỳ đầu tiên lấy chỉ số lúc bàn giao ghi trong Hợp đồng. Hệ thống từ chối lưu khi chỉ số mới nhỏ hơn chỉ số cũ.
+- **Hóa đơn đã thanh toán là bất biến.** Chỉ hóa đơn mới nhất chưa thanh toán của hợp đồng mới được sửa hoặc hủy. Sai sót ở hóa đơn không còn sửa được thì điều chỉnh bằng một dòng *Điều chỉnh* có mô tả, đặt ở hóa đơn kỳ kế tiếp hoặc Hóa đơn thanh lý. Mỗi hợp đồng chỉ có một hóa đơn chưa hủy cho mỗi kỳ; kỳ do hệ thống xác định theo tháng.
 - **Không xóa cứng dữ liệu tài chính.** Phòng hoặc Khu trọ đã từng phát sinh Hợp đồng hoặc Hóa đơn chỉ được chuyển sang trạng thái *Lưu trữ*, không được xóa vĩnh viễn.
 - **Nhật ký không thể sửa xóa.** Mọi thao tác ảnh hưởng tới tiền hoặc quyền đều ghi nhật ký gồm người thực hiện, thời điểm, giá trị trước và sau — kể cả Admin cũng không sửa được.
 - **Phân quyền theo sở hữu.** Chủ trọ chỉ thao tác trên dữ liệu thuộc khu trọ của mình; Người thuê chỉ xem được hợp đồng, hóa đơn và sự cố của chính mình.
@@ -155,7 +155,7 @@ Với 02 thành viên và 2.5 tháng, phạm vi in-scope là rất lớn. Thứ 
 | **Authentication** | JWT Authentication |
 | **Frontend** | React + TypeScript, Tailwind CSS, React Router, React Hook Form, TanStack Query, Axios, qrcode (vẽ mã VietQR) |
 | **Kiến trúc** | Web không truy cập database trực tiếp, giao tiếp hoàn toàn qua Backend API |
-| **Công cụ** | Trello (tiến độ), GitHub (mã nguồn), Postman (kiểm thử), PlantUML (thiết kế CSDL/UML) |
+| **Công cụ** | Google Drive (bảng tiến độ), GitHub (mã nguồn), Postman (kiểm thử), PlantUML (thiết kế CSDL/UML) |
 
 **Nguyên tắc kiểm soát phạm vi:** Không tự ý thêm chức năng nằm ngoài nghiệp vụ. Mọi chức năng mới phải có cơ sở từ nghiệp vụ, yêu cầu của hệ thống hoặc tiêu chí môn học.
 
