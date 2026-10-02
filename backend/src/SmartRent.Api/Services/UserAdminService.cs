@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SmartRent.Api.Contracts;
 using SmartRent.Infrastructure.Identity;
@@ -10,18 +9,15 @@ namespace SmartRent.Api.Services;
 public class UserAdminService
 {
     private readonly AppDbContext _db;
-    private readonly UserManager<AppUser> _userManager;
     private readonly AuditLogger _auditLogger;
     private readonly Notifier _notifier;
 
     public UserAdminService(
         AppDbContext db,
-        UserManager<AppUser> userManager,
         AuditLogger auditLogger,
         Notifier notifier)
     {
         _db = db;
-        _userManager = userManager;
         _auditLogger = auditLogger;
         _notifier = notifier;
     }
@@ -58,13 +54,18 @@ public class UserAdminService
             .Take(pageSize)
             .ToListAsync(cancellationToken);
 
-        var items = new List<UserListItemResponse>(users.Count);
+        // Vai trò của cả trang lấy bằng một truy vấn, không gọi riêng cho từng tài khoản.
+        var pageUserIds = users.Select(u => u.Id).ToList();
 
-        foreach (var user in users)
-        {
-            var roles = await _userManager.GetRolesAsync(user);
+        var rolesByUser = (await (from userRole in _db.UserRoles
+                                  join appRole in _db.Roles on userRole.RoleId equals appRole.Id
+                                  where pageUserIds.Contains(userRole.UserId)
+                                  select new { userRole.UserId, appRole.Name })
+                                 .ToListAsync(cancellationToken))
+            .ToLookup(r => r.UserId, r => r.Name!);
 
-            items.Add(new UserListItemResponse(
+        var items = users
+            .Select(user => new UserListItemResponse(
                 user.Id,
                 user.Email!,
                 user.FullName,
@@ -72,8 +73,8 @@ public class UserAdminService
                 user.IsLocked,
                 user.LockReason,
                 user.RegisteredAt,
-                [.. roles]));
-        }
+                [.. rolesByUser[user.Id]]))
+            .ToList();
 
         return new PagedResponse<UserListItemResponse>(
             items, page, pageSize, total, (int)Math.Ceiling(total / (double)pageSize));
@@ -90,19 +91,19 @@ public class UserAdminService
         if (adminUserId == targetUserId)
         {
             return ServiceResult.Fail(
-                StatusCodes.Status422UnprocessableEntity, "Khong the tu khoa tai khoan cua chinh minh.");
+                StatusCodes.Status422UnprocessableEntity, "Không thể tự khóa tài khoản của chính mình.");
         }
 
         var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == targetUserId, cancellationToken);
 
         if (user is null)
         {
-            return ServiceResult.Fail(StatusCodes.Status404NotFound, "Khong tim thay tai khoan.");
+            return ServiceResult.Fail(StatusCodes.Status404NotFound, "Không tìm thấy tài khoản.");
         }
 
         if (user.IsLocked)
         {
-            return ServiceResult.Fail(StatusCodes.Status409Conflict, "Tai khoan da bi khoa.");
+            return ServiceResult.Fail(StatusCodes.Status409Conflict, "Tài khoản đã bị khóa.");
         }
 
         user.IsLocked = true;
@@ -119,8 +120,8 @@ public class UserAdminService
         _notifier.Notify(
             user.Id,
             "TaiKhoanBiKhoa",
-            "Tai khoan cua ban da bi khoa",
-            $"Ly do: {reason}.",
+            "Tài khoản của bạn đã bị khóa",
+            $"Lý do: {reason}.",
             nameof(AppUser),
             user.Id);
 
@@ -138,12 +139,12 @@ public class UserAdminService
 
         if (user is null)
         {
-            return ServiceResult.Fail(StatusCodes.Status404NotFound, "Khong tim thay tai khoan.");
+            return ServiceResult.Fail(StatusCodes.Status404NotFound, "Không tìm thấy tài khoản.");
         }
 
         if (!user.IsLocked)
         {
-            return ServiceResult.Fail(StatusCodes.Status409Conflict, "Tai khoan dang khong bi khoa.");
+            return ServiceResult.Fail(StatusCodes.Status409Conflict, "Tài khoản đang không bị khóa.");
         }
 
         var previousReason = user.LockReason;
@@ -161,8 +162,8 @@ public class UserAdminService
         _notifier.Notify(
             user.Id,
             "TaiKhoanDuocMoKhoa",
-            "Tai khoan cua ban da duoc mo khoa",
-            "Ban co the dang nhap va su dung he thong binh thuong.",
+            "Tài khoản của bạn đã được mở khóa",
+            "Bạn có thể đăng nhập và sử dụng hệ thống bình thường.",
             nameof(AppUser),
             user.Id);
 
