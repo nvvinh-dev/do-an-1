@@ -35,24 +35,21 @@ public class AuthController : ControllerBase
     {
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 
-        if (_loginLimiter.GetBlockedFor(request.Email, ip) is { } blockedFor)
+        // Giữ chỗ một lượt TRƯỚC khi kiểm tra mật khẩu, để request gửi song song không vượt được ngưỡng.
+        if (!_loginLimiter.TryReserveAttempt(request.Email, ip, out var retryAfter))
         {
             Response.Headers.RetryAfter =
-                ((int)Math.Ceiling(blockedFor.TotalSeconds)).ToString(CultureInfo.InvariantCulture);
+                ((int)Math.Ceiling(retryAfter.TotalSeconds)).ToString(CultureInfo.InvariantCulture);
 
             return Problem(
-                detail: "Ban da nhap sai qua nhieu lan. Vui long thu lai sau.",
+                detail: "Bạn đã nhập sai quá nhiều lần. Vui lòng thử lại sau.",
                 statusCode: StatusCodes.Status429TooManyRequests);
         }
 
         var result = await _authService.LoginAsync(request);
 
-        // Chỉ lần sai email hoặc mật khẩu mới bị đếm.
-        if (result.StatusCode == StatusCodes.Status401Unauthorized)
-        {
-            _loginLimiter.RegisterFailure(request.Email, ip);
-        }
-        else
+        // Lượt đã giữ chỗ chỉ được tính là lần sai khi sai email hoặc mật khẩu.
+        if (result.StatusCode != StatusCodes.Status401Unauthorized)
         {
             _loginLimiter.Reset(request.Email, ip);
         }
@@ -68,7 +65,7 @@ public class AuthController : ControllerBase
         await _authService.ForgotPasswordAsync(request);
 
         // Luôn trả về cùng một kết quả để không tiết lộ email có tồn tại hay không.
-        return Ok(new { message = "Neu email ton tai trong he thong, huong dan dat lai mat khau da duoc gui." });
+        return Ok(new { message = "Nếu email tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu đã được gửi." });
     }
 
     [HttpPost("reset-password")]
