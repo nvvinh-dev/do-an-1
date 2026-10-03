@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using SmartRent.Domain.Entities;
 using SmartRent.Domain.Enums;
 using SmartRent.Infrastructure.Identity;
@@ -308,6 +309,21 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
             entity.HasIndex(r => new { r.RoomId, r.Status });
 
             entity.HasIndex(r => r.TenantUserId);
+
+            // BR-27: mỗi người thuê chỉ có một yêu cầu chờ duyệt cho mỗi phòng — chặn cả hai lượt gửi cùng lúc.
+            entity.HasIndex(r => new { r.RoomId, r.TenantUserId }, "ux_rental_requests_room_tenant_cho_duyet")
+                  .IsUnique()
+                  .HasFilter("status = 'ChoDuyet'")
+                  .HasDatabaseName("ux_rental_requests_room_tenant_cho_duyet");
+
+            // BR-28: mỗi người thuê chỉ giữ một phòng — chặn hai lượt duyệt gửi gần như đồng thời.
+            // Đặt tên riêng để cùng tồn tại với chỉ mục thường trên tenant_user_id ở trên.
+            entity.HasIndex(r => r.TenantUserId, "ux_rental_requests_tenant_da_duyet")
+                  .IsUnique()
+                  .HasFilter("status = 'DaDuyet'")
+                  .HasDatabaseName("ux_rental_requests_tenant_da_duyet");
+
+            ConfigureRowVersion(entity);
         });
     }
 
@@ -322,11 +338,26 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
             entity.Property(c => c.WaterUnitPrice).HasColumnType(Money);
             entity.Property(c => c.DepositAmount).HasColumnType(Money);
             entity.Property(c => c.DepositRefundedAmount).HasColumnType(Money);
+            entity.Property(c => c.InitialElectricityIndex).HasColumnType(MeterIndex);
+            entity.Property(c => c.InitialWaterIndex).HasColumnType(MeterIndex);
             entity.Property(c => c.Status).HasConversion<string>().IsRequired();
+            entity.Property(c => c.DepositReceivedMethod).HasConversion<string>();
+            entity.Property(c => c.DepositRefundMethod).HasConversion<string>();
 
-            entity.ToTable(t => t.HasCheckConstraint(
-                "ck_contracts_status",
-                $"status IN ({EnumValues<ContractStatus>()})"));
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "ck_contracts_status",
+                    $"status IN ({EnumValues<ContractStatus>()})");
+
+                t.HasCheckConstraint(
+                    "ck_contracts_deposit_received_method",
+                    $"deposit_received_method IN ({EnumValues<PaymentMethod>()})");
+
+                t.HasCheckConstraint(
+                    "ck_contracts_deposit_refund_method",
+                    $"deposit_refund_method IN ({EnumValues<PaymentMethod>()})");
+            });
 
             entity.HasOne(c => c.Room)
                   .WithMany()
@@ -342,6 +373,13 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
                   .WithMany()
                   .HasForeignKey(c => c.RentalRequestId)
                   .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne<AppUser>()
+                  .WithMany()
+                  .HasForeignKey(c => c.CancelledByUserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            ConfigureRowVersion(entity);
 
             // Một phòng chỉ có tối đa một hợp đồng đang chiếm dụng tại một thời điểm
             entity.HasIndex(c => c.RoomId)
@@ -511,6 +549,17 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
             entity.HasIndex(a => new { a.EntityType, a.EntityId });
         });
     }
+
+    /// <summary>
+    /// Dùng cột hệ thống xmin của PostgreSQL làm concurrency token: hai thao tác cùng đổi trạng thái
+    /// một bản ghi (duyệt và rút một yêu cầu thuê, thu hồi và xác nhận một hợp đồng...) không ghi đè nhau —
+    /// bên lưu sau nhận DbUpdateConcurrencyException. xmin có sẵn trên mọi bảng nên không sinh cột mới.
+    /// </summary>
+    private static void ConfigureRowVersion<TEntity>(EntityTypeBuilder<TEntity> entity) where TEntity : class
+        => entity.Property<uint>("RowVersion")
+                 .HasColumnName("xmin")
+                 .HasColumnType("xid")
+                 .IsRowVersion();
 
     /// <summary>
     /// Sinh danh sách giá trị hợp lệ của một enum để dùng trong ràng buộc CHECK.
