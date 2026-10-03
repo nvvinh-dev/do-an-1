@@ -66,6 +66,14 @@ public class LandlordApplicationService
                 StatusCodes.Status409Conflict, "Bạn đang có một hồ sơ chờ duyệt.");
         }
 
+        if (await HasOpenRentalAsync(userId, cancellationToken))
+        {
+            return ServiceResult<LandlordApplicationResponse>.Fail(
+                StatusCodes.Status409Conflict,
+                "Tài khoản còn hợp đồng chưa kết thúc hoặc yêu cầu thuê đang mở. " +
+                "Hãy hoàn tất hoặc hủy trước khi nộp hồ sơ Chủ trọ.");
+        }
+
         // BR-01: số điện thoại do Admin xác minh khi duyệt, nên tài khoản phải có số trước khi nộp.
         if (string.IsNullOrWhiteSpace(user.PhoneNumber))
         {
@@ -242,6 +250,14 @@ public class LandlordApplicationService
                 StatusCodes.Status409Conflict, "Người nộp hồ sơ đã là Chủ trọ. Hãy từ chối hồ sơ này.");
         }
 
+        // FR-97: tình trạng này có thể phát sinh trong lúc hồ sơ chờ duyệt.
+        if (await HasOpenRentalAsync(applicant.Id, cancellationToken))
+        {
+            return ServiceResult.Fail(
+                StatusCodes.Status409Conflict,
+                "Người nộp hồ sơ còn hợp đồng chưa kết thúc hoặc yêu cầu thuê đang mở, chưa duyệt được.");
+        }
+
         if (string.IsNullOrWhiteSpace(applicant.PhoneNumber))
         {
             return ServiceResult.Fail(
@@ -359,6 +375,21 @@ public class LandlordApplicationService
 
         return ServiceResult.Ok();
     }
+
+    /// <summary>
+    /// FR-97: tài khoản còn hợp đồng chưa kết thúc hoặc yêu cầu thuê đang mở (chờ duyệt, đã duyệt).
+    /// Đổi vai trò lúc đó sẽ làm người dùng mất quyền thao tác trên hợp đồng của chính mình.
+    /// </summary>
+    private async Task<bool> HasOpenRentalAsync(long userId, CancellationToken cancellationToken)
+        => await _db.Contracts.AnyAsync(
+               c => c.TenantUserId == userId
+                    && c.Status != ContractStatus.DaThanhLy
+                    && c.Status != ContractStatus.DaHuy,
+               cancellationToken)
+           || await _db.RentalRequests.AnyAsync(
+               r => r.TenantUserId == userId
+                    && (r.Status == RentalRequestStatus.ChoDuyet || r.Status == RentalRequestStatus.DaDuyet),
+               cancellationToken);
 
     private static LandlordApplicationResponse ToResponse(LandlordApplication a)
         => new(a.Id, a.Status, a.SubmittedAt, a.ReviewedAt, a.RejectReason);
