@@ -149,6 +149,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LandlordApplicationService>();
 builder.Services.AddScoped<LandlordBankAccountService>();
 builder.Services.AddScoped<UserAdminService>();
+builder.Services.AddScoped<RentalRequestService>();
 
 // ---------------------------------------------------------------- MVC + API
 builder.Services.AddControllers()
