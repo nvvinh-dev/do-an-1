@@ -152,6 +152,9 @@ builder.Services.AddScoped<UserAdminService>();
 builder.Services.AddScoped<RentalRequestService>();
 builder.Services.AddScoped<ContractService>();
 
+// Tác vụ định kỳ chạy mỗi giờ trong tiến trình API — docs/architecture.md mục 7.
+builder.Services.AddHostedService<ScheduledTaskRunner>();
+
 // ---------------------------------------------------------------- MVC + API
 builder.Services.AddControllers()
        .AddJsonOptions(options =>
