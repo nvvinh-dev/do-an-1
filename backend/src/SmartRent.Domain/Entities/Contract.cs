@@ -80,6 +80,9 @@ public class Contract
 
     public DateTimeOffset? MoveOutNoticeAt { get; set; }
 
+    /// <summary>Bên gửi thông báo trả phòng — căn cứ cho phí phạt (BR-22).</summary>
+    public long? MoveOutNoticeByUserId { get; set; }
+
     public DateOnly? ExpectedMoveOutDate { get; set; }
 
     public DateTimeOffset? TerminatedAt { get; set; }

@@ -379,6 +379,11 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
                   .HasForeignKey(c => c.CancelledByUserId)
                   .OnDelete(DeleteBehavior.Restrict);
 
+            entity.HasOne<AppUser>()
+                  .WithMany()
+                  .HasForeignKey(c => c.MoveOutNoticeByUserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
             ConfigureRowVersion(entity);
 
             // Một phòng chỉ có tối đa một hợp đồng đang chiếm dụng tại một thời điểm

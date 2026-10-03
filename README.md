@@ -357,7 +357,7 @@ dotnet test
 
 ## 13. Trạng thái hiện tại
 
-**Backend:** solution 3 project và 1 project test (chưa có test); cấu hình JWT, rate limiting, Serilog, Swagger. Toàn bộ 18 entity của Phase 1 đã có, cùng hai migration: `InitialPhase1` (25 bảng) và `AddBankAccountDepositRefundAuditGuard` (tài khoản nhận tiền của Chủ trọ, thông tin hoàn cọc, trigger chặn sửa và xóa nhật ký hệ thống). Khi khởi động, ứng dụng tạo dữ liệu nền: 3 vai trò, tài khoản Admin đầu tiên và danh mục 16 tiện ích.
+**Backend:** solution 3 project và 1 project test (chưa có test); cấu hình JWT, rate limiting, Serilog, Swagger. Toàn bộ 18 entity của Phase 1 đã có, cùng bốn migration: `InitialPhase1` (25 bảng), `AddBankAccountDepositRefundAuditGuard` (tài khoản nhận tiền của Chủ trọ, thông tin hoàn cọc, trigger chặn sửa và xóa nhật ký hệ thống), `AddLandlordApplicationPendingUniqueIndex` (mỗi người một hồ sơ Chủ trọ chờ duyệt) và `UpdateContractsAndRentalRequestsForBp06` (chỉ số đầu, bên hủy, bên gửi thông báo trả phòng và lý do giữ cọc của hợp đồng; unique index BR-27, BR-28 của yêu cầu thuê). Khi khởi động, ứng dụng tạo dữ liệu nền: 3 vai trò, tài khoản Admin đầu tiên và danh mục 16 tiện ích.
 
 **BP-01 đã hiện thực ở backend:** đăng ký, đăng nhập, đổi và đặt lại mật khẩu, xem và sửa thông tin cá nhân, nộp và duyệt hồ sơ Chủ trọ, khóa và mở khóa tài khoản, khai báo tài khoản ngân hàng nhận tiền của Chủ trọ, tải file dùng chung.
 
