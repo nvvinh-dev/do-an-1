@@ -1,5 +1,7 @@
 using System.Net;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using SmartRent.Api.Contracts;
 using SmartRent.Infrastructure.Email;
 using SmartRent.Infrastructure.Identity;
@@ -57,7 +59,19 @@ public class AuthService
 
         await using var transaction = await _db.Database.BeginTransactionAsync();
 
-        var created = await _userManager.CreateAsync(user, request.Password);
+        IdentityResult created;
+
+        try
+        {
+            created = await _userManager.CreateAsync(user, request.Password);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            // Hai lượt đăng ký cùng email gửi gần như cùng lúc đều qua được bước kiểm tra ở trên;
+            // unique index trên tên đăng nhập (chính là email) chặn lượt thứ hai.
+            return ServiceResult<CurrentUserResponse>.Fail(
+                StatusCodes.Status409Conflict, "Email này đã được sử dụng.");
+        }
 
         if (!created.Succeeded)
         {
@@ -198,7 +212,8 @@ public class AuthService
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
         var baseUrl = _configuration["Frontend:BaseUrl"]?.TrimEnd('/') ?? "http://localhost:5173";
 
-        var link = $"{baseUrl}/dat-lai-mat-khau" +
+        // Trang A4 trong docs/frontend-screens.md.
+        var link = $"{baseUrl}/reset-password" +
                    $"?email={WebUtility.UrlEncode(user.Email)}" +
                    $"&token={WebUtility.UrlEncode(token)}";
 
