@@ -155,7 +155,7 @@ Với 02 thành viên và 2.5 tháng, phạm vi in-scope là rất lớn. Thứ 
 | **Authentication** | JWT Authentication |
 | **Frontend** | React + TypeScript, Tailwind CSS, React Router, React Hook Form, TanStack Query, Axios, qrcode (vẽ mã VietQR) |
 | **Kiến trúc** | Web không truy cập database trực tiếp, giao tiếp hoàn toàn qua Backend API |
-| **Công cụ** | Google Drive (bảng tiến độ), GitHub (mã nguồn), Postman (kiểm thử), PlantUML (thiết kế CSDL/UML) |
+| **Công cụ** | Trello (tiến độ), GitHub (mã nguồn), Postman (kiểm thử), PlantUML (thiết kế CSDL/UML) |
 
 **Nguyên tắc kiểm soát phạm vi:** Không tự ý thêm chức năng nằm ngoài nghiệp vụ. Mọi chức năng mới phải có cơ sở từ nghiệp vụ, yêu cầu của hệ thống hoặc tiêu chí môn học.
 
