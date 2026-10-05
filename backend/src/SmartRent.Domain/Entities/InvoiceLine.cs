@@ -23,4 +23,12 @@ public class InvoiceLine
     public decimal Amount { get; set; }
 
     public string? EvidenceUrl { get; set; }
+
+    /// <summary>
+    /// Hóa đơn gốc cùng hợp đồng. Bắt buộc với CongNoKyTruoc; với DieuChinhKhac khi dòng
+    /// điều chỉnh sai sót của một hóa đơn trước (BR-16).
+    /// </summary>
+    public long? RelatedInvoiceId { get; set; }
+
+    public Invoice? RelatedInvoice { get; set; }
 }

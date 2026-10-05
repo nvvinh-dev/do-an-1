@@ -5,7 +5,8 @@ namespace SmartRent.Domain.Entities;
 /// <summary>
 /// Hóa đơn của một kỳ. Lưu kèm bản sao đơn giá đã áp dụng nên hóa đơn đã phát hành
 /// không bị tính lại khi giá thay đổi. Hóa đơn đã thanh toán không được sửa —
-/// mọi điều chỉnh phải tạo hóa đơn mới tham chiếu về hóa đơn gốc.
+/// sai sót được điều chỉnh bằng một dòng DieuChinhKhac trỏ về hóa đơn gốc,
+/// đặt ở hóa đơn kỳ kế tiếp hoặc hóa đơn thanh lý (BR-16).
 /// </summary>
 public class Invoice
 {
@@ -16,11 +17,6 @@ public class Invoice
     public Contract Contract { get; set; } = null!;
 
     public InvoiceType Type { get; set; }
-
-    /// <summary>Bắt buộc có giá trị khi <see cref="Type"/> là DieuChinh.</summary>
-    public long? AdjustedInvoiceId { get; set; }
-
-    public Invoice? AdjustedInvoice { get; set; }
 
     public DateOnly PeriodStart { get; set; }
 
@@ -67,6 +63,18 @@ public class Invoice
     public DateOnly? DueDate { get; set; }
 
     public DateTimeOffset? SettledAt { get; set; }
+
+    /// <summary>Chỉ với hóa đơn thanh lý: thời điểm người thuê đồng ý bảng thanh lý.</summary>
+    public DateTimeOffset? TenantConfirmedAt { get; set; }
+
+    /// <summary>Chỉ với hóa đơn thanh lý: lý do người thuê chưa đồng ý ở lần gần nhất.</summary>
+    public string? ChangeRequestReason { get; set; }
+
+    /// <summary>Chỉ với hóa đơn thanh lý: lần gửi gần nhất cho người thuê — mốc tính 7 ngày Chủ trọ được tự chốt.</summary>
+    public DateTimeOffset? SentAt { get; set; }
+
+    /// <summary>Chỉ với hóa đơn thanh lý: ghi chú bắt buộc khi Chủ trọ tự chốt.</summary>
+    public string? LandlordFinalizeNote { get; set; }
 
     /// <summary>Bắt buộc có giá trị khi <see cref="Status"/> là DaHuy.</summary>
     public string? CancelReason { get; set; }
