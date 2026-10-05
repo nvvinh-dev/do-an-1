@@ -15,13 +15,23 @@ public class ContractTests
         DepositAmount = depositAmount,
         StartDate = new DateOnly(2026, 10, 15),
         EndDate = new DateOnly(2027, 10, 14),
+        RentalRequestId = 5,
         RentalRequest = new RentalRequest
         {
+            Id = 5,
             Status = RentalRequestStatus.DaLapHopDong,
             SubmittedAt = ApprovedAt.AddDays(-1),
             ProcessedAt = ApprovedAt
         }
     };
+
+    /// <summary>Hợp đồng chờ nhận cọc đúng luồng: người thuê đã đồng ý.</summary>
+    private static Contract AwaitingDeposit()
+    {
+        var contract = NewContract(ContractStatus.ChoNhanCoc);
+        contract.TenantConfirmedAt = ApprovedAt.AddHours(2);
+        return contract;
+    }
 
     [Fact]
     public void ConfirmByTenant_CocLonHon0_ChoNhanCoc()
@@ -51,9 +61,51 @@ public class ContractTests
     }
 
     [Fact]
+    public void CanConfirmByTenant_ChiKhiChoNguoiThueXacNhanVaConHanGiuCho()
+    {
+        Assert.True(NewContract(ContractStatus.ChoNguoiThueXacNhan).CanConfirmByTenant(ApprovedAt.AddHours(72)));
+        Assert.False(NewContract(ContractStatus.ChoNguoiThueXacNhan).CanConfirmByTenant(ApprovedAt.AddHours(73)));
+        Assert.False(NewContract(ContractStatus.Nhap).CanConfirmByTenant(ApprovedAt.AddHours(5)));
+        Assert.False(NewContract(ContractStatus.ChoNhanCoc).CanConfirmByTenant(ApprovedAt.AddHours(5)));
+    }
+
+    [Fact]
+    public void ConfirmByTenant_HopDongConNhap_NemLoiVaGiuNguyen()
+    {
+        // Gọi khi chưa /send: bỏ qua bước gửi hợp đồng.
+        var contract = NewContract(ContractStatus.Nhap);
+
+        Assert.Throws<InvalidOperationException>(() => contract.ConfirmByTenant(ApprovedAt.AddHours(5)));
+        Assert.Equal(ContractStatus.Nhap, contract.Status);
+        Assert.Null(contract.TenantConfirmedAt);
+    }
+
+    [Fact]
+    public void CanConfirmDeposit_CanNguoiThueDaDongYVaConHanGiuCho()
+    {
+        Assert.True(AwaitingDeposit().CanConfirmDeposit(ApprovedAt.AddHours(72)));
+        Assert.False(AwaitingDeposit().CanConfirmDeposit(ApprovedAt.AddHours(73)));
+        Assert.False(NewContract(ContractStatus.ChoNhanCoc).CanConfirmDeposit(ApprovedAt.AddHours(5)));
+        Assert.False(NewContract(ContractStatus.ChoNguoiThueXacNhan).CanConfirmDeposit(ApprovedAt.AddHours(5)));
+    }
+
+    [Fact]
+    public void ConfirmDeposit_NguoiThueChuaDongY_NemLoiKhongKichHoat()
+    {
+        // BR-21, security-design 5.5: không được kích hoạt hợp đồng khi người thuê chưa đồng ý.
+        var contract = NewContract(ContractStatus.ChoNguoiThueXacNhan);
+
+        Assert.Throws<InvalidOperationException>(
+            () => contract.ConfirmDeposit(ApprovedAt, PaymentMethod.TienMat, ApprovedAt.AddHours(5)));
+        Assert.Equal(ContractStatus.ChoNguoiThueXacNhan, contract.Status);
+        Assert.Null(contract.ActivatedAt);
+        Assert.Null(contract.DepositReceivedAt);
+    }
+
+    [Fact]
     public void ConfirmDeposit_GhiNgayNhanThucTeVaKichHoat()
     {
-        var contract = NewContract(ContractStatus.ChoNhanCoc);
+        var contract = AwaitingDeposit();
         var receivedAt = ApprovedAt.AddHours(-30);
         var now = ApprovedAt.AddHours(6);
 
@@ -68,13 +120,32 @@ public class ContractTests
     [Fact]
     public void Recall_BoLanDongYTruocDo()
     {
-        var contract = NewContract(ContractStatus.ChoNhanCoc);
-        contract.TenantConfirmedAt = ApprovedAt.AddHours(2);
+        var contract = AwaitingDeposit();
 
-        contract.Recall();
+        contract.Recall(ApprovedAt.AddHours(10));
 
         Assert.Equal(ContractStatus.Nhap, contract.Status);
         Assert.Null(contract.TenantConfirmedAt);
+    }
+
+    [Theory]
+    [InlineData(ContractStatus.ChoNguoiThueXacNhan, 72, true)]
+    [InlineData(ContractStatus.ChoNhanCoc, 72, true)]
+    [InlineData(ContractStatus.ChoNguoiThueXacNhan, 73, false)]
+    [InlineData(ContractStatus.Nhap, 5, false)]
+    [InlineData(ContractStatus.DangHieuLuc, 5, false)]
+    public void CanRecall_ChiHopDongDaGuiChuaHieuLucConHanGiuCho(ContractStatus status, int hoursAfterApproval, bool expected)
+    {
+        Assert.Equal(expected, NewContract(status).CanRecall(ApprovedAt.AddHours(hoursAfterApproval)));
+    }
+
+    [Fact]
+    public void Recall_HopDongDangHieuLuc_NemLoiVaGiuNguyen()
+    {
+        var contract = NewContract(ContractStatus.DangHieuLuc);
+
+        Assert.Throws<InvalidOperationException>(() => contract.Recall(ApprovedAt.AddDays(10)));
+        Assert.Equal(ContractStatus.DangHieuLuc, contract.Status);
     }
 
     [Fact]
@@ -82,6 +153,25 @@ public class ContractTests
     {
         Assert.Equal(ApprovedAt.AddHours(72), NewContract(ContractStatus.Nhap).HoldDeadline);
         Assert.Null(NewContract(ContractStatus.DangHieuLuc).HoldDeadline);
+    }
+
+    [Fact]
+    public void HoldDeadline_QuenNapRentalRequest_NemLoi()
+    {
+        var contract = NewContract(ContractStatus.ChoNguoiThueXacNhan);
+        contract.RentalRequest = null;
+
+        Assert.Throws<InvalidOperationException>(() => contract.HoldDeadline);
+        Assert.Throws<InvalidOperationException>(() => contract.IsHoldExpired(ApprovedAt.AddHours(80)));
+    }
+
+    [Fact]
+    public void HoldDeadline_KhongNapRentalRequest_HopDongDaHieuLuc_KhongCanHan()
+    {
+        var contract = NewContract(ContractStatus.DangHieuLuc);
+        contract.RentalRequest = null;
+
+        Assert.Null(contract.HoldDeadline);
     }
 
     [Fact]
@@ -126,10 +216,21 @@ public class ContractTests
     }
 
     [Fact]
+    public void Cancel_HopDongDaBatDau_NemLoiVaGiuNguyen()
+    {
+        var contract = NewContract(ContractStatus.DangHieuLuc);
+        var onStartDate = new DateTimeOffset(contract.StartDate.ToDateTime(new TimeOnly(9, 0)), TimeSpan.FromHours(7));
+
+        Assert.Throws<InvalidOperationException>(() => contract.Cancel(contract.TenantUserId, "Đổi ý", onStartDate));
+        Assert.Equal(ContractStatus.DangHieuLuc, contract.Status);
+    }
+
+    [Fact]
     public void IsAwaitingDepositRefund_DaHuyDaNhanCocChuaHoan()
     {
-        var contract = NewContract(ContractStatus.ChoNhanCoc);
-        contract.ConfirmDeposit(ApprovedAt, PaymentMethod.TienMat, ApprovedAt);
+        var contract = NewContract(ContractStatus.ChoNguoiThueXacNhan);
+        contract.ConfirmByTenant(ApprovedAt.AddHours(1));
+        contract.ConfirmDeposit(ApprovedAt, PaymentMethod.TienMat, ApprovedAt.AddHours(2));
         contract.Cancel(contract.TenantUserId, "Đổi ý", ApprovedAt.AddDays(1));
 
         Assert.True(contract.IsAwaitingDepositRefund);

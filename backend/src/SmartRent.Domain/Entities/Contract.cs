@@ -110,9 +110,26 @@ public class Contract
 
     /// <summary>
     /// Hạn giữ chỗ của hợp đồng chưa có hiệu lực — 72 giờ kể từ khi duyệt yêu cầu thuê gốc.
-    /// Cần nạp <see cref="RentalRequest"/>.
+    /// Cần nạp <see cref="RentalRequest"/>; quên nạp thì ném lỗi, vì trả null sẽ khiến hợp đồng quá hạn vẫn thao tác được.
     /// </summary>
-    public DateTimeOffset? HoldDeadline => IsAwaitingActivation ? RentalRequest?.HoldDeadline : null;
+    public DateTimeOffset? HoldDeadline
+    {
+        get
+        {
+            if (!IsAwaitingActivation || RentalRequestId is null)
+            {
+                return null;
+            }
+
+            if (RentalRequest is null)
+            {
+                throw new InvalidOperationException(
+                    $"Hợp đồng {Id}: chưa nạp RentalRequest nên không tính được hạn giữ chỗ. Thêm .Include(c => c.RentalRequest).");
+            }
+
+            return RentalRequest.HoldDeadline;
+        }
+    }
 
     /// <summary>
     /// Hợp đồng chưa hiệu lực đã quá hạn giữ chỗ. Thao tác của người dùng tự kiểm tra hạn,
@@ -126,13 +143,31 @@ public class Contract
 
     public bool WasCancelledByTenant => Status == ContractStatus.DaHuy && CancelledByUserId == TenantUserId;
 
+    /// <summary>Người thuê đồng ý được khi hợp đồng đang chờ mình xác nhận và chưa quá hạn giữ chỗ.</summary>
+    public bool CanConfirmByTenant(DateTimeOffset now)
+        => Status == ContractStatus.ChoNguoiThueXacNhan && !IsHoldExpired(now);
+
+    /// <summary>
+    /// BR-21: Chủ trọ xác nhận cọc chỉ sau khi người thuê đã đồng ý — hợp đồng ở Chờ nhận cọc,
+    /// có thời điểm người thuê xác nhận — và chưa quá hạn giữ chỗ.
+    /// </summary>
+    public bool CanConfirmDeposit(DateTimeOffset now)
+        => Status == ContractStatus.ChoNhanCoc && TenantConfirmedAt is not null && !IsHoldExpired(now);
+
+    /// <summary>FR-102: chỉ thu hồi hợp đồng đã gửi mà chưa có hiệu lực, và chưa quá hạn giữ chỗ.</summary>
+    public bool CanRecall(DateTimeOffset now)
+        => Status is (ContractStatus.ChoNguoiThueXacNhan or ContractStatus.ChoNhanCoc) && !IsHoldExpired(now);
+
     /// <summary>
     /// BR-21: người thuê đồng ý điều khoản. Tiền cọc bằng 0 thì hợp đồng có hiệu lực ngay;
     /// ngược lại chờ Chủ trọ xác nhận nhận cọc.
     /// </summary>
     /// <returns><c>true</c> khi hợp đồng vừa chuyển sang Đang hiệu lực.</returns>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanConfirmByTenant"/> sai — lỗi lập trình.</exception>
     public bool ConfirmByTenant(DateTimeOffset now)
     {
+        EnsureAllowed(CanConfirmByTenant(now), nameof(ConfirmByTenant));
+
         TenantConfirmedAt = now;
 
         if (DepositAmount > 0)
@@ -146,16 +181,22 @@ public class Contract
     }
 
     /// <summary>BR-21: Chủ trọ xác nhận đã nhận cọc sau khi người thuê đã đồng ý; hợp đồng có hiệu lực.</summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanConfirmDeposit"/> sai — lỗi lập trình.</exception>
     public void ConfirmDeposit(DateTimeOffset receivedAt, PaymentMethod method, DateTimeOffset now)
     {
+        EnsureAllowed(CanConfirmDeposit(now), nameof(ConfirmDeposit));
+
         DepositReceivedAt = receivedAt;
         DepositReceivedMethod = method;
         Activate(now);
     }
 
     /// <summary>BP-06 A6: Chủ trọ thu hồi để sửa; lần đồng ý trước đó của người thuê bị bỏ.</summary>
-    public void Recall()
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanRecall"/> sai — lỗi lập trình.</exception>
+    public void Recall(DateTimeOffset now)
     {
+        EnsureAllowed(CanRecall(now), nameof(Recall));
+
         Status = ContractStatus.Nhap;
         TenantConfirmedAt = null;
     }
@@ -169,8 +210,11 @@ public class Contract
         => IsAwaitingActivation || (Status == ContractStatus.DangHieuLuc && today < StartDate);
 
     /// <param name="cancelledByUserId">Bên hủy; null khi hệ thống tự hủy do hết hạn giữ chỗ.</param>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanBeCancelled"/> sai — lỗi lập trình.</exception>
     public void Cancel(long? cancelledByUserId, string reason, DateTimeOffset now)
     {
+        EnsureAllowed(CanBeCancelled(VietnamTime.DateOf(now)), nameof(Cancel));
+
         Status = ContractStatus.DaHuy;
         CancelReason = reason;
         CancelledByUserId = cancelledByUserId;
@@ -181,5 +225,17 @@ public class Contract
     {
         Status = ContractStatus.DangHieuLuc;
         ActivatedAt = now;
+    }
+
+    /// <summary>
+    /// Service phải kiểm tra điều kiện bằng các hàm Can... và trả 409 trước khi đổi trạng thái;
+    /// tới được đây mà điều kiện sai là lỗi lập trình, không phải lỗi nghiệp vụ.
+    /// </summary>
+    private void EnsureAllowed(bool allowed, string operation)
+    {
+        if (!allowed)
+        {
+            throw new InvalidOperationException($"Hợp đồng {Id} ở trạng thái {Status}: không thực hiện được {operation}.");
+        }
     }
 }

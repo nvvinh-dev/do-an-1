@@ -212,18 +212,13 @@ public class ContractService
 
         var now = DateTimeOffset.UtcNow;
 
-        if (contract.Status is not (ContractStatus.ChoNguoiThueXacNhan or ContractStatus.ChoNhanCoc))
+        if (!contract.CanRecall(now))
         {
-            return ServiceResult.Fail(
-                StatusCodes.Status409Conflict, "Chỉ thu hồi được hợp đồng đang chờ người thuê xác nhận hoặc chờ nhận cọc.");
+            return Conflict(contract, now,
+                "Chỉ thu hồi được hợp đồng đang chờ người thuê xác nhận hoặc chờ nhận cọc.");
         }
 
-        if (contract.IsHoldExpired(now))
-        {
-            return ServiceResult.Fail(StatusCodes.Status409Conflict, HoldExpiredMessage);
-        }
-
-        contract.Recall();
+        contract.Recall(now);
 
         _notifier.Notify(
             contract.TenantUserId,
@@ -252,14 +247,9 @@ public class ContractService
 
         var now = DateTimeOffset.UtcNow;
 
-        if (contract.Status != ContractStatus.ChoNguoiThueXacNhan)
+        if (!contract.CanConfirmByTenant(now))
         {
-            return ServiceResult.Fail(StatusCodes.Status409Conflict, "Hợp đồng không ở trạng thái chờ bạn xác nhận.");
-        }
-
-        if (contract.IsHoldExpired(now))
-        {
-            return ServiceResult.Fail(StatusCodes.Status409Conflict, HoldExpiredMessage);
+            return Conflict(contract, now, "Hợp đồng không ở trạng thái chờ bạn xác nhận.");
         }
 
         if (contract.ConfirmByTenant(now))
@@ -325,14 +315,9 @@ public class ContractService
 
         var now = DateTimeOffset.UtcNow;
 
-        if (contract.Status != ContractStatus.ChoNhanCoc)
+        if (!contract.CanConfirmDeposit(now))
         {
-            return ServiceResult.Fail(StatusCodes.Status409Conflict, "Hợp đồng không ở trạng thái chờ nhận cọc.");
-        }
-
-        if (contract.IsHoldExpired(now))
-        {
-            return ServiceResult.Fail(StatusCodes.Status409Conflict, HoldExpiredMessage);
+            return Conflict(contract, now, "Hợp đồng không ở trạng thái chờ nhận cọc.");
         }
 
         var receivedAt = request.ReceivedAt!.Value;
@@ -1120,6 +1105,15 @@ public class ContractService
 
     private static ServiceResult NotFound()
         => ServiceResult.Fail(StatusCodes.Status404NotFound, "Không tìm thấy hợp đồng.");
+
+    /// <summary>
+    /// 409 khi điều kiện Can... của hợp đồng sai: báo quá hạn giữ chỗ nếu đó là lý do,
+    /// ngược lại báo sai trạng thái.
+    /// </summary>
+    private static ServiceResult Conflict(Contract contract, DateTimeOffset now, string wrongStatusMessage)
+        => ServiceResult.Fail(
+            StatusCodes.Status409Conflict,
+            contract.IsHoldExpired(now) ? HoldExpiredMessage : wrongStatusMessage);
 
     private static ServiceResult<T> NotFound<T>()
         => ServiceResult<T>.Fail(StatusCodes.Status404NotFound, "Không tìm thấy hợp đồng.");
