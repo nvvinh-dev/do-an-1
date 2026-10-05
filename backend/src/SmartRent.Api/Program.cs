@@ -79,6 +79,9 @@ builder.Services.AddSingleton<LoginAttemptLimiter>();
 // Ngưỡng nhóm đăng ký / quên / đặt lại mật khẩu đặt ở cấu hình, để nâng được khi demo dùng chung mạng.
 var authAccountPerHour = builder.Configuration.GetValue("RateLimiting:AuthAccountPerHour", 3);
 
+// Ngưỡng nhóm gửi yêu cầu thuê, báo đã thanh toán, nộp hồ sơ Chủ trọ (security-design.md mục 6).
+var businessWritePerHour = builder.Configuration.GetValue("RateLimiting:BusinessWritePerHour", 10);
+
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -111,14 +114,15 @@ builder.Services.AddRateLimiter(options =>
 
     // Tính theo tài khoản đăng nhập. Id người dùng đọc từ claim "sub" của token,
     // nên middleware rate limiting phải chạy SAU UseAuthentication.
+    // Mỗi endpoint của nhóm một bộ đếm riêng: gửi yêu cầu thuê không ăn lượt của nộp hồ sơ Chủ trọ.
     options.AddPolicy(RateLimitPolicies.BusinessWrite, context =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: GetUserId(context) is { } userId
-                ? $"user:{userId}"
-                : $"ip:{GetClientIp(context)}",
+                ? $"{GetRouteTemplate(context)}|user:{userId}"
+                : $"{GetRouteTemplate(context)}|ip:{GetClientIp(context)}",
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 10,
+                PermitLimit = businessWritePerHour,
                 Window = TimeSpan.FromHours(1)
             }));
 
@@ -224,3 +228,10 @@ static string GetClientIp(HttpContext context)
 
 static string? GetUserId(HttpContext context)
     => context.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? context.User.FindFirstValue("sub");
+
+// Mẫu route của endpoint, không phải đường dẫn thật: "rooms/{roomId}/rental-requests" phải đếm chung
+// mọi phòng, không phải mỗi phòng một bộ đếm.
+static string GetRouteTemplate(HttpContext context)
+    => (context.GetEndpoint() as RouteEndpoint)?.RoutePattern.RawText
+       ?? context.Request.Path.Value?.ToLowerInvariant()
+       ?? string.Empty;
