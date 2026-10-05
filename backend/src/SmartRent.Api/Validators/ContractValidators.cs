@@ -11,24 +11,26 @@ public class ContractTermsRequestValidator : AbstractValidator<ContractTermsRequ
 {
     public ContractTermsRequestValidator()
     {
-        RuleFor(x => x.RentPrice).NotNull().GreaterThan(0);
-        RuleFor(x => x.ElectricityUnitPrice).NotNull().GreaterThanOrEqualTo(0);
-        RuleFor(x => x.WaterUnitPrice).NotNull().GreaterThanOrEqualTo(0);
-        RuleFor(x => x.DepositAmount).NotNull().GreaterThanOrEqualTo(0);
-        RuleFor(x => x.InitialElectricityIndex).NotNull().GreaterThanOrEqualTo(0);
-        RuleFor(x => x.InitialWaterIndex).NotNull().GreaterThanOrEqualTo(0);
+        // Vượt numeric(14,2) của tiền hoặc numeric(12,2) của chỉ số thì PostgreSQL báo tràn số, nên chặn ở đây (400).
+        RuleFor(x => x.RentPrice).NotNull().GreaterThan(0).PrecisionScale(14, 2, true);
+        RuleFor(x => x.ElectricityUnitPrice).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(14, 2, true);
+        RuleFor(x => x.WaterUnitPrice).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(14, 2, true);
+        RuleFor(x => x.DepositAmount).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(14, 2, true);
+        RuleFor(x => x.InitialElectricityIndex).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(12, 2, true);
+        RuleFor(x => x.InitialWaterIndex).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(12, 2, true);
         RuleFor(x => x.StartDate).NotNull();
         RuleFor(x => x.EndDate).NotNull();
         RuleFor(x => x.PaymentDueDays).NotNull().InclusiveBetween(1, 30);
 
-        RuleForEach(x => x.ServiceFees).ChildRules(fee =>
+        // ChildRules bỏ qua phần tử null, nên phải chặn null riêng.
+        RuleForEach(x => x.ServiceFees).NotNull().ChildRules(fee =>
         {
             fee.RuleFor(f => f.Name).NotEmpty();
-            fee.RuleFor(f => f.Amount).NotNull().GreaterThanOrEqualTo(0);
+            fee.RuleFor(f => f.Amount).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(14, 2, true);
         });
 
         // Số điện thoại người ở cùng theo cùng định dạng với số điện thoại tài khoản.
-        RuleForEach(x => x.Occupants).ChildRules(occupant =>
+        RuleForEach(x => x.Occupants).NotNull().ChildRules(occupant =>
         {
             occupant.RuleFor(o => o.FullName).NotEmpty();
             occupant.RuleFor(o => o.PhoneNumber).MaximumLength(20);
@@ -86,6 +88,7 @@ public class RefundDepositRequestValidator : AbstractValidator<RefundDepositRequ
     {
         RuleFor(x => x.RefundedAt).NotNull();
         RuleFor(x => x.RefundMethod).NotNull().IsInEnum();
+        RuleFor(x => x.Amount).PrecisionScale(14, 2, true);
     }
 }
 
@@ -93,7 +96,7 @@ public class InitialMeterReadingsRequestValidator : AbstractValidator<InitialMet
 {
     public InitialMeterReadingsRequestValidator()
     {
-        RuleFor(x => x.InitialElectricityIndex).NotNull().GreaterThanOrEqualTo(0);
-        RuleFor(x => x.InitialWaterIndex).NotNull().GreaterThanOrEqualTo(0);
+        RuleFor(x => x.InitialElectricityIndex).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(12, 2, true);
+        RuleFor(x => x.InitialWaterIndex).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(12, 2, true);
     }
 }
