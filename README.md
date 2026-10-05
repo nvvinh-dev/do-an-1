@@ -361,6 +361,8 @@ dotnet test
 
 **BP-01 đã hiện thực ở backend:** đăng ký, đăng nhập, đổi và đặt lại mật khẩu, xem và sửa thông tin cá nhân, nộp và duyệt hồ sơ Chủ trọ, khóa và mở khóa tài khoản, khai báo tài khoản ngân hàng nhận tiền của Chủ trọ, tải file dùng chung.
 
+**BP-06 đã hiện thực ở backend:** gửi, xem, rút yêu cầu thuê; duyệt, từ chối và hủy duyệt yêu cầu thuê, chặn một người thuê giữ hai phòng cùng lúc (BR-28); lập, sửa, gửi, thu hồi và xem hợp đồng, người thuê đồng ý hoặc yêu cầu sửa; xác nhận nhận cọc, hủy hợp đồng chưa bắt đầu và ghi nhận hoàn cọc; sửa chỉ số điện nước lúc bàn giao; các tác vụ định kỳ mỗi giờ (hết hạn yêu cầu thuê, hủy hợp đồng quá hạn giữ chỗ, nhắc hạn giữ chỗ, đánh dấu hợp đồng sắp hết hạn).
+
 **Frontend:** khung Vite + React + TypeScript + Tailwind và lớp gọi API; chưa có màn hình chức năng.
 
 Tài liệu thiết kế cho Phase 1 đã hoàn tất trong `docs/`: đặc tả yêu cầu chức năng, sơ đồ use case, kiến trúc phần mềm, thiết kế cơ sở dữ liệu, thiết kế API và thiết kế an toàn. Sơ đồ tuần tự chưa được thực hiện.
