@@ -320,7 +320,8 @@ public class ContractService
             return Conflict(contract, now, "Hợp đồng không ở trạng thái chờ nhận cọc.");
         }
 
-        var receivedAt = request.ReceivedAt!.Value;
+        // Client gửi giờ Việt Nam (+07:00) hoặc không kèm offset; Npgsql chỉ ghi được DateTimeOffset ở UTC vào timestamptz.
+        var receivedAt = request.ReceivedAt!.Value.ToUniversalTime();
         var method = request.Method!.Value;
 
         if (receivedAt > now)
@@ -425,6 +426,16 @@ public class ContractService
             return ServiceResult.Fail(StatusCodes.Status409Conflict, "Hợp đồng không có khoản cọc đang chờ hoàn.");
         }
 
+        // Đổi sang UTC như thời điểm nhận cọc; hoàn cọc chỉ xảy ra sau khi hủy và không ở tương lai.
+        var refundedAt = request.RefundedAt!.Value.ToUniversalTime();
+
+        if (refundedAt < contract.CancelledAt || refundedAt > DateTimeOffset.UtcNow)
+        {
+            return ServiceResult.Fail(
+                StatusCodes.Status422UnprocessableEntity,
+                "Thời điểm hoàn cọc phải từ lúc hợp đồng bị hủy tới thời điểm hiện tại.");
+        }
+
         decimal amount;
         string? note = null;
 
@@ -453,7 +464,7 @@ public class ContractService
         }
 
         contract.DepositRefundedAmount = amount;
-        contract.DepositRefundedAt = request.RefundedAt!.Value;
+        contract.DepositRefundedAt = refundedAt;
         contract.DepositRefundMethod = request.RefundMethod!.Value;
         contract.DepositRefundNote = note;
 
