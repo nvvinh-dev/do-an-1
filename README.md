@@ -357,9 +357,11 @@ dotnet test
 
 ## 13. Trạng thái hiện tại
 
-**Backend:** solution 3 project và 1 project test (chưa có test); cấu hình JWT, rate limiting, Serilog, Swagger. Toàn bộ 18 entity của Phase 1 đã có, cùng bốn migration: `InitialPhase1` (25 bảng), `AddBankAccountDepositRefundAuditGuard` (tài khoản nhận tiền của Chủ trọ, thông tin hoàn cọc, trigger chặn sửa và xóa nhật ký hệ thống), `AddLandlordApplicationPendingUniqueIndex` (mỗi người một hồ sơ Chủ trọ chờ duyệt) và `UpdateContractsAndRentalRequestsForBp06` (chỉ số đầu, bên hủy, bên gửi thông báo trả phòng và lý do giữ cọc của hợp đồng; unique index BR-27, BR-28 của yêu cầu thuê). Khi khởi động, ứng dụng tạo dữ liệu nền: 3 vai trò, tài khoản Admin đầu tiên và danh mục 16 tiện ích.
+**Backend:** solution 3 project và 1 project test (unit test cho phần Domain: hợp đồng, yêu cầu thuê, quy đổi giờ Việt Nam); cấu hình JWT, rate limiting, Serilog, Swagger. Toàn bộ 18 entity của Phase 1 đã có, cùng bốn migration: `InitialPhase1` (25 bảng), `AddBankAccountDepositRefundAuditGuard` (tài khoản nhận tiền của Chủ trọ, thông tin hoàn cọc, trigger chặn sửa và xóa nhật ký hệ thống), `AddLandlordApplicationPendingUniqueIndex` (mỗi người một hồ sơ Chủ trọ chờ duyệt) và `UpdateContractsAndRentalRequestsForBp06` (chỉ số đầu, bên hủy, bên gửi thông báo trả phòng và lý do giữ cọc của hợp đồng; unique index BR-27, BR-28 của yêu cầu thuê). Khi khởi động, ứng dụng tạo dữ liệu nền: 3 vai trò, tài khoản Admin đầu tiên và danh mục 16 tiện ích.
 
 **BP-01 đã hiện thực ở backend:** đăng ký, đăng nhập, đổi và đặt lại mật khẩu, xem và sửa thông tin cá nhân, nộp và duyệt hồ sơ Chủ trọ, khóa và mở khóa tài khoản, khai báo tài khoản ngân hàng nhận tiền của Chủ trọ, tải file dùng chung.
+
+**BP-06 đã hiện thực ở backend:** gửi, xem, rút yêu cầu thuê; duyệt, từ chối và hủy duyệt yêu cầu thuê, chặn một người thuê giữ hai phòng cùng lúc (BR-28); lập, sửa, gửi, thu hồi và xem hợp đồng, người thuê đồng ý hoặc yêu cầu sửa; xác nhận nhận cọc, hủy hợp đồng chưa bắt đầu và ghi nhận hoàn cọc; sửa chỉ số điện nước lúc bàn giao; các tác vụ định kỳ mỗi giờ (hết hạn yêu cầu thuê, hủy hợp đồng quá hạn giữ chỗ, nhắc hạn giữ chỗ, đánh dấu hợp đồng sắp hết hạn).
 
 **Frontend:** khung Vite + React + TypeScript + Tailwind và lớp gọi API; chưa có màn hình chức năng.
 
