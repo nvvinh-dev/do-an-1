@@ -834,6 +834,56 @@ public class ContractService
     }
 
     /// <summary>
+    /// Tác vụ định kỳ: hợp đồng Đang hiệu lực còn 15 ngày hoặc ít hơn tới ngày kết thúc chuyển Sắp hết hạn,
+    /// hai bên nhận thông báo. Chỉ chọn hợp đồng còn Đang hiệu lực nên chạy lại không gửi trùng.
+    /// </summary>
+    /// <returns>Số hợp đồng đã chuyển.</returns>
+    public async Task<int> MarkExpiringSoonAsync(DateTimeOffset now, CancellationToken cancellationToken = default)
+    {
+        var today = VietnamTime.DateOf(now);
+        var endingOnOrBefore = today.AddDays(Contract.ExpiringSoonDays);
+
+        var ids = await _db.Contracts
+            .Where(c => c.Status == ContractStatus.DangHieuLuc && c.EndDate <= endingOnOrBefore)
+            .Select(c => c.Id)
+            .ToListAsync(cancellationToken);
+
+        var marked = 0;
+
+        foreach (var id in ids)
+        {
+            _db.ChangeTracker.Clear();
+
+            var contract = await FindAsync(id, cancellationToken);
+
+            if (contract is null || !contract.ShouldMarkExpiringSoon(today))
+            {
+                continue;
+            }
+
+            contract.MarkExpiringSoon(today);
+
+            foreach (var recipient in new[] { contract.TenantUserId, contract.Room.Property.LandlordUserId })
+            {
+                _notifier.Notify(
+                    recipient,
+                    "HopDongSapHetHan",
+                    "Hợp đồng sắp hết hạn",
+                    $"Hợp đồng thuê phòng {RoomLabel(contract)} kết thúc ngày {contract.EndDate:dd/MM/yyyy}.",
+                    nameof(Contract),
+                    contract.Id);
+            }
+
+            if ((await SaveAsync(cancellationToken)).Succeeded)
+            {
+                marked++;
+            }
+        }
+
+        return marked;
+    }
+
+    /// <summary>
     /// Tác vụ định kỳ — FR-94: hạn giữ chỗ còn dưới 24 giờ mà hợp đồng chưa có hiệu lực thì nhắc một lần
     /// bên đang phải thao tác: Chủ trọ khi chưa lập hợp đồng hoặc hợp đồng còn Nháp; người thuê khi hợp đồng
     /// chờ mình xác nhận; cả hai khi hợp đồng chờ nhận cọc.

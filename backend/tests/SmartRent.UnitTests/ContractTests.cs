@@ -241,6 +241,38 @@ public class ContractTests
         Assert.False(contract.IsAwaitingDepositRefund);
     }
 
+    [Theory]
+    [InlineData(ContractStatus.DangHieuLuc, 15, true)]
+    [InlineData(ContractStatus.DangHieuLuc, 0, true)]
+    [InlineData(ContractStatus.DangHieuLuc, 16, false)]
+    [InlineData(ContractStatus.DangThanhLy, 10, false)]
+    [InlineData(ContractStatus.SapHetHan, 10, false)]
+    public void ShouldMarkExpiringSoon_DangHieuLucConTu15NgayTroXuong(ContractStatus status, int daysBeforeEnd, bool expected)
+    {
+        var contract = NewContract(status);
+
+        Assert.Equal(expected, contract.ShouldMarkExpiringSoon(contract.EndDate.AddDays(-daysBeforeEnd)));
+    }
+
+    [Fact]
+    public void MarkExpiringSoon_ChuyenSapHetHan()
+    {
+        var contract = NewContract(ContractStatus.DangHieuLuc);
+
+        contract.MarkExpiringSoon(contract.EndDate.AddDays(-15));
+
+        Assert.Equal(ContractStatus.SapHetHan, contract.Status);
+    }
+
+    [Fact]
+    public void MarkExpiringSoon_HopDongDangThanhLy_NemLoiVaGiuNguyen()
+    {
+        var contract = NewContract(ContractStatus.DangThanhLy);
+
+        Assert.Throws<InvalidOperationException>(() => contract.MarkExpiringSoon(contract.EndDate.AddDays(-5)));
+        Assert.Equal(ContractStatus.DangThanhLy, contract.Status);
+    }
+
     [Fact]
     public void Cancel_HeThongHuy_KhongGhiBenHuy()
     {

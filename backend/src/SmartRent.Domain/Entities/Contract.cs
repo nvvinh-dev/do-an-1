@@ -13,6 +13,9 @@ public class Contract
     public static readonly ContractStatus[] AwaitingActivationStatuses =
         [ContractStatus.Nhap, ContractStatus.ChoNguoiThueXacNhan, ContractStatus.ChoNhanCoc];
 
+    /// <summary>Hợp đồng Đang hiệu lực chuyển Sắp hết hạn khi còn từ chừng này ngày trở xuống tới ngày kết thúc.</summary>
+    public const int ExpiringSoonDays = 15;
+
     /// <summary>Hợp đồng đang chiếm dụng phòng — mỗi phòng tối đa một hợp đồng ở các trạng thái này (BR-07).</summary>
     public static readonly ContractStatus[] OccupyingStatuses =
         [ContractStatus.DangHieuLuc, ContractStatus.SapHetHan, ContractStatus.DangThanhLy];
@@ -208,6 +211,22 @@ public class Contract
     /// <param name="today">Ngày hiện tại theo lịch Việt Nam.</param>
     public bool CanBeCancelled(DateOnly today)
         => IsAwaitingActivation || (Status == ContractStatus.DangHieuLuc && today < StartDate);
+
+    /// <summary>
+    /// Tác vụ định kỳ (architecture mục 7): hợp đồng Đang hiệu lực còn <see cref="ExpiringSoonDays"/> ngày
+    /// hoặc ít hơn tới ngày kết thúc. Hợp đồng đang thanh lý không bị đổi.
+    /// </summary>
+    /// <param name="today">Ngày hiện tại theo lịch Việt Nam.</param>
+    public bool ShouldMarkExpiringSoon(DateOnly today)
+        => Status == ContractStatus.DangHieuLuc && EndDate.DayNumber - today.DayNumber <= ExpiringSoonDays;
+
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="ShouldMarkExpiringSoon"/> sai — lỗi lập trình.</exception>
+    public void MarkExpiringSoon(DateOnly today)
+    {
+        EnsureAllowed(ShouldMarkExpiringSoon(today), nameof(MarkExpiringSoon));
+
+        Status = ContractStatus.SapHetHan;
+    }
 
     /// <param name="cancelledByUserId">Bên hủy; null khi hệ thống tự hủy do hết hạn giữ chỗ.</param>
     /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanBeCancelled"/> sai — lỗi lập trình.</exception>
