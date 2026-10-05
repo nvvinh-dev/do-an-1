@@ -225,9 +225,9 @@ public class RentalRequestService
                 .FirstOrDefaultAsync(cancellationToken)
             : null;
 
-        // QR-07: số điện thoại bên còn lại chỉ lộ khi Chủ trọ đã duyệt. Sau khi lập hợp đồng,
-        // số điện thoại hai bên nằm ở chi tiết hợp đồng.
-        string? otherPartyPhoneNumber = r.Status == RentalRequestStatus.DaDuyet
+        // QR-07: số điện thoại bên còn lại chỉ lộ khi Chủ trọ đã duyệt và còn hạn giữ chỗ, kể cả khi tác vụ
+        // định kỳ chưa chuyển yêu cầu sang Hết hạn. Sau khi lập hợp đồng, số điện thoại hai bên nằm ở chi tiết hợp đồng.
+        string? otherPartyPhoneNumber = r.IsHoldingRoom(DateTimeOffset.UtcNow)
             ? (userId == r.TenantUserId ? landlord.PhoneNumber : tenant.PhoneNumber)
             : null;
 
@@ -277,13 +277,46 @@ public class RentalRequestService
             return ServiceResult.Fail(StatusCodes.Status409Conflict, "Phòng không còn ở trạng thái Trống.");
         }
 
-        // BR-28: người thuê đang giữ phòng khác — yêu cầu khác đã duyệt, hoặc hợp đồng chưa có hiệu lực.
+        var approvedBefore = now - RentalRequest.HoldWindow;
+
+        // Hết hạn giữ chỗ được tính ngay, không chờ tác vụ định kỳ (architecture mục 7): yêu cầu đã duyệt khác
+        // của người thuê mà quá 72 giờ thì chuyển Hết hạn như ExpireHeldAsync. Lưu trước lượt duyệt để unique
+        // index BR-28 không thấy hai yêu cầu DaDuyet cùng lúc; hai lần lưu nằm trong một transaction.
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+
+        var expiredHolds = await _db.RentalRequests
+            .Include(r => r.Room)
+            .ThenInclude(room => room.Property)
+            .Where(r => r.TenantUserId == request.TenantUserId
+                        && r.Status == RentalRequestStatus.DaDuyet
+                        && r.ProcessedAt < approvedBefore)
+            .ToListAsync(cancellationToken);
+
+        if (expiredHolds.Count > 0)
+        {
+            foreach (var expiredHold in expiredHolds)
+            {
+                ExpireHeld(expiredHold);
+            }
+
+            var expiredSaved = await SaveAsync(cancellationToken);
+
+            if (!expiredSaved.Succeeded)
+            {
+                return expiredSaved;
+            }
+        }
+
+        // BR-28: người thuê đang giữ phòng khác — yêu cầu khác đã duyệt, hoặc hợp đồng chưa có hiệu lực
+        // còn trong hạn giữ chỗ (cùng điều kiện với Contract.IsHoldExpired).
         var tenantIsHoldingRoom =
             await _db.RentalRequests.AnyAsync(
                 r => r.TenantUserId == request.TenantUserId && r.Status == RentalRequestStatus.DaDuyet,
                 cancellationToken)
             || await _db.Contracts.AnyAsync(
-                c => c.TenantUserId == request.TenantUserId && Contract.AwaitingActivationStatuses.Contains(c.Status),
+                c => c.TenantUserId == request.TenantUserId
+                     && Contract.AwaitingActivationStatuses.Contains(c.Status)
+                     && (c.RentalRequest == null || c.RentalRequest.ProcessedAt >= approvedBefore),
                 cancellationToken);
 
         if (tenantIsHoldingRoom)
@@ -340,6 +373,8 @@ public class RentalRequestService
             // unique index của BR-28 chặn lượt thứ hai.
             return TenantHoldingAnotherRoom();
         }
+
+        await transaction.CommitAsync(cancellationToken);
 
         return ServiceResult.Ok();
     }
@@ -515,22 +550,7 @@ public class RentalRequestService
                 continue;
             }
 
-            request.Status = RentalRequestStatus.HetHan;
-            ReleaseHeldRoom(request.Room);
-
-            var content = $"Đã hết hạn giữ chỗ 72 giờ cho phòng {request.Room.Code} ({request.Room.Property.Name}) " +
-                          "mà hợp đồng chưa được lập. Yêu cầu thuê đã hết hạn và phòng trở lại trạng thái Trống.";
-
-            foreach (var recipient in new[] { request.TenantUserId, request.Room.Property.LandlordUserId })
-            {
-                _notifier.Notify(
-                    recipient,
-                    "YeuCauThueHetHan",
-                    "Yêu cầu thuê đã hết hạn giữ chỗ",
-                    content,
-                    nameof(RentalRequest),
-                    request.Id);
-            }
+            ExpireHeld(request);
 
             if ((await SaveAsync(cancellationToken)).Succeeded)
             {
@@ -539,6 +559,30 @@ public class RentalRequestService
         }
 
         return expired;
+    }
+
+    /// <summary>
+    /// FR-36: yêu cầu đã duyệt quá 72 giờ mà chưa lập hợp đồng chuyển Hết hạn, phòng trở lại Trống,
+    /// hai bên nhận thông báo. Cần nạp sẵn Room và Property.
+    /// </summary>
+    private void ExpireHeld(RentalRequest request)
+    {
+        request.Status = RentalRequestStatus.HetHan;
+        ReleaseHeldRoom(request.Room);
+
+        var content = $"Đã hết hạn giữ chỗ 72 giờ cho phòng {request.Room.Code} ({request.Room.Property.Name}) " +
+                      "mà hợp đồng chưa được lập. Yêu cầu thuê đã hết hạn và phòng trở lại trạng thái Trống.";
+
+        foreach (var recipient in new[] { request.TenantUserId, request.Room.Property.LandlordUserId })
+        {
+            _notifier.Notify(
+                recipient,
+                "YeuCauThueHetHan",
+                "Yêu cầu thuê đã hết hạn giữ chỗ",
+                content,
+                nameof(RentalRequest),
+                request.Id);
+        }
     }
 
     private Task<RentalRequest?> FindAsync(long id, CancellationToken cancellationToken)
