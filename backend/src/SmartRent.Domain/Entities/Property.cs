@@ -13,9 +13,11 @@ public class Property
 
     public string Address { get; set; } = string.Empty;
 
-    public string? Ward { get; set; }
-
-    public string? District { get; set; }
+    /// <summary>
+    /// Phường/xã. Địa chỉ theo đơn vị hành chính 2 cấp từ 01/07/2025 nên không có quận/huyện;
+    /// cặp (<see cref="City"/>, <see cref="Ward"/>) phải có trong danh mục đơn vị hành chính.
+    /// </summary>
+    public string Ward { get; set; } = string.Empty;
 
     public string City { get; set; } = string.Empty;
 

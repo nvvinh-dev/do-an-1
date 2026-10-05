@@ -137,6 +137,7 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
         {
             entity.Property(p => p.Name).IsRequired();
             entity.Property(p => p.Address).IsRequired();
+            entity.Property(p => p.Ward).IsRequired();
             entity.Property(p => p.City).IsRequired();
             entity.Property(p => p.Status).HasConversion<string>().IsRequired();
 
@@ -153,7 +154,7 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
             entity.HasIndex(p => p.LandlordUserId);
 
             // Bộ lọc khu vực
-            entity.HasIndex(p => new { p.City, p.District, p.Ward });
+            entity.HasIndex(p => new { p.City, p.Ward });
         });
     }
 
@@ -465,16 +466,19 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
                   .HasForeignKey(i => i.ContractId)
                   .OnDelete(DeleteBehavior.Restrict);
 
-            entity.HasOne(i => i.AdjustedInvoice)
-                  .WithMany()
-                  .HasForeignKey(i => i.AdjustedInvoiceId)
-                  .OnDelete(DeleteBehavior.Restrict);
-
-            // Mỗi hợp đồng chỉ có một hóa đơn định kỳ cho mỗi kỳ
+            // BR-17: mỗi hợp đồng chỉ có một hóa đơn định kỳ chưa hủy cho mỗi kỳ —
+            // hóa đơn đã hủy không chặn việc lập lại kỳ đó.
             entity.HasIndex(i => new { i.ContractId, i.PeriodStart, i.PeriodEnd })
                   .IsUnique()
-                  .HasFilter("type = 'DinhKy'")
+                  .HasFilter("type = 'DinhKy' AND status <> 'DaHuy'")
                   .HasDatabaseName("ux_invoices_contract_ky_dinh_ky");
+
+            // FR-54: mỗi hợp đồng tối đa một hóa đơn thanh lý.
+            // Đặt tên riêng để không trùng chỉ mục khóa ngoại trên contract_id.
+            entity.HasIndex(i => i.ContractId, "ux_invoices_contract_thanh_ly")
+                  .IsUnique()
+                  .HasFilter("type = 'ThanhLy'")
+                  .HasDatabaseName("ux_invoices_contract_thanh_ly");
 
             // Quét hóa đơn quá hạn
             entity.HasIndex(i => new { i.Status, i.DueDate });
@@ -494,6 +498,11 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
                   .WithMany(i => i.Lines)
                   .HasForeignKey(l => l.InvoiceId)
                   .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(l => l.RelatedInvoice)
+                  .WithMany()
+                  .HasForeignKey(l => l.RelatedInvoiceId)
+                  .OnDelete(DeleteBehavior.Restrict);
         });
 
         builder.Entity<PaymentReport>(entity =>
