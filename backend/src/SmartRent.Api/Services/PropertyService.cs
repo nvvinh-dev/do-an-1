@@ -16,6 +16,8 @@ public class PropertyService
 {
     private const int MaxServiceFeesPerRoom = 10;
 
+    private const int MaxImages = 10;
+
     private static readonly RoomCountsResponse EmptyRoomCounts = new(0, 0, 0, 0, 0);
 
     private readonly AppDbContext _db;
@@ -52,11 +54,22 @@ public class PropertyService
             return AmenityScopeError<PropertyResponse>();
         }
 
+        var imagePaths = request.ImagePaths ?? [];
+        var imageError = await CheckImagePathsAsync(imagePaths, FilePurpose.AnhKhuTro, landlordUserId, cancellationToken);
+
+        if (imageError is not null)
+        {
+            return ServiceResult<PropertyResponse>.Fail(StatusCodes.Status422UnprocessableEntity, imageError);
+        }
+
         var property = new Property
         {
             LandlordUserId = landlordUserId,
             Status = PropertyStatus.DangKhaiThac,
-            Amenities = amenityIds.Select(id => new PropertyAmenity { AmenityId = id }).ToList()
+            Amenities = amenityIds.Select(id => new PropertyAmenity { AmenityId = id }).ToList(),
+            Images = imagePaths
+                .Select((path, order) => new PropertyImage { Url = path, DisplayOrder = order })
+                .ToList()
         };
 
         ApplyDetails(property, request);
@@ -67,7 +80,10 @@ public class PropertyService
         return await GetAsync(landlordUserId, property.Id, cancellationToken);
     }
 
-    /// <summary>Thay toàn bộ thông tin và danh sách tiện ích. Khu trọ đã lưu trữ chỉ còn xem được (409).</summary>
+    /// <summary>
+    /// Thay toàn bộ thông tin, danh sách tiện ích và ảnh. Ảnh bị bỏ không bị xóa khỏi Storage ở Phase 1.
+    /// Khu trọ đã lưu trữ chỉ còn xem được (409).
+    /// </summary>
     public async Task<ServiceResult<PropertyResponse>> UpdateAsync(
         long landlordUserId,
         long propertyId,
@@ -76,6 +92,8 @@ public class PropertyService
     {
         var property = await _db.Properties
             .Include(p => p.Amenities)
+            .Include(p => p.Images)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(
                 p => p.Id == propertyId && p.LandlordUserId == landlordUserId,
                 cancellationToken);
@@ -103,7 +121,22 @@ public class PropertyService
             return AmenityScopeError<PropertyResponse>();
         }
 
+        var imagePaths = request.ImagePaths ?? [];
+        var imageError = await CheckImagePathsAsync(imagePaths, FilePurpose.AnhKhuTro, landlordUserId, cancellationToken);
+
+        if (imageError is not null)
+        {
+            return ServiceResult<PropertyResponse>.Fail(StatusCodes.Status422UnprocessableEntity, imageError);
+        }
+
         ApplyDetails(property, request);
+
+        property.Images.Clear();
+
+        foreach (var (path, order) in imagePaths.Select((path, order) => (path, order)))
+        {
+            property.Images.Add(new PropertyImage { Url = path, DisplayOrder = order });
+        }
 
         // Chỉ xóa tiện ích bị bỏ và thêm tiện ích mới, không xóa rồi thêm lại cùng khóa.
         foreach (var removed in property.Amenities.Where(a => !amenityIds.Contains(a.AmenityId)).ToList())
@@ -230,7 +263,8 @@ public class PropertyService
         }
 
         var amenityIds = (request.AmenityIds ?? []).Distinct().ToList();
-        var error = await ValidateRoomAsync(propertyId, null, request, amenityIds, cancellationToken);
+        var error = await ValidateRoomAsync(
+            landlordUserId, propertyId, null, request, amenityIds, mustKeepImage: false, cancellationToken);
 
         if (error is not null)
         {
@@ -257,7 +291,8 @@ public class PropertyService
     }
 
     /// <summary>
-    /// Thay toàn bộ thông tin, phí dịch vụ và tiện ích; không đổi được khu trọ của phòng. Phòng đã lưu trữ trả 409.
+    /// Thay toàn bộ thông tin, phí dịch vụ, tiện ích và ảnh; không đổi được khu trọ của phòng. Phòng đã lưu trữ trả 409;
+    /// phòng đang hiển thị không được bỏ hết ảnh (422).
     /// Đổi giá hoặc phí dịch vụ thì ghi nhật ký giá trị cũ và mới (BR-23); giá mới chỉ áp dụng cho hợp đồng lập sau (BR-12).
     /// </summary>
     public async Task<ServiceResult<RoomResponse>> UpdateRoomAsync(
@@ -269,6 +304,7 @@ public class PropertyService
         var room = await _db.Rooms
             .Include(r => r.ServiceFees)
             .Include(r => r.Amenities)
+            .Include(r => r.Images)
             .AsSplitQuery()
             .FirstOrDefaultAsync(
                 r => r.Id == roomId && r.Property.LandlordUserId == landlordUserId,
@@ -286,7 +322,14 @@ public class PropertyService
         }
 
         var amenityIds = (request.AmenityIds ?? []).Distinct().ToList();
-        var error = await ValidateRoomAsync(room.PropertyId, room.Id, request, amenityIds, cancellationToken);
+        var error = await ValidateRoomAsync(
+            landlordUserId,
+            room.PropertyId,
+            room.Id,
+            request,
+            amenityIds,
+            mustKeepImage: room.VisibilityStatus == RoomVisibilityStatus.DangHienThi,
+            cancellationToken);
 
         if (error is not null)
         {
@@ -442,18 +485,22 @@ public class PropertyService
     }
 
     /// <summary>
-    /// Quy tắc dữ liệu của phòng (api-design mục 5.2): giá trị số, phí dịch vụ và tiện ích sai trả 422;
+    /// Quy tắc dữ liệu của phòng (api-design mục 5.2): giá trị số, phí dịch vụ, tiện ích và ảnh sai trả 422;
     /// mã phòng trùng với phòng khác trong cùng khu trọ trả 409. Trả null khi hợp lệ.
+    /// <paramref name="mustKeepImage"/> khi phòng đang hiển thị: phòng hiển thị phải có ít nhất một ảnh (FR-15).
     /// </summary>
     private async Task<ServiceResult?> ValidateRoomAsync(
+        long landlordUserId,
         long propertyId,
         long? roomId,
         RoomRequest request,
         IReadOnlyCollection<long> amenityIds,
+        bool mustKeepImage,
         CancellationToken cancellationToken)
     {
         string? invalid = null;
         var fees = request.ServiceFees ?? [];
+        var imagePaths = request.ImagePaths ?? [];
 
         if (request.Area <= 0)
         {
@@ -487,6 +534,14 @@ public class PropertyService
         {
             invalid = "Tiện ích không có trong danh mục tiện ích của phòng.";
         }
+        else if (mustKeepImage && imagePaths.Count == 0)
+        {
+            invalid = "Phòng đang hiển thị phải còn ít nhất một ảnh. Tắt hiển thị trước khi bỏ hết ảnh.";
+        }
+        else
+        {
+            invalid = await CheckImagePathsAsync(imagePaths, FilePurpose.AnhPhong, landlordUserId, cancellationToken);
+        }
 
         if (invalid is not null)
         {
@@ -517,6 +572,46 @@ public class PropertyService
         {
             room.ServiceFees.Add(new RoomServiceFee { Name = fee.Name.Trim(), Amount = fee.Amount!.Value });
         }
+
+        // Ảnh bị bỏ không bị xóa khỏi Storage ở Phase 1.
+        room.Images.Clear();
+
+        foreach (var (path, order) in (request.ImagePaths ?? []).Select((path, order) => (path, order)))
+        {
+            room.Images.Add(new RoomImage { Url = path, DisplayOrder = order });
+        }
+    }
+
+    /// <summary>
+    /// FR-100, api-design mục 5.1 và 14: tối đa 10 ảnh, không trùng nhau, mỗi đường dẫn đúng định dạng server sinh ra,
+    /// đúng loại ảnh, nằm trong thư mục của chính Chủ trọ và file còn trên Storage. Trả null khi hợp lệ.
+    /// </summary>
+    private async Task<string?> CheckImagePathsAsync(
+        IReadOnlyList<string> paths,
+        FilePurpose purpose,
+        long landlordUserId,
+        CancellationToken cancellationToken)
+    {
+        if (paths.Count > MaxImages)
+        {
+            return $"Tối đa {MaxImages} ảnh.";
+        }
+
+        if (paths.Distinct(StringComparer.Ordinal).Count() != paths.Count)
+        {
+            return "Danh sách ảnh có ảnh bị trùng.";
+        }
+
+        var owned = await Task.WhenAll(
+            paths.Select(path => _fileStorage.IsOwnedByAsync(path, purpose, landlordUserId, cancellationToken)));
+
+        if (owned.All(isOwned => isOwned))
+        {
+            return null;
+        }
+
+        var kind = purpose == FilePurpose.AnhKhuTro ? "ảnh khu trọ" : "ảnh phòng";
+        return $"Đường dẫn ảnh không hợp lệ: chỉ nhận {kind} do chính bạn tải lên.";
     }
 
     /// <summary>Hai request cùng mã phòng gửi gần như đồng thời: unique index (property_id, code) chặn bên sau.</summary>

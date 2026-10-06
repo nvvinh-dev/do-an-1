@@ -3,8 +3,9 @@ using SmartRent.Domain.Enums;
 namespace SmartRent.Api.Contracts;
 
 /// <summary>
-/// Body chung của tạo và sửa khu trọ. <see cref="AmenityIds"/> bỏ trống nghĩa là không có tiện ích;
-/// khi sửa, danh sách mới thay toàn bộ danh sách cũ.
+/// Body chung của tạo và sửa khu trọ. <see cref="AmenityIds"/> và <see cref="ImagePaths"/> bỏ trống nghĩa là
+/// không có; khi sửa, danh sách mới thay toàn bộ danh sách cũ. Thứ tự trong <see cref="ImagePaths"/> là thứ tự
+/// hiển thị, ảnh đầu tiên là ảnh đại diện.
 /// </summary>
 public record PropertyRequest(
     string Name,
@@ -12,7 +13,8 @@ public record PropertyRequest(
     string City,
     string Ward,
     string? Description,
-    IReadOnlyList<long>? AmenityIds);
+    IReadOnlyList<long>? AmenityIds,
+    IReadOnlyList<string>? ImagePaths);
 
 /// <summary>Tiện ích gắn với khu trọ hoặc phòng.</summary>
 public record AmenityReferenceResponse(long Id, string Name);
@@ -53,7 +55,7 @@ public record RoomServiceFeeRequest(string Name, decimal? Amount);
 /// <summary>
 /// Body chung của thêm và sửa phòng. Các trường số khai báo nullable để thiếu trường thì validator trả 400;
 /// giá trị ngoài khoảng cho phép là quy tắc nghiệp vụ, trả 422 ở PropertyService.
-/// Khi sửa, danh sách phí dịch vụ và tiện ích mới thay toàn bộ danh sách cũ.
+/// Khi sửa, danh sách phí dịch vụ, tiện ích và ảnh mới thay toàn bộ danh sách cũ; ảnh đầu tiên là ảnh đại diện.
 /// </summary>
 public record RoomRequest(
     string Code,
@@ -64,7 +66,8 @@ public record RoomRequest(
     decimal? WaterUnitPrice,
     string? Description,
     IReadOnlyList<RoomServiceFeeRequest>? ServiceFees,
-    IReadOnlyList<long>? AmenityIds);
+    IReadOnlyList<long>? AmenityIds,
+    IReadOnlyList<string>? ImagePaths);
 
 public record RoomServiceFeeResponse(string Name, decimal Amount);
 

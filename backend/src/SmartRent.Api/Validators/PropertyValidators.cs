@@ -4,8 +4,8 @@ using SmartRent.Api.Contracts;
 namespace SmartRent.Api.Validators;
 
 /// <summary>
-/// Chỉ kiểm tra định dạng. Cặp tỉnh/thành – phường/xã có trong danh mục và tiện ích đúng phạm vi khu trọ
-/// là quy tắc nghiệp vụ, trả 422 ở PropertyService.
+/// Chỉ kiểm tra định dạng. Cặp tỉnh/thành – phường/xã có trong danh mục, tiện ích đúng phạm vi khu trọ
+/// và ảnh (số lượng, chủ sở hữu, loại) là quy tắc nghiệp vụ, trả 422 ở PropertyService.
 /// </summary>
 public class PropertyRequestValidator : AbstractValidator<PropertyRequest>
 {
@@ -16,12 +16,13 @@ public class PropertyRequestValidator : AbstractValidator<PropertyRequest>
         RuleFor(x => x.City).NotEmpty();
         RuleFor(x => x.Ward).NotEmpty();
         RuleFor(x => x.Description).MaximumLength(2000);
+        RuleForEach(x => x.ImagePaths).NotEmpty();
     }
 }
 
 /// <summary>
 /// Chỉ kiểm tra định dạng: trường bắt buộc và giới hạn của cột numeric (vượt thì PostgreSQL báo tràn số).
-/// Diện tích, số người, giá, số khoản phí, tên phí trùng và tiện ích đúng phạm vi phòng
+/// Diện tích, số người, giá, số khoản phí, tên phí trùng, tiện ích đúng phạm vi phòng và ảnh
 /// là quy tắc nghiệp vụ, trả 422 ở PropertyService (api-design mục 5.2).
 /// </summary>
 public class RoomRequestValidator : AbstractValidator<RoomRequest>
@@ -42,5 +43,7 @@ public class RoomRequestValidator : AbstractValidator<RoomRequest>
             fee.RuleFor(f => f.Name).NotEmpty().MaximumLength(100);
             fee.RuleFor(f => f.Amount).NotNull().PrecisionScale(14, 2, true);
         });
+
+        RuleForEach(x => x.ImagePaths).NotEmpty();
     }
 }
