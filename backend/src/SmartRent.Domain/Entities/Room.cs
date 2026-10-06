@@ -35,6 +35,23 @@ public class Room
     /// <summary>Phòng mới tạo chưa hiển thị cho tới khi Chủ trọ chủ động bật (BP-03).</summary>
     public RoomVisibilityStatus VisibilityStatus { get; set; } = RoomVisibilityStatus.DaAnBoiChuTro;
 
+    /// <summary>Phòng đã lưu trữ chỉ còn xem được. Lưu trữ là vĩnh viễn (BR-09).</summary>
+    public bool IsArchived => OccupancyStatus == RoomOccupancyStatus.LuuTru;
+
+    /// <summary>
+    /// BR-05 — phòng xuất hiện trong kết quả tìm kiếm khi đủ cả bốn điều kiện: phòng Trống, đang bật hiển thị,
+    /// khu trọ đang khai thác và Chủ trọ không bị khóa. Nhận giá trị rời để dùng được với dữ liệu đã chiếu từ truy vấn.
+    /// </summary>
+    public static bool IsListed(
+        RoomOccupancyStatus occupancyStatus,
+        RoomVisibilityStatus visibilityStatus,
+        PropertyStatus propertyStatus,
+        bool landlordLocked)
+        => occupancyStatus == RoomOccupancyStatus.Trong
+           && visibilityStatus == RoomVisibilityStatus.DangHienThi
+           && propertyStatus == PropertyStatus.DangKhaiThac
+           && !landlordLocked;
+
     public ICollection<RoomServiceFee> ServiceFees { get; set; } = [];
 
     public ICollection<RoomImage> Images { get; set; } = [];
