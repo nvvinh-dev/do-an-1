@@ -39,6 +39,31 @@ public class Room
     public bool IsArchived => OccupancyStatus == RoomOccupancyStatus.LuuTru;
 
     /// <summary>
+    /// Chủ trọ chỉ tự chuyển giữa Trống và Bảo trì (FR-89); các trạng thái khác do hệ thống chuyển.
+    /// Về Trống thì hợp đồng hiện tại phải đã ở Đã thanh lý hoặc Đã hủy (BR-08, FR-18).
+    /// </summary>
+    /// <param name="hasOpenContract">Phòng còn hợp đồng chưa ở Đã thanh lý hoặc Đã hủy.</param>
+    public bool CanChangeOccupancyTo(RoomOccupancyStatus target, bool hasOpenContract)
+        => (OccupancyStatus, target) switch
+        {
+            (RoomOccupancyStatus.Trong, RoomOccupancyStatus.BaoTri) => true,
+            (RoomOccupancyStatus.BaoTri, RoomOccupancyStatus.Trong) => !hasOpenContract,
+            _ => false
+        };
+
+    /// <summary>
+    /// Chủ trọ bật hoặc tắt được hiển thị, trừ khi tin đang bị Admin ẩn hoặc phòng đã lưu trữ (FR-15).
+    /// Bật hiển thị còn cần phòng có ít nhất một ảnh — service kiểm tra vì cần đếm ảnh.
+    /// </summary>
+    public bool CanChangeVisibility => !IsArchived && VisibilityStatus != RoomVisibilityStatus.DaAnBoiAdmin;
+
+    /// <summary>Phòng chỉ lưu trữ được khi đang Trống hoặc Bảo trì (FR-20).</summary>
+    public bool CanBeArchived => OccupancyStatus is RoomOccupancyStatus.Trong or RoomOccupancyStatus.BaoTri;
+
+    /// <summary>Phòng đang giữ chỗ hoặc đang thuê thì khu trọ chứa nó chưa lưu trữ được (BR-10).</summary>
+    public bool BlocksPropertyArchive => OccupancyStatus is RoomOccupancyStatus.DangGiuCho or RoomOccupancyStatus.DangThue;
+
+    /// <summary>
     /// BR-05 — phòng xuất hiện trong kết quả tìm kiếm khi đủ cả bốn điều kiện: phòng Trống, đang bật hiển thị,
     /// khu trọ đang khai thác và Chủ trọ không bị khóa. Nhận giá trị rời để dùng được với dữ liệu đã chiếu từ truy vấn.
     /// </summary>
