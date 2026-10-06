@@ -28,6 +28,12 @@ public interface IFileStorage
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// URL vĩnh viễn của một file trong bucket công khai (ảnh khu trọ, ảnh phòng).
+    /// Chỉ ghép chuỗi, không gọi Storage.
+    /// </summary>
+    string GetPublicUrl(string path);
+
+    /// <summary>
     /// Tạo URL có chữ ký, có hạn cho một file trong bucket riêng tư.
     /// Chỉ gọi sau khi đã kiểm tra người yêu cầu có quyền xem file đó.
     /// </summary>
