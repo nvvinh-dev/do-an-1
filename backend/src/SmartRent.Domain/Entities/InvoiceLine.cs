@@ -31,4 +31,9 @@ public class InvoiceLine
     public long? RelatedInvoiceId { get; set; }
 
     public Invoice? RelatedInvoice { get; set; }
+
+    /// <summary>
+    /// Hóa đơn định kỳ chỉ nhận dòng DieuChinhKhac; các loại còn lại chỉ dùng trong hóa đơn thanh lý (FR-41).
+    /// </summary>
+    public static bool IsAllowedOnPeriodicInvoice(InvoiceLineCategory category) => throw new NotImplementedException();
 }
