@@ -24,4 +24,8 @@
     <ProjectReference Include="..\SmartRent.Infrastructure\SmartRent.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="Data\locations.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
