@@ -105,3 +105,9 @@ public record RoomListItemResponse(
     RoomVisibilityStatus VisibilityStatus,
     bool IsListed,
     string? CoverImageUrl);
+
+/// <summary>Bật hoặc tắt hiển thị tin của phòng. Chỉ nhận DangHienThi hoặc DaAnBoiChuTro.</summary>
+public record RoomVisibilityRequest(RoomVisibilityStatus? VisibilityStatus);
+
+/// <summary>Chủ trọ chuyển phòng giữa Trống và Bảo trì; giá trị khác là chuyển tiếp không hợp lệ (409).</summary>
+public record RoomOccupancyRequest(RoomOccupancyStatus? OccupancyStatus);

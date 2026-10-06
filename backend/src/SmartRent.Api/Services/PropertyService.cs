@@ -18,23 +18,29 @@ public class PropertyService
 
     private const int MaxImages = 10;
 
+    /// <summary>Lý do do hệ thống sinh khi lưu trữ phòng hoặc khu trọ tự từ chối yêu cầu thuê đang chờ (FR-20).</summary>
+    private const string RoomRetiredReason = "Phòng đã ngừng cho thuê.";
+
     private static readonly RoomCountsResponse EmptyRoomCounts = new(0, 0, 0, 0, 0);
 
     private readonly AppDbContext _db;
     private readonly IFileStorage _fileStorage;
     private readonly LocationCatalog _locations;
     private readonly AuditLogger _auditLogger;
+    private readonly Notifier _notifier;
 
     public PropertyService(
         AppDbContext db,
         IFileStorage fileStorage,
         LocationCatalog locations,
-        AuditLogger auditLogger)
+        AuditLogger auditLogger,
+        Notifier notifier)
     {
         _db = db;
         _fileStorage = fileStorage;
         _locations = locations;
         _auditLogger = auditLogger;
+        _notifier = notifier;
     }
 
     public async Task<ServiceResult<PropertyResponse>> CreateAsync(
@@ -656,6 +662,236 @@ public class PropertyService
                    .SequenceEqual(other.ServiceFees.OrderBy(f => f.Name).ThenBy(f => f.Amount));
     }
 
+    // ------------------------------------------- Hiển thị, trạng thái khai thác, lưu trữ
+
+    /// <summary>
+    /// FR-15: bật hoặc tắt hiển thị tin của phòng. Tin bị Admin ẩn và phòng đã lưu trữ trả 409;
+    /// bật hiển thị khi phòng chưa có ảnh nào trả 422.
+    /// </summary>
+    public async Task<ServiceResult> ChangeVisibilityAsync(
+        long landlordUserId,
+        long roomId,
+        RoomVisibilityStatus target,
+        CancellationToken cancellationToken = default)
+    {
+        var room = await _db.Rooms.FirstOrDefaultAsync(
+            r => r.Id == roomId && r.Property.LandlordUserId == landlordUserId,
+            cancellationToken);
+
+        if (room is null)
+        {
+            return RoomNotFound();
+        }
+
+        if (!room.CanChangeVisibility)
+        {
+            return ServiceResult.Fail(
+                StatusCodes.Status409Conflict,
+                room.IsArchived
+                    ? "Phòng đã lưu trữ, chỉ còn xem được."
+                    : "Tin đăng đang bị Quản trị viên ẩn, Chủ trọ không tự bật lại được.");
+        }
+
+        if (target == RoomVisibilityStatus.DangHienThi
+            && !await _db.RoomImages.AnyAsync(i => i.RoomId == room.Id, cancellationToken))
+        {
+            return ServiceResult.Fail(
+                StatusCodes.Status422UnprocessableEntity, "Phòng phải có ít nhất một ảnh mới bật hiển thị được.");
+        }
+
+        room.VisibilityStatus = target;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return ServiceResult.Ok();
+    }
+
+    /// <summary>FR-89: chỉ Trống ↔ Bảo trì; về Trống khi hợp đồng hiện tại chưa kết thúc thì từ chối (BR-08, FR-18).</summary>
+    public async Task<ServiceResult> ChangeOccupancyStatusAsync(
+        long landlordUserId,
+        long roomId,
+        RoomOccupancyStatus target,
+        CancellationToken cancellationToken = default)
+    {
+        var room = await _db.Rooms.FirstOrDefaultAsync(
+            r => r.Id == roomId && r.Property.LandlordUserId == landlordUserId,
+            cancellationToken);
+
+        if (room is null)
+        {
+            return RoomNotFound();
+        }
+
+        var hasOpenContract = await _db.Contracts.AnyAsync(
+            c => c.RoomId == room.Id && c.Status != ContractStatus.DaThanhLy && c.Status != ContractStatus.DaHuy,
+            cancellationToken);
+
+        if (!room.CanChangeOccupancyTo(target, hasOpenContract))
+        {
+            var blockedByContract = room.OccupancyStatus == RoomOccupancyStatus.BaoTri
+                                    && target == RoomOccupancyStatus.Trong
+                                    && hasOpenContract;
+
+            return ServiceResult.Fail(
+                StatusCodes.Status409Conflict,
+                blockedByContract
+                    ? "Hợp đồng hiện tại của phòng chưa thanh lý hoặc chưa hủy, chưa chuyển phòng về Trống được."
+                    : "Chủ trọ chỉ chuyển được phòng từ Trống sang Bảo trì hoặc từ Bảo trì về Trống.");
+        }
+
+        room.OccupancyStatus = target;
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return ServiceResult.Ok();
+    }
+
+    /// <summary>
+    /// FR-20: lưu trữ phòng đang Trống hoặc Bảo trì. Yêu cầu thuê đang chờ của phòng tự chuyển Từ chối và người thuê
+    /// nhận thông báo, trong cùng transaction. Lưu trữ là vĩnh viễn.
+    /// </summary>
+    public async Task<ServiceResult> ArchiveRoomAsync(
+        long landlordUserId,
+        long roomId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+
+        var room = await _db.Rooms
+            .Include(r => r.Property)
+            .FirstOrDefaultAsync(
+                r => r.Id == roomId && r.Property.LandlordUserId == landlordUserId,
+                cancellationToken);
+
+        if (room is null)
+        {
+            return RoomNotFound();
+        }
+
+        if (!room.CanBeArchived)
+        {
+            return ServiceResult.Fail(
+                StatusCodes.Status409Conflict,
+                room.IsArchived ? "Phòng đã lưu trữ." : "Chỉ lưu trữ được phòng đang Trống hoặc Bảo trì.");
+        }
+
+        room.OccupancyStatus = RoomOccupancyStatus.LuuTru;
+        await RejectPendingRentalRequestsAsync([room], room.Property.Name, cancellationToken);
+
+        if (!await TrySaveArchiveAsync(cancellationToken))
+        {
+            return ArchiveConflict();
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+
+        return ServiceResult.Ok();
+    }
+
+    /// <summary>
+    /// BR-10, FR-20: lưu trữ khu trọ khi không còn phòng Đang giữ chỗ hoặc Đang thuê. Mọi phòng của khu chuyển
+    /// Lưu trữ, yêu cầu thuê đang chờ của các phòng đó tự chuyển Từ chối và người thuê nhận thông báo —
+    /// tất cả trong một transaction (security-design mục 8, điều 10).
+    /// </summary>
+    public async Task<ServiceResult> ArchivePropertyAsync(
+        long landlordUserId,
+        long propertyId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+
+        var property = await _db.Properties
+            .Include(p => p.Rooms)
+            .FirstOrDefaultAsync(
+                p => p.Id == propertyId && p.LandlordUserId == landlordUserId,
+                cancellationToken);
+
+        if (property is null)
+        {
+            return ServiceResult.Fail(StatusCodes.Status404NotFound, "Không tìm thấy khu trọ.");
+        }
+
+        if (property.IsArchived)
+        {
+            return ServiceResult.Fail(StatusCodes.Status409Conflict, "Khu trọ đã lưu trữ.");
+        }
+
+        if (property.Rooms.Any(r => r.BlocksPropertyArchive))
+        {
+            return ServiceResult.Fail(
+                StatusCodes.Status409Conflict,
+                "Khu trọ còn phòng đang giữ chỗ hoặc đang cho thuê, chưa lưu trữ được.");
+        }
+
+        var rooms = property.Rooms.Where(r => !r.IsArchived).ToList();
+
+        property.Status = PropertyStatus.LuuTru;
+
+        foreach (var room in rooms)
+        {
+            room.OccupancyStatus = RoomOccupancyStatus.LuuTru;
+        }
+
+        await RejectPendingRentalRequestsAsync(rooms, property.Name, cancellationToken);
+
+        if (!await TrySaveArchiveAsync(cancellationToken))
+        {
+            return ArchiveConflict();
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+
+        return ServiceResult.Ok();
+    }
+
+    /// <summary>
+    /// FR-20: yêu cầu thuê đang chờ của các phòng vừa lưu trữ chuyển Từ chối với lý do do hệ thống sinh;
+    /// mỗi người thuê nhận YeuCauThueBiTuChoi. Chỉ thêm vào DbContext — bên gọi lưu trong transaction của mình.
+    /// </summary>
+    private async Task RejectPendingRentalRequestsAsync(
+        IReadOnlyCollection<Room> rooms,
+        string propertyName,
+        CancellationToken cancellationToken)
+    {
+        var roomCodes = rooms.ToDictionary(r => r.Id, r => r.Code);
+        var roomIds = roomCodes.Keys.ToList();
+
+        var pending = await _db.RentalRequests
+            .Where(r => roomIds.Contains(r.RoomId) && r.Status == RentalRequestStatus.ChoDuyet)
+            .ToListAsync(cancellationToken);
+
+        var now = DateTimeOffset.UtcNow;
+
+        foreach (var request in pending)
+        {
+            request.Status = RentalRequestStatus.TuChoi;
+            request.RejectReason = RoomRetiredReason;
+            request.ProcessedAt = now;
+
+            _notifier.Notify(
+                request.TenantUserId,
+                "YeuCauThueBiTuChoi",
+                "Yêu cầu thuê bị từ chối",
+                $"Yêu cầu thuê phòng {roomCodes[request.RoomId]} ({propertyName}) bị từ chối. Lý do: {RoomRetiredReason}",
+                nameof(RentalRequest),
+                request.Id);
+        }
+    }
+
+    /// <summary>
+    /// Yêu cầu thuê vừa được duyệt hoặc rút cùng lúc với thao tác lưu trữ: xmin của rental_requests chặn bên lưu sau.
+    /// </summary>
+    private async Task<bool> TrySaveArchiveAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _db.SaveChangesAsync(cancellationToken);
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return false;
+        }
+    }
+
     private static void ApplyDetails(Property property, PropertyRequest request)
     {
         property.Name = request.Name.Trim();
@@ -718,6 +954,14 @@ public class PropertyService
 
     private static ServiceResult<T> NotFound<T>()
         => ServiceResult<T>.Fail(StatusCodes.Status404NotFound, "Không tìm thấy khu trọ.");
+
+    private static ServiceResult RoomNotFound()
+        => ServiceResult.Fail(StatusCodes.Status404NotFound, "Không tìm thấy phòng.");
+
+    private static ServiceResult ArchiveConflict()
+        => ServiceResult.Fail(
+            StatusCodes.Status409Conflict,
+            "Yêu cầu thuê của phòng vừa được thay đổi bởi một thao tác khác. Hãy tải lại và thử lại.");
 
     private static ServiceResult<T> RoomNotFound<T>()
         => ServiceResult<T>.Fail(StatusCodes.Status404NotFound, "Không tìm thấy phòng.");

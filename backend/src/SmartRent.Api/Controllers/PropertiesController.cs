@@ -56,4 +56,15 @@ public class PropertiesController : ControllerBase
             ? Ok(result.Value)
             : Problem(detail: result.Error, statusCode: result.StatusCode);
     }
+
+    /// <summary>Lưu trữ là vĩnh viễn; không có DELETE (BR-09).</summary>
+    [HttpPost("{id:long}/archive")]
+    public async Task<IActionResult> Archive(long id, CancellationToken cancellationToken)
+    {
+        var result = await _service.ArchivePropertyAsync(this.CurrentUserId(), id, cancellationToken);
+
+        return result.Succeeded
+            ? NoContent()
+            : Problem(detail: result.Error, statusCode: result.StatusCode);
+    }
 }

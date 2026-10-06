@@ -64,4 +64,43 @@ public class RoomsController : ControllerBase
             ? Ok(result.Value)
             : Problem(detail: result.Error, statusCode: result.StatusCode);
     }
+
+    [HttpPatch("rooms/{id:long}/visibility")]
+    public async Task<IActionResult> ChangeVisibility(
+        long id,
+        RoomVisibilityRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _service.ChangeVisibilityAsync(
+            this.CurrentUserId(), id, request.VisibilityStatus!.Value, cancellationToken);
+
+        return result.Succeeded
+            ? NoContent()
+            : Problem(detail: result.Error, statusCode: result.StatusCode);
+    }
+
+    [HttpPatch("rooms/{id:long}/occupancy-status")]
+    public async Task<IActionResult> ChangeOccupancyStatus(
+        long id,
+        RoomOccupancyRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _service.ChangeOccupancyStatusAsync(
+            this.CurrentUserId(), id, request.OccupancyStatus!.Value, cancellationToken);
+
+        return result.Succeeded
+            ? NoContent()
+            : Problem(detail: result.Error, statusCode: result.StatusCode);
+    }
+
+    /// <summary>Lưu trữ là vĩnh viễn; không có DELETE (BR-09).</summary>
+    [HttpPost("rooms/{id:long}/archive")]
+    public async Task<IActionResult> Archive(long id, CancellationToken cancellationToken)
+    {
+        var result = await _service.ArchiveRoomAsync(this.CurrentUserId(), id, cancellationToken);
+
+        return result.Succeeded
+            ? NoContent()
+            : Problem(detail: result.Error, statusCode: result.StatusCode);
+    }
 }

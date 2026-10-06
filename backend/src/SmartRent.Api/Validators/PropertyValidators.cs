@@ -1,5 +1,6 @@
 using FluentValidation;
 using SmartRent.Api.Contracts;
+using SmartRent.Domain.Enums;
 
 namespace SmartRent.Api.Validators;
 
@@ -45,5 +46,26 @@ public class RoomRequestValidator : AbstractValidator<RoomRequest>
         });
 
         RuleForEach(x => x.ImagePaths).NotEmpty();
+    }
+}
+
+public class RoomVisibilityRequestValidator : AbstractValidator<RoomVisibilityRequest>
+{
+    public RoomVisibilityRequestValidator()
+    {
+        // DaAnBoiAdmin chỉ Admin đặt được, ở Phase 2.
+        RuleFor(x => x.VisibilityStatus)
+            .NotNull()
+            .Must(v => v is RoomVisibilityStatus.DangHienThi or RoomVisibilityStatus.DaAnBoiChuTro)
+            .WithMessage("Chỉ nhận DangHienThi hoặc DaAnBoiChuTro.");
+    }
+}
+
+/// <summary>Chỉ kiểm tra có giá trị; chuyển tiếp nào hợp lệ là quy tắc nghiệp vụ, trả 409 ở PropertyService.</summary>
+public class RoomOccupancyRequestValidator : AbstractValidator<RoomOccupancyRequest>
+{
+    public RoomOccupancyRequestValidator()
+    {
+        RuleFor(x => x.OccupancyStatus).NotNull();
     }
 }
