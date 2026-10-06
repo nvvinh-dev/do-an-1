@@ -32,8 +32,8 @@ public sealed record BillingPeriod
     public bool CanBeInvoicedOn(DateOnly today) => throw new NotImplementedException();
 
     /// <summary>
-    /// Kỳ thuộc tháng chứa <paramref name="date"/>. Dùng cho ngày trả phòng dự kiến:
-    /// tháng đó không có hóa đơn định kỳ mà thuộc hóa đơn thanh lý.
+    /// Kỳ thuộc tháng chứa ngày trả phòng dự kiến hoặc một tháng sau đó. Hợp đồng đã có thông báo trả phòng
+    /// không lập hóa đơn định kỳ cho các kỳ này — phần đó thuộc hóa đơn thanh lý (FR-88, FR-91).
     /// </summary>
-    public bool IsMonthOf(DateOnly date) => throw new NotImplementedException();
+    public bool IsInOrAfterMoveOutMonth(DateOnly expectedMoveOutDate) => throw new NotImplementedException();
 }

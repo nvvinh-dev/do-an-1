@@ -107,20 +107,40 @@ public class BillingPeriodTests
     }
 
     /// <summary>
-    /// FR-91, database-design mục 6.1: tháng chứa ngày trả phòng dự kiến không có hóa đơn định kỳ
-    /// mà thuộc hóa đơn thanh lý.
+    /// FR-88, FR-91, database-design mục 6.1: tháng chứa ngày trả phòng dự kiến và các tháng sau đó
+    /// không có hóa đơn định kỳ mà thuộc hóa đơn thanh lý. Kỳ tháng 11 với các ngày trả phòng dự kiến khác nhau.
     /// </summary>
     [Theory]
     [InlineData(2026, 11, 10, true)]
     [InlineData(2026, 11, 1, true)]
     [InlineData(2026, 11, 30, true)]
+    [InlineData(2026, 10, 31, true)]
+    [InlineData(2026, 10, 5, true)]
     [InlineData(2026, 12, 1, false)]
-    [InlineData(2026, 10, 31, false)]
     [InlineData(2027, 11, 10, false)]
-    public void IsMonthOf_NgayTraPhongDuKien_KyThang11(int year, int month, int day, bool expected)
+    public void IsInOrAfterMoveOutMonth_KyThang11(int year, int month, int day, bool expected)
     {
         var november = new BillingPeriod(D(2026, 11, 1), D(2026, 11, 30));
 
-        Assert.Equal(expected, november.IsMonthOf(D(year, month, day)));
+        Assert.Equal(expected, november.IsInOrAfterMoveOutMonth(D(year, month, day)));
+    }
+
+    /// <summary>
+    /// FR-88, FR-91: hóa đơn tháng 11 đã lập trước khi người thuê báo trả phòng ngày 10/11 —
+    /// kỳ kế tiếp là tháng 12, nằm sau tháng trả phòng nên cũng không lập hóa đơn định kỳ.
+    /// </summary>
+    [Fact]
+    public void IsInOrAfterMoveOutMonth_KyKeTiepSauThangTraPhong_BiChan()
+    {
+        var november = new BillingPeriod(D(2026, 11, 1), D(2026, 11, 30));
+
+        Assert.True(november.Next().IsInOrAfterMoveOutMonth(D(2026, 11, 10)));
+    }
+
+    /// <summary>FR-88, FR-91: kỳ đầu không trọn tháng chứa ngày trả phòng dự kiến cũng thuộc hóa đơn thanh lý.</summary>
+    [Fact]
+    public void IsInOrAfterMoveOutMonth_KyDauCungThangTraPhong()
+    {
+        Assert.True(BillingPeriod.First(D(2026, 10, 15)).IsInOrAfterMoveOutMonth(D(2026, 10, 20)));
     }
 }
