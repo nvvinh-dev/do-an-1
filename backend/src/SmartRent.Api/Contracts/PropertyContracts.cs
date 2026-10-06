@@ -46,3 +46,59 @@ public record PropertyListItemResponse(
     PropertyStatus Status,
     string? CoverImageUrl,
     RoomCountsResponse RoomCounts);
+
+/// <summary>Khoản phí dịch vụ cố định của phòng. <see cref="Amount"/> nullable để thiếu thì validator trả 400.</summary>
+public record RoomServiceFeeRequest(string Name, decimal? Amount);
+
+/// <summary>
+/// Body chung của thêm và sửa phòng. Các trường số khai báo nullable để thiếu trường thì validator trả 400;
+/// giá trị ngoài khoảng cho phép là quy tắc nghiệp vụ, trả 422 ở PropertyService.
+/// Khi sửa, danh sách phí dịch vụ và tiện ích mới thay toàn bộ danh sách cũ.
+/// </summary>
+public record RoomRequest(
+    string Code,
+    decimal? Area,
+    int? MaxOccupants,
+    decimal? RentPrice,
+    decimal? ElectricityUnitPrice,
+    decimal? WaterUnitPrice,
+    string? Description,
+    IReadOnlyList<RoomServiceFeeRequest>? ServiceFees,
+    IReadOnlyList<long>? AmenityIds);
+
+public record RoomServiceFeeResponse(string Name, decimal Amount);
+
+/// <summary>
+/// Chi tiết phòng ở góc nhìn quản lý. <see cref="IsListed"/> cho biết phòng có đang xuất hiện trong tìm kiếm không
+/// (đủ bốn điều kiện BR-05); <see cref="CurrentContractId"/> là hợp đồng chưa kết thúc gần nhất của phòng.
+/// </summary>
+public record RoomResponse(
+    long Id,
+    long PropertyId,
+    string PropertyName,
+    string Code,
+    decimal Area,
+    int MaxOccupants,
+    decimal RentPrice,
+    decimal ElectricityUnitPrice,
+    decimal WaterUnitPrice,
+    string? Description,
+    RoomOccupancyStatus OccupancyStatus,
+    RoomVisibilityStatus VisibilityStatus,
+    bool IsListed,
+    IReadOnlyList<RoomServiceFeeResponse> ServiceFees,
+    IReadOnlyList<AmenityReferenceResponse> Amenities,
+    IReadOnlyList<ImageResponse> Images,
+    long? CurrentContractId);
+
+/// <summary>Dòng trong danh sách phòng của một khu trọ.</summary>
+public record RoomListItemResponse(
+    long Id,
+    string Code,
+    decimal Area,
+    int MaxOccupants,
+    decimal RentPrice,
+    RoomOccupancyStatus OccupancyStatus,
+    RoomVisibilityStatus VisibilityStatus,
+    bool IsListed,
+    string? CoverImageUrl);
