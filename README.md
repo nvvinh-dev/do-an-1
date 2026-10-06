@@ -327,7 +327,7 @@ Lấy thông số kết nối tại Supabase: **Project Settings → Database �
 
 Hai thành viên **dùng chung một project Supabase** — cùng một database và cùng một Storage. Vì vậy phải tuân thủ quy tắc migration ở mục 11: một người chạy migration, người kia pull về trước khi đổi schema.
 
-Ứng dụng **không khởi động được** nếu thiếu `ConnectionStrings:DefaultConnection` hoặc `Jwt:Key`. Đây là hành vi cố ý: thà dừng ngay còn hơn chạy với cấu hình sai. Thiếu các giá trị `Supabase:*` hoặc `Smtp:*` thì ứng dụng vẫn khởi động, nhưng các chức năng dùng tới file (tải file, hồ sơ Chủ trọ) và gửi email đặt lại mật khẩu sẽ báo lỗi khi được gọi.
+Ứng dụng **không khởi động được** nếu thiếu `ConnectionStrings:DefaultConnection` hoặc `Jwt:Key`. Đây là hành vi cố ý: thà dừng ngay còn hơn chạy với cấu hình sai. Thiếu các giá trị `Supabase:*` hoặc `Smtp:*` thì ứng dụng vẫn khởi động, nhưng các chức năng dùng tới file (tải file, hồ sơ Chủ trọ, khu trọ và phòng — kể cả chỉ xem) và gửi email đặt lại mật khẩu sẽ báo lỗi khi được gọi.
 
 ### 12.2 Chạy backend
 
@@ -363,6 +363,8 @@ dotnet test
 **Backend:** solution 3 project và 1 project test (unit test cho phần Domain: hợp đồng, yêu cầu thuê, quy đổi giờ Việt Nam); cấu hình JWT, rate limiting, Serilog, Swagger. Toàn bộ 18 entity của Phase 1 đã có, cùng năm migration: `InitialPhase1` (25 bảng), `AddBankAccountDepositRefundAuditGuard` (tài khoản nhận tiền của Chủ trọ, thông tin hoàn cọc, trigger chặn sửa và xóa nhật ký hệ thống), `AddLandlordApplicationPendingUniqueIndex` (mỗi người một hồ sơ Chủ trọ chờ duyệt), `UpdateContractsAndRentalRequestsForBp06` (chỉ số đầu, bên hủy, bên gửi thông báo trả phòng và lý do giữ cọc của hợp đồng; unique index BR-27, BR-28 của yêu cầu thuê) và `UpdateInvoicesPropertiesAndAmenityNames` (bỏ loại hóa đơn điều chỉnh, thêm ba trạng thái và bốn cột của hóa đơn thanh lý, unique index BR-17 bỏ qua hóa đơn đã hủy, mỗi hợp đồng một hóa đơn thanh lý; dòng hóa đơn trỏ về hóa đơn gốc; khu trọ bỏ quận/huyện, bắt buộc phường/xã; tên tiện ích có dấu). Khi khởi động, ứng dụng tạo dữ liệu nền: 3 vai trò, tài khoản Admin đầu tiên và danh mục 16 tiện ích.
 
 **BP-01 đã hiện thực ở backend:** đăng ký, đăng nhập, đổi và đặt lại mật khẩu, xem và sửa thông tin cá nhân, nộp và duyệt hồ sơ Chủ trọ, khóa và mở khóa tài khoản, khai báo tài khoản ngân hàng nhận tiền của Chủ trọ, tải file dùng chung.
+
+**BP-02/03 đã hiện thực ở backend:** tạo, sửa, xem khu trọ của mình kèm số phòng theo trạng thái; danh mục tỉnh/thành – phường/xã (`GET /locations`) và kiểm tra địa chỉ khu trọ theo danh mục; thêm, sửa, xem phòng kèm phí dịch vụ, tiện ích và ghi nhật ký khi đổi giá (`SuaGiaPhong`); gắn tối đa 10 ảnh cho khu trọ và phòng, sắp thứ tự, ảnh đầu là ảnh đại diện; bật, tắt hiển thị tin (`isListed` theo BR-05); chuyển phòng giữa Trống và Bảo trì; lưu trữ phòng và khu trọ, tự từ chối yêu cầu thuê đang chờ và báo người thuê.
 
 **BP-06 đã hiện thực ở backend:** gửi, xem, rút yêu cầu thuê; duyệt, từ chối và hủy duyệt yêu cầu thuê, chặn một người thuê giữ hai phòng cùng lúc (BR-28); lập, sửa, gửi, thu hồi và xem hợp đồng, người thuê đồng ý hoặc yêu cầu sửa; xác nhận nhận cọc, hủy hợp đồng chưa bắt đầu và ghi nhận hoàn cọc; sửa chỉ số điện nước lúc bàn giao; các tác vụ định kỳ mỗi giờ (hết hạn yêu cầu thuê, hủy hợp đồng quá hạn giữ chỗ, nhắc hạn giữ chỗ, đánh dấu hợp đồng sắp hết hạn).
 
