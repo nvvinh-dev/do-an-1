@@ -172,7 +172,8 @@ SmartRent_System/
 │   │   │   ├── Controllers/
 │   │   │   ├── Services/               # Service điều phối nghiệp vụ
 │   │   │   ├── Contracts/              # Kiểu dữ liệu vào/ra của API
-│   │   │   └── Validators/             # Kiểm tra dữ liệu đầu vào (FluentValidation)
+│   │   │   ├── Validators/             # Kiểm tra dữ liệu đầu vào (FluentValidation)
+│   │   │   └── Data/                   # Dữ liệu tĩnh: danh mục tỉnh/thành – phường/xã (locations.json)
 │   │   ├── SmartRent.Domain/           # Entity, quy tắc nghiệp vụ
 │   │   │   ├── Entities/
 │   │   │   └── Enums/
@@ -203,6 +204,8 @@ SmartRent_System/
 │       └── App.tsx                      # Khai báo toàn bộ route (URL → trang)
 └── docs/                                # Tài liệu phân tích và thiết kế (không đưa lên Git)
 ```
+
+**Danh mục đơn vị hành chính** (`backend/src/SmartRent.Api/Data/locations.json`) lấy từ web service của Cục Thống kê (https://danhmuchanhchinh.nso.gov.vn/DMDVHC.asmx, thao tác `DanhMucTinh` và `DanhMucPhuongXa`) tính đến ngày 06/10/2026: 34 tỉnh/thành, 3.321 phường/xã/đặc khu, khớp trang thống kê số lượng của cùng nguồn. Tên giữ nguyên như nguồn, chỉ bỏ khoảng trắng thừa và chuẩn hóa Unicode về dạng NFC; tỉnh/thành và phường/xã xếp theo mã. Danh mục chính thức thay đổi thì tải lại từ nguồn này.
 
 **Nguyên tắc sắp xếp file:** mỗi thư mục chỉ chứa một loại code, và tên file ghép từ **chức năng nghiệp vụ + vai trò của file** — nhìn tên là biết file thuộc chức năng nào, làm nhiệm vụ gì. Không đặt tên chung chung như `Helper`, `Utils`, `Common`.
 
