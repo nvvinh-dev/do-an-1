@@ -155,6 +155,7 @@ builder.Services.AddScoped<LandlordBankAccountService>();
 builder.Services.AddScoped<UserAdminService>();
 builder.Services.AddScoped<RentalRequestService>();
 builder.Services.AddScoped<ContractService>();
+builder.Services.AddScoped<PropertyService>();
 
 // Tác vụ định kỳ chạy mỗi giờ trong tiến trình API — docs/architecture.md mục 7.
 builder.Services.AddHostedService<ScheduledTaskRunner>();
