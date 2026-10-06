@@ -17,11 +17,13 @@ public class PropertyService
 
     private readonly AppDbContext _db;
     private readonly IFileStorage _fileStorage;
+    private readonly LocationCatalog _locations;
 
-    public PropertyService(AppDbContext db, IFileStorage fileStorage)
+    public PropertyService(AppDbContext db, IFileStorage fileStorage, LocationCatalog locations)
     {
         _db = db;
         _fileStorage = fileStorage;
+        _locations = locations;
     }
 
     public async Task<ServiceResult<PropertyResponse>> CreateAsync(
@@ -29,6 +31,11 @@ public class PropertyService
         PropertyRequest request,
         CancellationToken cancellationToken = default)
     {
+        if (!IsKnownLocation(request))
+        {
+            return LocationError<PropertyResponse>();
+        }
+
         var amenityIds = (request.AmenityIds ?? []).Distinct().ToList();
 
         if (!await AreAllPropertyAmenitiesAsync(amenityIds, cancellationToken))
@@ -73,6 +80,11 @@ public class PropertyService
         {
             return ServiceResult<PropertyResponse>.Fail(
                 StatusCodes.Status409Conflict, "Khu trọ đã lưu trữ, chỉ còn xem được.");
+        }
+
+        if (!IsKnownLocation(request))
+        {
+            return LocationError<PropertyResponse>();
         }
 
         var amenityIds = (request.AmenityIds ?? []).Distinct().ToList();
@@ -186,10 +198,14 @@ public class PropertyService
     {
         property.Name = request.Name.Trim();
         property.Address = request.Address.Trim();
-        property.City = request.City.Trim();
-        property.Ward = request.Ward.Trim();
+        property.City = LocationCatalog.Normalize(request.City);
+        property.Ward = LocationCatalog.Normalize(request.Ward);
         property.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
     }
+
+    /// <summary>Cặp tỉnh/thành – phường/xã có trong danh mục GET /locations (FR-99).</summary>
+    private bool IsKnownLocation(PropertyRequest request)
+        => _locations.Contains(LocationCatalog.Normalize(request.City), LocationCatalog.Normalize(request.Ward));
 
     /// <summary>Mọi id đều là tiện ích có trong danh mục và thuộc phạm vi khu trọ (FR-100).</summary>
     private async Task<bool> AreAllPropertyAmenitiesAsync(
@@ -239,6 +255,10 @@ public class PropertyService
 
     private static ServiceResult<T> NotFound<T>()
         => ServiceResult<T>.Fail(StatusCodes.Status404NotFound, "Không tìm thấy khu trọ.");
+
+    private static ServiceResult<T> LocationError<T>()
+        => ServiceResult<T>.Fail(
+            StatusCodes.Status422UnprocessableEntity, "Cặp tỉnh/thành và phường/xã không có trong danh mục đơn vị hành chính.");
 
     private static ServiceResult<T> AmenityScopeError<T>()
         => ServiceResult<T>.Fail(
