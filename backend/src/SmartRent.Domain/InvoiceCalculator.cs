@@ -9,13 +9,15 @@ namespace SmartRent.Domain;
 public static class InvoiceCalculator
 {
     /// <summary>Làm tròn đến đồng, nửa đồng làm tròn ra xa số 0.</summary>
-    public static decimal RoundToDong(decimal amount) => throw new NotImplementedException();
+    public static decimal RoundToDong(decimal amount) => Math.Round(amount, 0, MidpointRounding.AwayFromZero);
 
     /// <summary>
     /// Khoản theo tháng tính cho một kỳ: số tiền × số ngày ở ÷ số ngày của tháng, làm tròn đến đồng.
     /// Kỳ trọn tháng ra đúng số tiền tháng (BR-15, FR-42).
     /// </summary>
-    public static decimal Prorate(decimal monthlyAmount, BillingPeriod period) => throw new NotImplementedException();
+    /// <remarks>Nhân trước rồi mới chia và chỉ làm tròn một lần ở cuối, để không cộng dồn sai số.</remarks>
+    public static decimal Prorate(decimal monthlyAmount, BillingPeriod period)
+        => RoundToDong(monthlyAmount * period.DaysCharged / period.DaysInMonth);
 
     /// <summary>
     /// Tiền điện hoặc nước = (chỉ số mới − chỉ số cũ) × đơn giá, làm tròn đến đồng (BR-14).
