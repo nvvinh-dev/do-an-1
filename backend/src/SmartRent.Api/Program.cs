@@ -137,9 +137,10 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromHours(1)
             }));
 
+    // Tìm kiếm và chi tiết phòng công khai mỗi endpoint một bộ đếm; mọi id phòng đếm chung một bộ.
     options.AddPolicy(RateLimitPolicies.PublicSearch, context =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: GetClientIp(context),
+            partitionKey: $"{GetRouteTemplate(context)}|{GetClientIp(context)}",
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 60,
