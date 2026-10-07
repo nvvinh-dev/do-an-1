@@ -17,6 +17,13 @@ public class Invoice
     public static readonly InvoiceStatus[] OutstandingStatuses =
         [InvoiceStatus.ChuaThanhToan, InvoiceStatus.ChoXacNhan, InvoiceStatus.ThanhToanMotPhan, InvoiceStatus.QuaHan];
 
+    /// <summary>
+    /// Hóa đơn còn nợ được kết chuyển vào hóa đơn thanh lý (FR-92, database-design mục 6.1). Không gồm Chờ xác nhận —
+    /// còn lượt báo thanh toán chờ xác nhận thì chưa lập được hóa đơn thanh lý.
+    /// </summary>
+    public static readonly InvoiceStatus[] CarryOverStatuses =
+        [InvoiceStatus.ChuaThanhToan, InvoiceStatus.ThanhToanMotPhan, InvoiceStatus.QuaHan];
+
     public long Id { get; set; }
 
     public long ContractId { get; set; }
@@ -89,4 +96,15 @@ public class Invoice
     public ICollection<InvoiceLine> Lines { get; set; } = [];
 
     public ICollection<PaymentReport> PaymentReports { get; set; } = [];
+
+    /// <summary>Hóa đơn còn nợ, được kết chuyển khi lập hóa đơn thanh lý (FR-92).</summary>
+    public bool CanCarryOverToSettlement => throw new NotImplementedException();
+
+    /// <summary>
+    /// FR-92: phần còn phải trả (tổng tiền trừ số đã được xác nhận thu) trở thành một dòng <see cref="InvoiceLineCategory.CongNoKyTruoc"/> trỏ về hóa đơn này,
+    /// và hóa đơn chuyển Đã chuyển thanh lý — không còn bị nhắc quá hạn, không nhận báo thanh toán riêng.
+    /// Service thêm dòng trả về vào hóa đơn thanh lý trong cùng transaction.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanCarryOverToSettlement"/> sai — lỗi lập trình.</exception>
+    public InvoiceLine CarryOverToSettlement() => throw new NotImplementedException();
 }
