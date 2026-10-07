@@ -153,6 +153,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LandlordApplicationService>();
 builder.Services.AddScoped<LandlordBankAccountService>();
 builder.Services.AddScoped<UserAdminService>();
+builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<RentalRequestService>();
 builder.Services.AddScoped<ContractService>();
 builder.Services.AddScoped<PropertyService>();
