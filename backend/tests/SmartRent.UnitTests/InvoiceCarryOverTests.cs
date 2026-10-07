@@ -55,6 +55,16 @@ public class InvoiceCarryOverTests
         Assert.False(string.IsNullOrWhiteSpace(line.Description));
     }
 
+    /// <summary>
+    /// FR-47, FR-92: hóa đơn đã thu một phần rồi qua hạn ở Quá hạn với số đã thu lớn hơn 0 — công nợ vẫn chỉ là phần
+    /// còn thiếu 1.420.000, không phải cả 3.420.000 (người thuê bị đòi thừa 2.000.000 đã trả).
+    /// </summary>
+    [Fact]
+    public void CarryOverToSettlement_QuaHanDaThuMotPhan_CongNoBangPhanConThieu()
+    {
+        Assert.Equal(1_420_000m, NewInvoice(InvoiceStatus.QuaHan, paidAmount: 2_000_000).CarryOverToSettlement().Amount);
+    }
+
     /// <summary>FR-92: hóa đơn chưa thu đồng nào, kể cả đã quá hạn, chuyển nguyên tổng tiền thành công nợ.</summary>
     [Theory]
     [InlineData(InvoiceStatus.ChuaThanhToan)]
