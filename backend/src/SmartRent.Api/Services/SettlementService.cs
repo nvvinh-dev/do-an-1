@@ -113,12 +113,17 @@ public class SettlementService
 
         contract.WithdrawMoveOutNotice(userId, hasSettlementInvoice, VietnamTime.DateOf(DateTimeOffset.UtcNow));
 
+        // Hợp đồng về thẳng Sắp hết hạn thì tác vụ định kỳ (chỉ chọn Đang hiệu lực) không gửi HopDongSapHetHan,
+        // nên báo ngày kết thúc ngay trong thông báo này. Câu chữ đúng cả khi đã qua ngày kết thúc.
+        var continuation = contract.Status == ContractStatus.SapHetHan
+            ? $"Hợp đồng tiếp tục hiệu lực theo điều khoản đã chốt; ngày kết thúc ghi trên hợp đồng là {contract.EndDate:dd/MM/yyyy}."
+            : "Hợp đồng tiếp tục hiệu lực theo điều khoản đã chốt.";
+
         _notifier.Notify(
             OtherPartyOf(contract, userId),
             "ThongBaoTraPhongBiRut",
             "Thông báo trả phòng đã được rút",
-            $"{PartyName(contract, userId)} đã rút thông báo trả phòng {ContractService.RoomLabel(contract)}. " +
-            "Hợp đồng tiếp tục hiệu lực theo điều khoản đã chốt.",
+            $"{PartyName(contract, userId)} đã rút thông báo trả phòng {ContractService.RoomLabel(contract)}. {continuation}",
             nameof(Contract),
             contract.Id);
 
