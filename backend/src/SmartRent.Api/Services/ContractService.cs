@@ -742,6 +742,14 @@ public class ContractService
             ? new DepositRefundResponse(refundedAmount, refundedAt, refundMethod, contract.DepositRefundNote)
             : null;
 
+        // Người thuê không thấy hóa đơn thanh lý khi nó còn ở Nháp (api-design mục 10).
+        var settlementInvoiceId = await _db.Invoices
+            .Where(i => i.ContractId == id
+                        && i.Type == InvoiceType.ThanhLy
+                        && (!viewerIsTenant || i.Status != InvoiceStatus.Nhap))
+            .Select(i => (long?)i.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
         return ServiceResult<ContractDetailResponse>.Ok(new ContractDetailResponse(
             contract.Id,
             contract.RentalRequestId,
@@ -776,7 +784,10 @@ public class ContractService
             contract.HoldDeadline,
             paymentQr,
             depositRefund,
-            contract.IsAwaitingDepositRefund));
+            contract.IsAwaitingDepositRefund,
+            SettlementService.MoveOutNoticeOf(contract),
+            settlementInvoiceId,
+            contract.TerminatedAt));
     }
 
     /// <summary>
