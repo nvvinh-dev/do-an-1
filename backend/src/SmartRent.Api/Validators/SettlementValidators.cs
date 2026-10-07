@@ -12,3 +12,26 @@ public class SendMoveOutNoticeRequestValidator : AbstractValidator<SendMoveOutNo
         RuleFor(x => x.Reason).NotEmpty().MaximumLength(500);
     }
 }
+
+/// <summary>
+/// Thiếu trường bắt buộc hoặc số sai định dạng trả 400. Dòng thiếu mô tả (BR-22), loại dòng do hệ thống tự thêm, phí
+/// phạt không hợp lệ, chỉ số nhỏ hơn chỉ số cũ và đường dẫn ảnh sai là quy tắc nghiệp vụ, trả 422 ở SettlementService
+/// (api-design mục 10).
+/// </summary>
+public class SettlementInvoiceRequestValidator : AbstractValidator<SettlementInvoiceRequest>
+{
+    public SettlementInvoiceRequestValidator()
+    {
+        RuleFor(x => x.CurrentElectricityIndex).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(12, 2, true);
+        RuleFor(x => x.CurrentWaterIndex).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(12, 2, true);
+        RuleFor(x => x.MoveOutDate).NotNull();
+
+        // ChildRules bỏ qua phần tử null, nên phải chặn null riêng.
+        RuleForEach(x => x.Lines).NotNull().ChildRules(line =>
+        {
+            line.RuleFor(l => l.Category).NotNull();
+            line.RuleFor(l => l.Amount).NotNull().PrecisionScale(14, 2, true);
+            line.RuleFor(l => l.Description).MaximumLength(500);
+        });
+    }
+}

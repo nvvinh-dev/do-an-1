@@ -45,4 +45,34 @@ public class SettlementController : ControllerBase
             ? NoContent()
             : Problem(detail: result.Error, statusCode: result.StatusCode);
     }
+
+    /// <summary>Lập hóa đơn thanh lý ở Nháp; trả 201 kèm chi tiết hóa đơn theo cấu trúc GET /invoices/{id}.</summary>
+    [HttpPost("contracts/{id:long}/settlement-invoice")]
+    [Authorize(Roles = AppRoles.Landlord)]
+    public async Task<IActionResult> CreateSettlementInvoice(
+        long id,
+        SettlementInvoiceRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _service.CreateSettlementInvoiceAsync(this.CurrentUserId(), id, request, cancellationToken);
+
+        return result.Succeeded
+            ? Created($"/api/v1/invoices/{result.Value!.Id}", result.Value)
+            : Problem(detail: result.Error, statusCode: result.StatusCode);
+    }
+
+    /// <summary>Sửa hóa đơn thanh lý còn ở Nháp; trả 200 kèm chi tiết hóa đơn đã tính lại.</summary>
+    [HttpPut("contracts/{id:long}/settlement-invoice")]
+    [Authorize(Roles = AppRoles.Landlord)]
+    public async Task<IActionResult> UpdateSettlementInvoice(
+        long id,
+        SettlementInvoiceRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _service.UpdateSettlementInvoiceAsync(this.CurrentUserId(), id, request, cancellationToken);
+
+        return result.Succeeded
+            ? Ok(result.Value)
+            : Problem(detail: result.Error, statusCode: result.StatusCode);
+    }
 }
