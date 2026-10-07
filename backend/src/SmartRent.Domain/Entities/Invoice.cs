@@ -193,6 +193,26 @@ public class Invoice
     }
 
     /// <summary>
+    /// Bảng thanh lý đã khóa — người thuê đồng ý hoặc Chủ trọ tự chốt — nên Chủ trọ hoàn tất thanh lý được. Số dư dương
+    /// chưa trả đủ, kể cả đang chờ xác nhận lượt báo thanh toán, vẫn là đã khóa (FR-96).
+    /// </summary>
+    public bool IsSettlementLocked
+        => Type == InvoiceType.ThanhLy && Status is not (InvoiceStatus.Nhap or InvoiceStatus.ChoNguoiThueXacNhan);
+
+    /// <summary>
+    /// database-design mục 6.1: hóa đơn thanh lý số dư âm sang Đã thanh toán khi Chủ trọ ghi nhận hoàn cọc lúc hoàn tất
+    /// thanh lý — với hóa đơn thanh lý, Đã thanh toán nghĩa là đã tất toán xong.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Gọi khi hóa đơn không ở Chờ hoàn cọc — lỗi lập trình.</exception>
+    public void CompleteDepositRefund(DateTimeOffset now)
+    {
+        EnsureAllowed(Status == InvoiceStatus.ChoHoanCoc, nameof(CompleteDepositRefund));
+
+        Status = InvoiceStatus.DaThanhToan;
+        SettledAt = now;
+    }
+
+    /// <summary>
     /// database-design mục 6.1: số dư dương → Chưa thanh toán, phát hành lúc khóa, hạn thanh toán tính từ ngày khóa theo
     /// giờ Việt Nam (BP-10 bước 6); số dư âm → Chờ hoàn cọc; bằng 0 → Đã thanh toán ngay.
     /// </summary>
