@@ -1,3 +1,4 @@
+using System.Globalization;
 using SmartRent.Domain;
 using SmartRent.Domain.Entities;
 using SmartRent.Domain.Enums;
@@ -11,6 +12,12 @@ namespace SmartRent.UnitTests;
 public class InvoiceCalculatorTests
 {
     private static DateOnly D(int year, int month, int day) => new(year, month, day);
+
+    /// <summary>
+    /// Số thập phân trong InlineData viết dạng chuỗi có dấu chấm; đọc theo InvariantCulture để máy đặt
+    /// định dạng số Việt Nam (dấu chấm là phân cách hàng nghìn) không đọc "1645161.29" thành 164.516.129.
+    /// </summary>
+    private static decimal M(string value) => decimal.Parse(value, CultureInfo.InvariantCulture);
 
     private static BillingPeriod October15To31 => BillingPeriod.First(D(2026, 10, 15));
 
@@ -57,7 +64,7 @@ public class InvoiceCalculatorTests
     [InlineData("-2.5", "-3")]
     public void RoundToDong_AwayFromZero(string amount, string expected)
     {
-        Assert.Equal(decimal.Parse(expected), InvoiceCalculator.RoundToDong(decimal.Parse(amount)));
+        Assert.Equal(M(expected), InvoiceCalculator.RoundToDong(M(amount)));
     }
 
     // ------------------------------------------------- Tiền phòng theo tỷ lệ ngày
@@ -161,7 +168,7 @@ public class InvoiceCalculatorTests
     [InlineData("1250", "1300", true)]
     public void MeterReading_IsValid(string previous, string current, bool expected)
     {
-        Assert.Equal(expected, new MeterReading(decimal.Parse(previous), decimal.Parse(current)).IsValid);
+        Assert.Equal(expected, new MeterReading(M(previous), M(current)).IsValid);
     }
 
     /// <summary>BR-14, FR-39: tính tiền với chỉ số mới nhỏ hơn chỉ số cũ là lỗi lập trình — service phải chặn trước (422).</summary>
