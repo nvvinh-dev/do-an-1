@@ -55,17 +55,21 @@ public class RoomVisibilityRequestValidator : AbstractValidator<RoomVisibilityRe
     {
         // DaAnBoiAdmin chỉ Admin đặt được, ở Phase 2.
         RuleFor(x => x.VisibilityStatus)
+            .Cascade(CascadeMode.Stop)
             .NotNull()
             .Must(v => v is RoomVisibilityStatus.DangHienThi or RoomVisibilityStatus.DaAnBoiChuTro)
             .WithMessage("Chỉ nhận DangHienThi hoặc DaAnBoiChuTro.");
     }
 }
 
-/// <summary>Chỉ kiểm tra có giá trị; chuyển tiếp nào hợp lệ là quy tắc nghiệp vụ, trả 409 ở PropertyService.</summary>
+/// <summary>
+/// Chỉ kiểm tra có giá trị và là một trạng thái có thật — JsonStringEnumConverter vẫn nhận số nguyên như 99.
+/// Chuyển tiếp nào hợp lệ là quy tắc nghiệp vụ, trả 409 ở PropertyService.
+/// </summary>
 public class RoomOccupancyRequestValidator : AbstractValidator<RoomOccupancyRequest>
 {
     public RoomOccupancyRequestValidator()
     {
-        RuleFor(x => x.OccupancyStatus).NotNull();
+        RuleFor(x => x.OccupancyStatus).Cascade(CascadeMode.Stop).NotNull().IsInEnum();
     }
 }
