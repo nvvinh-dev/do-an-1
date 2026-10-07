@@ -155,6 +155,7 @@ builder.Services.AddScoped<LandlordBankAccountService>();
 builder.Services.AddScoped<UserAdminService>();
 builder.Services.AddScoped<RentalRequestService>();
 builder.Services.AddScoped<ContractService>();
+builder.Services.AddScoped<SettlementService>();
 builder.Services.AddScoped<PropertyService>();
 builder.Services.AddSingleton<LocationCatalog>();
 
