@@ -28,4 +28,16 @@ public class Notification
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset? ReadAt { get; set; }
+
+    /// <summary>Đánh dấu lại thông báo đã đọc không lỗi và giữ nguyên thời điểm đọc lần đầu.</summary>
+    public void MarkAsRead(DateTimeOffset now)
+    {
+        if (IsRead)
+        {
+            return;
+        }
+
+        IsRead = true;
+        ReadAt = now;
+    }
 }
