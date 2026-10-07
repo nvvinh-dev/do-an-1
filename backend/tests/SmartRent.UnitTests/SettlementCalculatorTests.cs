@@ -77,19 +77,19 @@ public class SettlementCalculatorTests
 
     private static InvoiceLine Debt(decimal amount) => Line(InvoiceLineCategory.CongNoKyTruoc, amount, "Công nợ hóa đơn tháng 11/2026");
 
-    private static InvoiceLine DepositDeduction(decimal deposit) => Line(InvoiceLineCategory.KhauTruTienCoc, -deposit, "Trừ tiền cọc");
 
     // ---------------------------------------------------- Tiền phòng kỳ cuối theo tỷ lệ ngày
 
     /// <summary>
     /// BR-15, FR-42: trả phòng 15/12, tính cả ngày trả phòng — 15 trên 31 ngày. Tiền phòng 3.000.000 × 15 ÷ 31 =
     /// 1.451.612,90 → 1.451.613; phí dịch vụ tính trên tổng 120.000 × 15 ÷ 31 = 58.064,52 → 58.065. Giá lấy từ
-    /// hợp đồng, không lấy giá hiện tại của phòng (BR-12, BR-13).
+    /// hợp đồng, không lấy giá hiện tại của phòng (BR-12, BR-13). Hợp đồng không cọc để chỉ thấy phần kỳ cuối.
     /// </summary>
     [Fact]
     public void Calculate_KyCuoi1Den15Thang12_TienPhongVaPhiTheoTyLe15Tren31()
     {
-        var amounts = SettlementCalculator.Calculate(NewContract(), December1To15, Electricity, Water, []);
+        var amounts = SettlementCalculator.Calculate(
+            NewContract(depositAmount: 0), December1To15, Electricity, Water, [], []).Amounts;
 
         Assert.Equal(new SettlementInvoiceAmounts(
             RentAmount: 1_451_613,
@@ -114,7 +114,7 @@ public class SettlementCalculatorTests
     {
         var period = new SettlementPeriod(D(year, month, 1), D(year, month, moveOutDay), includesRentAndServiceFees: true);
 
-        var amounts = SettlementCalculator.Calculate(NewContract(), period, Electricity, Water, []);
+        var amounts = SettlementCalculator.Calculate(NewContract(), period, Electricity, Water, [], []).Amounts;
 
         Assert.Equal(expectedRent, amounts.RentAmount);
         Assert.Equal(expectedServiceFee, amounts.ServiceFeeAmount);
@@ -127,7 +127,8 @@ public class SettlementCalculatorTests
     [Fact]
     public void Calculate_KyChiTinhDienNuoc_KhongCoTienPhongVaPhi()
     {
-        var amounts = SettlementCalculator.Calculate(NewContract(), MeterOnlyOn15December, Electricity, Water, []);
+        var amounts = SettlementCalculator.Calculate(
+            NewContract(depositAmount: 0), MeterOnlyOn15December, Electricity, Water, [], []).Amounts;
 
         Assert.Equal(new SettlementInvoiceAmounts(
             RentAmount: 0,
@@ -143,7 +144,7 @@ public class SettlementCalculatorTests
     public void Calculate_ChiSoMoiNhoHonChiSoCu_NemLoi()
     {
         Assert.Throws<ArgumentException>(() => SettlementCalculator.Calculate(
-            NewContract(), December1To15, new MeterReading(1_250, 1_240), Water, []));
+            NewContract(), December1To15, new MeterReading(1_250, 1_240), Water, [], []));
     }
 
     // ---------------------------------------------------- Phí phạt: ba điều kiện và trần phạt
@@ -281,7 +282,8 @@ public class SettlementCalculatorTests
             December1To15,
             Electricity,
             Water,
-            [Debt(1_420_000), Damage(300_000), Penalty(1_000_000), DepositDeduction(3_000_000)]);
+            [Debt(1_420_000)],
+            [Damage(300_000), Penalty(1_000_000)]).Amounts;
 
         Assert.Equal(new SettlementInvoiceAmounts(
             RentAmount: 1_451_613,
@@ -306,7 +308,8 @@ public class SettlementCalculatorTests
             December1To15,
             Electricity,
             Water,
-            [Damage(300_000), DepositDeduction(3_000_000)]);
+            [],
+            [Damage(300_000)]).Amounts;
 
         Assert.Equal(-2_700_000m, amounts.LinesAmount);
         Assert.Equal(-920_322m, amounts.TotalAmount);
@@ -326,10 +329,61 @@ public class SettlementCalculatorTests
             MeterOnlyOn15December,
             Electricity,
             Water,
-            [Damage(2_730_000), DepositDeduction(3_000_000)]);
+            [],
+            [Damage(2_730_000)]).Amounts;
 
         Assert.Equal(0m, amounts.TotalAmount);
         Assert.Equal(0m, amounts.AmountDueFromTenant);
         Assert.Equal(0m, amounts.DepositRefundAmount);
+    }
+
+    // ---------------------------------------------------- Domain tự ghép dòng, trừ tiền cọc đúng một lần
+
+    /// <summary>
+    /// FR-55, RK-03: domain tự thêm dòng trừ tiền cọc — bên gọi chỉ đưa dòng công nợ và dòng Chủ trọ gửi — nên tổng luôn
+    /// trừ cọc đúng một lần. Thứ tự dòng: công nợ kỳ trước, các khoản Chủ trọ gửi, cuối cùng là dòng trừ cọc; tổng các
+    /// dòng khớp đúng danh sách được lưu.
+    /// </summary>
+    [Fact]
+    public void Calculate_TuThemDongTruCocDungMotLan_ThuTuFR55()
+    {
+        var result = SettlementCalculator.Calculate(
+            NewContract(), December1To15, Electricity, Water, [Debt(1_420_000)], [Damage(300_000)]);
+
+        Assert.Collection(result.Lines,
+            l => Assert.Equal(InvoiceLineCategory.CongNoKyTruoc, l.Category),
+            l => Assert.Equal(InvoiceLineCategory.BoiThuongHuHong, l.Category),
+            l => { Assert.Equal(InvoiceLineCategory.KhauTruTienCoc, l.Category); Assert.Equal(-3_000_000m, l.Amount); });
+        Assert.Equal(result.Lines.Sum(l => l.Amount), result.Amounts.LinesAmount);
+        Assert.Equal(-1_280_000m, result.Amounts.LinesAmount);
+        Assert.Equal(499_678m, result.Amounts.TotalAmount);
+    }
+
+    /// <summary>api-design mục 10: hợp đồng không cọc thì không có dòng trừ tiền cọc.</summary>
+    [Fact]
+    public void Calculate_HopDongKhongCoc_KhongCoDongTruCoc()
+    {
+        var result = SettlementCalculator.Calculate(
+            NewContract(depositAmount: 0), December1To15, Electricity, Water, [], [Damage(300_000)]);
+
+        Assert.DoesNotContain(result.Lines, l => l.Category == InvoiceLineCategory.KhauTruTienCoc);
+        Assert.Equal(2_079_678m, result.Amounts.TotalAmount);
+    }
+
+    /// <summary>
+    /// FR-55: dòng trừ cọc và dòng công nợ chỉ do hệ thống thêm. Đưa nhầm vào danh sách dòng Chủ trọ — trừ cọc hai lần
+    /// — hoặc đưa dòng khác vào danh sách công nợ là lỗi lập trình.
+    /// </summary>
+    [Fact]
+    public void Calculate_DongSaiDanhSach_NemLoi()
+    {
+        var depositLine = SettlementCalculator.DepositDeductionLine(NewContract())!;
+
+        Assert.Throws<ArgumentException>(() => SettlementCalculator.Calculate(
+            NewContract(), December1To15, Electricity, Water, [], [Damage(300_000), depositLine]));
+        Assert.Throws<ArgumentException>(() => SettlementCalculator.Calculate(
+            NewContract(), December1To15, Electricity, Water, [], [Debt(1_420_000)]));
+        Assert.Throws<ArgumentException>(() => SettlementCalculator.Calculate(
+            NewContract(), December1To15, Electricity, Water, [Damage(300_000)], []));
     }
 }

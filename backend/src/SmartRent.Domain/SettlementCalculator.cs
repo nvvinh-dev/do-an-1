@@ -39,20 +39,39 @@ public static class SettlementCalculator
 
     /// <summary>
     /// Tính hóa đơn thanh lý từ giá đã chốt trong hợp đồng (BR-12, BR-13). Tiền phòng và tổng phí dịch vụ tính theo
-    /// tỷ lệ ngày của <paramref name="period"/> (BR-15), bằng 0 khi kỳ không tính tiền phòng (FR-93).
-    /// <paramref name="lines"/> gồm mọi dòng của hóa đơn — dòng Chủ trọ gửi và dòng hệ thống tự thêm.
+    /// tỷ lệ ngày của <paramref name="period"/> (BR-15), bằng 0 khi kỳ không tính tiền phòng (FR-93). Domain tự ghép danh
+    /// sách dòng theo thứ tự FR-55 và tự thêm dòng trừ tiền cọc (<see cref="DepositDeductionLine"/>), nên tổng luôn trừ
+    /// tiền cọc đúng một lần — bên gọi không tự thêm dòng này (RK-03).
     /// </summary>
+    /// <param name="carriedOverLines">
+    /// Dòng công nợ kỳ trước: dòng mới từ <see cref="Invoice.CarryOverToSettlement"/> khi lập, hoặc dòng đã lưu khi sửa.
+    /// </param>
+    /// <param name="landlordLines">Các dòng Chủ trọ gửi: bồi thường hư hỏng, phí phạt, điều chỉnh.</param>
     /// <remarks>
-    /// Service phải nạp <see cref="Contract.ServiceFees"/> trước khi gọi. Chỉ số mới nhỏ hơn chỉ số cũ thì ném
-    /// <see cref="ArgumentException"/> như <see cref="InvoiceCalculator.MeterAmount"/> — service kiểm tra trước và trả 422.
+    /// Service phải nạp <see cref="Contract.ServiceFees"/> trước khi gọi. Chỉ số mới nhỏ hơn chỉ số cũ, hoặc dòng sai loại
+    /// ở từng danh sách, thì ném <see cref="ArgumentException"/> — service kiểm tra trước và trả 422.
     /// </remarks>
-    public static SettlementInvoiceAmounts Calculate(
+    public static SettlementInvoiceCalculation Calculate(
         Contract contract,
         SettlementPeriod period,
         MeterReading electricity,
         MeterReading water,
-        IEnumerable<InvoiceLine> lines)
+        IEnumerable<InvoiceLine> carriedOverLines,
+        IEnumerable<InvoiceLine> landlordLines)
     {
+        var debts = carriedOverLines.ToList();
+        var landlord = landlordLines.ToList();
+
+        if (debts.FirstOrDefault(l => l.Category != InvoiceLineCategory.CongNoKyTruoc) is { } notDebt)
+            throw new ArgumentException($"Dòng công nợ kỳ trước không nhận loại {notDebt.Category}.", nameof(carriedOverLines));
+        if (landlord.FirstOrDefault(l => !InvoiceLine.IsAllowedFromLandlordOnSettlement(l.Category)) is { } systemLine)
+            throw new ArgumentException($"Chủ trọ không gửi được dòng loại {systemLine.Category}.", nameof(landlordLines));
+
+        var lines = debts.Concat(landlord).ToList();
+
+        if (DepositDeductionLine(contract) is { } depositLine)
+            lines.Add(depositLine);
+
         var electricityAmount = InvoiceCalculator.MeterAmount(electricity, contract.ElectricityUnitPrice);
         var waterAmount = InvoiceCalculator.MeterAmount(water, contract.WaterUnitPrice);
         decimal rentAmount = 0;
@@ -67,12 +86,14 @@ public static class SettlementCalculator
 
         var linesAmount = lines.Sum(l => l.Amount);
 
-        return new SettlementInvoiceAmounts(
-            RentAmount: rentAmount,
-            ElectricityAmount: electricityAmount,
-            WaterAmount: waterAmount,
-            ServiceFeeAmount: serviceFeeAmount,
-            LinesAmount: linesAmount,
-            TotalAmount: rentAmount + electricityAmount + waterAmount + serviceFeeAmount + linesAmount);
+        return new SettlementInvoiceCalculation(
+            lines,
+            new SettlementInvoiceAmounts(
+                RentAmount: rentAmount,
+                ElectricityAmount: electricityAmount,
+                WaterAmount: waterAmount,
+                ServiceFeeAmount: serviceFeeAmount,
+                LinesAmount: linesAmount,
+                TotalAmount: rentAmount + electricityAmount + waterAmount + serviceFeeAmount + linesAmount));
     }
 }

@@ -225,24 +225,15 @@ public class SettlementService
             .Select(i => i.CarryOverToSettlement())
             .ToList();
 
-        // Thứ tự dòng theo FR-55: công nợ kỳ trước, các khoản Chủ trọ gửi, cuối cùng là dòng trừ tiền cọc.
-        var lines = debtLines.Concat(draft.LandlordLines).ToList();
-
-        if (SettlementCalculator.DepositDeductionLine(contract) is { } depositLine)
-        {
-            lines.Add(depositLine);
-        }
-
         var invoice = new Invoice
         {
             ContractId = contract.Id,
             Contract = contract,
             Type = InvoiceType.ThanhLy,
-            Status = InvoiceStatus.Nhap,
-            Lines = lines
+            Status = InvoiceStatus.Nhap
         };
 
-        ApplySettlementInvoice(invoice, contract, draft);
+        ApplySettlementInvoice(invoice, contract, draft, debtLines);
         _db.Invoices.Add(invoice);
         MarkContractChanged(contract);
 
@@ -326,27 +317,12 @@ public class SettlementService
 
         var before = SettlementInvoiceAudit.Of(settlementInvoice);
 
-        // Thay mọi dòng trừ dòng công nợ, rồi thêm lại dòng trừ tiền cọc ở cuối để giữ thứ tự FR-55.
-        var replacedLines = settlementInvoice.Lines.Where(l => l.Category != InvoiceLineCategory.CongNoKyTruoc).ToList();
+        // Dòng công nợ đã kết chuyển lúc lập giữ nguyên; các dòng Chủ trọ gửi và dòng trừ cọc được dựng lại.
+        var debtLines = settlementInvoice.Lines
+            .Where(l => l.Category == InvoiceLineCategory.CongNoKyTruoc)
+            .ToList();
 
-        foreach (var line in replacedLines)
-        {
-            settlementInvoice.Lines.Remove(line);
-        }
-
-        _db.InvoiceLines.RemoveRange(replacedLines);
-
-        foreach (var line in prepared.Value!.LandlordLines)
-        {
-            settlementInvoice.Lines.Add(line);
-        }
-
-        if (SettlementCalculator.DepositDeductionLine(contract) is { } depositLine)
-        {
-            settlementInvoice.Lines.Add(depositLine);
-        }
-
-        ApplySettlementInvoice(settlementInvoice, contract, prepared.Value);
+        ApplySettlementInvoice(settlementInvoice, contract, prepared.Value!, debtLines);
         MarkContractChanged(contract);
 
         _auditLogger.Write(
@@ -957,13 +933,34 @@ public class SettlementService
     }
 
     /// <summary>
-    /// Ghi kỳ, chỉ số, đơn giá đã chốt trong hợp đồng (BR-13) và các khoản tiền do server tính từ mọi dòng hiện có của
-    /// hóa đơn. Gọi sau khi đã đặt xong <see cref="Invoice.Lines"/>.
+    /// Tính lại hóa đơn thanh lý ở Domain từ dòng công nợ đã kết chuyển và các dòng Chủ trọ gửi — Domain tự thêm dòng trừ
+    /// tiền cọc — rồi ghi danh sách dòng, kỳ, chỉ số, đơn giá đã chốt trong hợp đồng (BR-13) và các khoản tiền. Dòng cũ
+    /// không còn trong kết quả bị xóa, nên tổng luôn khớp các dòng được lưu.
     /// </summary>
-    private static void ApplySettlementInvoice(Invoice invoice, Contract contract, SettlementInvoiceDraft draft)
+    private void ApplySettlementInvoice(
+        Invoice invoice,
+        Contract contract,
+        SettlementInvoiceDraft draft,
+        IReadOnlyList<InvoiceLine> carriedOverLines)
     {
-        var amounts = SettlementCalculator.Calculate(
-            contract, draft.Period, draft.Electricity, draft.Water, invoice.Lines);
+        var calculation = SettlementCalculator.Calculate(
+            contract, draft.Period, draft.Electricity, draft.Water, carriedOverLines, draft.LandlordLines);
+
+        var staleLines = invoice.Lines.Where(l => !calculation.Lines.Contains(l)).ToList();
+
+        foreach (var line in staleLines)
+        {
+            invoice.Lines.Remove(line);
+        }
+
+        _db.InvoiceLines.RemoveRange(staleLines.Where(l => l.Id != 0));
+
+        foreach (var line in calculation.Lines.Where(l => !invoice.Lines.Contains(l)))
+        {
+            invoice.Lines.Add(line);
+        }
+
+        var amounts = calculation.Amounts;
 
         invoice.PeriodStart = draft.Period.Start;
         invoice.PeriodEnd = draft.Period.End;
