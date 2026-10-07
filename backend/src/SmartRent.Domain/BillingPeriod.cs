@@ -30,23 +30,30 @@ public sealed record BillingPeriod
 
     /// <summary>Kỳ đầu tiên: từ ngày bắt đầu hợp đồng tới cuối tháng đó (FR-91).</summary>
     public static BillingPeriod First(DateOnly contractStartDate)
-    {
-        var lastDay = DateTime.DaysInMonth(contractStartDate.Year, contractStartDate.Month);
-        return new BillingPeriod(contractStartDate, new DateOnly(contractStartDate.Year, contractStartDate.Month, lastDay));
-    }
+        => new(contractStartDate, EndOfMonth(contractStartDate));
 
     /// <summary>Kỳ kế tiếp: trọn tháng liền sau kỳ này.</summary>
-    public BillingPeriod Next() => throw new NotImplementedException();
+    public BillingPeriod Next()
+    {
+        var firstDay = new DateOnly(Start.Year, Start.Month, 1).AddMonths(1);
+        return new BillingPeriod(firstDay, EndOfMonth(firstDay));
+    }
 
     /// <summary>
     /// Lập được hóa đơn cho kỳ này vào ngày <paramref name="today"/> (giờ Việt Nam): tháng của kỳ đã kết thúc,
-    /// hoặc đang là tháng của kỳ và từ ngày 25 trở đi (FR-91).
+    /// hoặc đang là tháng của kỳ và từ ngày 25 trở đi (FR-91). Kỳ chưa bắt đầu thì chưa lập được — kỳ đầu tiên
+    /// không lập trước ngày bắt đầu hợp đồng, kể cả khi hợp đồng bắt đầu sau ngày 25.
     /// </summary>
-    public bool CanBeInvoicedOn(DateOnly today) => throw new NotImplementedException();
+    public bool CanBeInvoicedOn(DateOnly today)
+        => today > End || (today >= Start && today.Day >= 25);
 
     /// <summary>
-    /// Kỳ thuộc tháng chứa ngày trả phòng dự kiến hoặc một tháng sau đó. Hợp đồng đã có thông báo trả phòng
+    /// Kỳ thuộc tháng chứa ngày trả phòng dự kiến hoặc các tháng sau đó. Hợp đồng đã có thông báo trả phòng
     /// không lập hóa đơn định kỳ cho các kỳ này — phần đó thuộc hóa đơn thanh lý (FR-88, FR-91).
     /// </summary>
-    public bool IsInOrAfterMoveOutMonth(DateOnly expectedMoveOutDate) => throw new NotImplementedException();
+    public bool IsInOrAfterMoveOutMonth(DateOnly expectedMoveOutDate)
+        => (Start.Year, Start.Month).CompareTo((expectedMoveOutDate.Year, expectedMoveOutDate.Month)) >= 0;
+
+    private static DateOnly EndOfMonth(DateOnly day)
+        => new(day.Year, day.Month, DateTime.DaysInMonth(day.Year, day.Month));
 }
