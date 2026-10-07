@@ -15,5 +15,5 @@ public sealed record PeriodicInvoiceAmounts(
     /// <summary>
     /// Tổng hóa đơn định kỳ không được âm (FR-41) — khoản giảm lớn hơn tiền tháng thì chia sang các kỳ sau.
     /// </summary>
-    public bool IsTotalAllowed => throw new NotImplementedException();
+    public bool IsTotalAllowed => TotalAmount >= 0;
 }

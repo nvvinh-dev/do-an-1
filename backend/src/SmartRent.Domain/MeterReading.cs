@@ -7,5 +7,5 @@ namespace SmartRent.Domain;
 public readonly record struct MeterReading(decimal Previous, decimal Current)
 {
     /// <summary>Chỉ số mới không được nhỏ hơn chỉ số cũ (BR-14, FR-39).</summary>
-    public bool IsValid => throw new NotImplementedException();
+    public bool IsValid => Current >= Previous;
 }
