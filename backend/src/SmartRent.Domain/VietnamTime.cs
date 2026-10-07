@@ -8,6 +8,9 @@ public static class VietnamTime
 {
     private static readonly TimeSpan Offset = TimeSpan.FromHours(7);
 
+    /// <summary>Một thời điểm biểu diễn theo giờ Việt Nam, để hiển thị giờ và ngày cho người dùng.</summary>
+    public static DateTimeOffset ToVietnamTime(DateTimeOffset instant) => instant.ToOffset(Offset);
+
     /// <summary>Ngày theo lịch Việt Nam của một thời điểm.</summary>
     public static DateOnly DateOf(DateTimeOffset instant)
         => DateOnly.FromDateTime(instant.ToOffset(Offset).DateTime);

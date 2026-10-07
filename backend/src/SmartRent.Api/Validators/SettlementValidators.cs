@@ -35,3 +35,19 @@ public class SettlementInvoiceRequestValidator : AbstractValidator<SettlementInv
         });
     }
 }
+
+public class SettlementChangeRequestValidator : AbstractValidator<SettlementChangeRequest>
+{
+    public SettlementChangeRequestValidator()
+    {
+        RuleFor(x => x.Reason).NotEmpty().MaximumLength(500);
+    }
+}
+
+public class SettlementFinalizeRequestValidator : AbstractValidator<SettlementFinalizeRequest>
+{
+    public SettlementFinalizeRequestValidator()
+    {
+        RuleFor(x => x.Note).NotEmpty().MaximumLength(500);
+    }
+}

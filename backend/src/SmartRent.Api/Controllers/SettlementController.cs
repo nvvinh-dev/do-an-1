@@ -75,4 +75,37 @@ public class SettlementController : ControllerBase
             ? Ok(result.Value)
             : Problem(detail: result.Error, statusCode: result.StatusCode);
     }
+
+    [HttpPost("contracts/{id:long}/settlement-invoice/send")]
+    [Authorize(Roles = AppRoles.Landlord)]
+    public async Task<IActionResult> SendSettlementInvoice(long id, CancellationToken cancellationToken)
+        => NoContentOrProblem(await _service.SendSettlementInvoiceAsync(this.CurrentUserId(), id, cancellationToken));
+
+    [HttpPost("contracts/{id:long}/settlement-invoice/confirm")]
+    [Authorize(Roles = AppRoles.Tenant)]
+    public async Task<IActionResult> ConfirmSettlementInvoice(long id, CancellationToken cancellationToken)
+        => NoContentOrProblem(await _service.ConfirmSettlementInvoiceAsync(this.CurrentUserId(), id, cancellationToken));
+
+    [HttpPost("contracts/{id:long}/settlement-invoice/request-changes")]
+    [Authorize(Roles = AppRoles.Tenant)]
+    public async Task<IActionResult> RequestSettlementInvoiceChanges(
+        long id,
+        SettlementChangeRequest request,
+        CancellationToken cancellationToken)
+        => NoContentOrProblem(
+            await _service.RequestSettlementInvoiceChangesAsync(this.CurrentUserId(), id, request, cancellationToken));
+
+    [HttpPost("contracts/{id:long}/settlement-invoice/finalize")]
+    [Authorize(Roles = AppRoles.Landlord)]
+    public async Task<IActionResult> FinalizeSettlementInvoice(
+        long id,
+        SettlementFinalizeRequest request,
+        CancellationToken cancellationToken)
+        => NoContentOrProblem(
+            await _service.FinalizeSettlementInvoiceAsync(this.CurrentUserId(), id, request, cancellationToken));
+
+    private IActionResult NoContentOrProblem(ServiceResult result)
+        => result.Succeeded
+            ? NoContent()
+            : Problem(detail: result.Error, statusCode: result.StatusCode);
 }

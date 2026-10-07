@@ -45,3 +45,9 @@ public record SettlementInvoiceLineRequest(
     decimal? Amount,
     string? EvidencePath,
     long? RelatedInvoiceId);
+
+/// <summary>FR-57: người thuê chưa đồng ý bảng thanh lý — lý do bắt buộc, gửi kèm thông báo cho Chủ trọ.</summary>
+public record SettlementChangeRequest(string Reason);
+
+/// <summary>FR-95: Chủ trọ tự chốt bảng thanh lý khi người thuê không phản hồi quá 7 ngày — ghi chú bắt buộc.</summary>
+public record SettlementFinalizeRequest(string Note);

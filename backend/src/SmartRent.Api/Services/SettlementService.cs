@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using SmartRent.Api.Contracts;
@@ -16,6 +17,8 @@ namespace SmartRent.Api.Services;
 public class SettlementService
 {
     private const string NotFoundMessage = "Không tìm thấy hợp đồng.";
+
+    private const string NoSettlementInvoiceMessage = "Hợp đồng chưa có hóa đơn thanh lý.";
 
     private const string MoveOutDateInFutureMessage =
         "Hóa đơn thanh lý lập vào hoặc sau ngày trả phòng thực tế — ngày trả phòng không được sau hôm nay.";
@@ -299,7 +302,7 @@ public class SettlementService
         if (settlementInvoice is null)
         {
             return ServiceResult<InvoiceDetailResponse>.Fail(
-                StatusCodes.Status404NotFound, "Hợp đồng chưa có hóa đơn thanh lý.");
+                StatusCodes.Status404NotFound, NoSettlementInvoiceMessage);
         }
 
         if (settlementInvoice.Status != InvoiceStatus.Nhap)
@@ -360,6 +363,180 @@ public class SettlementService
             await _invoiceDetailBuilder.BuildAsync(settlementInvoice, paymentQr: null, cancellationToken));
     }
 
+    /// <summary>FR-57: Chủ trọ gửi bảng thanh lý đang ở Nháp cho người thuê xác nhận; người thuê nhận thông báo.</summary>
+    public async Task<ServiceResult> SendSettlementInvoiceAsync(
+        long landlordUserId,
+        long id,
+        CancellationToken cancellationToken = default)
+    {
+        var (contract, invoice) = await FindSettlementInvoiceAsync(id, cancellationToken);
+
+        if (contract is null || contract.Room.Property.LandlordUserId != landlordUserId)
+        {
+            return ServiceResult.Fail(StatusCodes.Status404NotFound, NotFoundMessage);
+        }
+
+        if (invoice is null)
+        {
+            return ServiceResult.Fail(StatusCodes.Status404NotFound, NoSettlementInvoiceMessage);
+        }
+
+        if (!invoice.CanSendSettlement)
+        {
+            return ServiceResult.Fail(StatusCodes.Status409Conflict, "Chỉ gửi được bảng thanh lý đang ở Nháp.");
+        }
+
+        invoice.SendSettlement(DateTimeOffset.UtcNow);
+        MarkContractChanged(contract);
+
+        _notifier.Notify(
+            contract.TenantUserId,
+            "BangThanhLyChoXacNhan",
+            "Bảng thanh lý chờ bạn xác nhận",
+            $"Chủ trọ đã gửi bảng thanh lý {ContractService.RoomLabel(contract)}. {BalanceText(invoice, forTenant: true)} " +
+            "Vui lòng đồng ý, hoặc gửi lý do nếu chưa đồng ý.",
+            nameof(Invoice),
+            invoice.Id);
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return ServiceResult.Ok();
+    }
+
+    /// <summary>
+    /// FR-57: người thuê chưa đồng ý bảng thanh lý, lý do bắt buộc — bảng về Nháp để Chủ trọ sửa và gửi lại, Chủ trọ
+    /// nhận thông báo kèm lý do.
+    /// </summary>
+    public async Task<ServiceResult> RequestSettlementInvoiceChangesAsync(
+        long tenantUserId,
+        long id,
+        SettlementChangeRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var (contract, invoice) = await FindSettlementInvoiceAsync(id, cancellationToken);
+
+        if (TenantSettlementInvoiceError(contract, invoice, tenantUserId) is { } error)
+        {
+            return error;
+        }
+
+        var reason = request.Reason.Trim();
+        invoice!.RequestSettlementChanges(reason);
+        MarkContractChanged(contract!);
+
+        _notifier.Notify(
+            contract!.Room.Property.LandlordUserId,
+            "BangThanhLyCanChinhSua",
+            "Người thuê chưa đồng ý bảng thanh lý",
+            $"Người thuê chưa đồng ý bảng thanh lý {ContractService.RoomLabel(contract)}. Lý do: {reason}",
+            nameof(Invoice),
+            invoice.Id);
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return ServiceResult.Ok();
+    }
+
+    /// <summary>
+    /// FR-57: người thuê đồng ý — bảng bị khóa theo dấu số dư: dương thành khoản chờ thanh toán có hạn tính từ lúc
+    /// khóa, âm chờ Chủ trọ hoàn cọc, bằng 0 là đã tất toán. Chủ trọ nhận thông báo.
+    /// </summary>
+    public async Task<ServiceResult> ConfirmSettlementInvoiceAsync(
+        long tenantUserId,
+        long id,
+        CancellationToken cancellationToken = default)
+    {
+        var (contract, invoice) = await FindSettlementInvoiceAsync(id, cancellationToken);
+
+        if (TenantSettlementInvoiceError(contract, invoice, tenantUserId) is { } error)
+        {
+            return error;
+        }
+
+        invoice!.ConfirmSettlementByTenant(DateTimeOffset.UtcNow, contract!.PaymentDueDays);
+        MarkContractChanged(contract);
+
+        _notifier.Notify(
+            contract.Room.Property.LandlordUserId,
+            "BangThanhLyDuocDongY",
+            "Người thuê đã đồng ý bảng thanh lý",
+            $"Người thuê đã đồng ý bảng thanh lý {ContractService.RoomLabel(contract)}, bảng đã khóa. " +
+            BalanceText(invoice, forTenant: false),
+            nameof(Invoice),
+            invoice.Id);
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return ServiceResult.Ok();
+    }
+
+    /// <summary>
+    /// FR-95: bảng đã gửi quá 7 ngày (168 giờ) kể từ lần gửi gần nhất mà người thuê không phản hồi thì Chủ trọ tự chốt,
+    /// ghi chú bắt buộc; bảng bị khóa như khi người thuê đồng ý. Ghi nhật ký (BR-23) và thông báo cho người thuê.
+    /// </summary>
+    public async Task<ServiceResult> FinalizeSettlementInvoiceAsync(
+        long landlordUserId,
+        long id,
+        SettlementFinalizeRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var (contract, invoice) = await FindSettlementInvoiceAsync(id, cancellationToken);
+
+        if (contract is null || contract.Room.Property.LandlordUserId != landlordUserId)
+        {
+            return ServiceResult.Fail(StatusCodes.Status404NotFound, NotFoundMessage);
+        }
+
+        if (invoice is null)
+        {
+            return ServiceResult.Fail(StatusCodes.Status404NotFound, NoSettlementInvoiceMessage);
+        }
+
+        if (!invoice.IsAwaitingTenantSettlementConfirmation)
+        {
+            return ServiceResult.Fail(
+                StatusCodes.Status409Conflict, "Chỉ tự chốt được bảng thanh lý đang chờ người thuê xác nhận.");
+        }
+
+        var now = DateTimeOffset.UtcNow;
+
+        if (!invoice.CanFinalizeSettlement(now))
+        {
+            var allowedAfter = VietnamTime.ToVietnamTime(invoice.SettlementFinalizeAllowedAfter!.Value);
+
+            return ServiceResult.Fail(
+                StatusCodes.Status409Conflict,
+                "Bảng thanh lý gửi chưa quá 7 ngày nên chưa tự chốt được. " +
+                $"Người thuê không phản hồi thì tự chốt được sau {allowedAfter:HH:mm} ngày {allowedAfter:dd/MM/yyyy}.");
+        }
+
+        var note = request.Note.Trim();
+        var sentAt = invoice.SentAt;
+        invoice.FinalizeSettlementByLandlord(note, now, contract.PaymentDueDays);
+        MarkContractChanged(contract);
+
+        _auditLogger.Write(
+            landlordUserId,
+            "TuChotBangThanhLy",
+            nameof(Invoice),
+            invoice.Id,
+            new { Status = nameof(InvoiceStatus.ChoNguoiThueXacNhan), SentAt = sentAt },
+            new { Status = invoice.Status.ToString(), Note = note, invoice.TotalAmount, invoice.DueDate });
+
+        _notifier.Notify(
+            contract.TenantUserId,
+            "BangThanhLyDuocTuChot",
+            "Chủ trọ đã tự chốt bảng thanh lý",
+            $"Bạn chưa phản hồi bảng thanh lý {ContractService.RoomLabel(contract)} sau 7 ngày nên Chủ trọ đã tự chốt. " +
+            $"Ghi chú của Chủ trọ: {note}. {BalanceText(invoice, forTenant: true)}",
+            nameof(Invoice),
+            invoice.Id);
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return ServiceResult.Ok();
+    }
+
     /// <summary>Trường <c>moveOutNotice</c> của chi tiết hợp đồng; null khi hợp đồng chưa có thông báo trả phòng.</summary>
     internal static MoveOutNoticeResponse? MoveOutNoticeOf(Contract contract)
         => contract is
@@ -394,6 +571,75 @@ public class SettlementService
     private static string PartyName(Contract contract, long userId)
         => userId == contract.TenantUserId ? "Người thuê" : "Chủ trọ";
 
+
+    /// <summary>Hợp đồng kèm phòng, khu trọ và hóa đơn thanh lý của nó (null khi chưa lập).</summary>
+    private async Task<(Contract? Contract, Invoice? Invoice)> FindSettlementInvoiceAsync(
+        long id,
+        CancellationToken cancellationToken)
+    {
+        var contract = await FindAsync(id, cancellationToken);
+
+        if (contract is null)
+        {
+            return (null, null);
+        }
+
+        var invoice = await _db.Invoices.FirstOrDefaultAsync(
+            i => i.ContractId == id && i.Type == InvoiceType.ThanhLy,
+            cancellationToken);
+
+        return (contract, invoice);
+    }
+
+    /// <summary>
+    /// Người thuê chỉ thao tác trên bảng thanh lý của hợp đồng mình đứng tên, và chỉ thấy bảng từ khi được gửi — bảng ở
+    /// Nháp coi như chưa có, trả 404 (api-design mục 10). Bảng không ở trạng thái chờ người thuê xác nhận thì 409.
+    /// Trả null khi người thuê được đồng ý hoặc yêu cầu sửa.
+    /// </summary>
+    private static ServiceResult? TenantSettlementInvoiceError(Contract? contract, Invoice? invoice, long tenantUserId)
+    {
+        if (contract is null || contract.TenantUserId != tenantUserId)
+        {
+            return ServiceResult.Fail(StatusCodes.Status404NotFound, NotFoundMessage);
+        }
+
+        if (invoice is null || invoice.Status == InvoiceStatus.Nhap)
+        {
+            return ServiceResult.Fail(StatusCodes.Status404NotFound, NoSettlementInvoiceMessage);
+        }
+
+        return invoice.IsAwaitingTenantSettlementConfirmation
+            ? null
+            : ServiceResult.Fail(StatusCodes.Status409Conflict, "Bảng thanh lý đã khóa, không còn chờ bạn xác nhận.");
+    }
+
+    /// <summary>
+    /// Chiều của số dư cho người đọc thông báo (FR-58): số dư dương là khoản người thuê phải trả, kèm hạn nếu bảng đã
+    /// khóa; số dư âm là phần cọc dư Chủ trọ phải hoàn.
+    /// </summary>
+    private static string BalanceText(Invoice invoice, bool forTenant)
+    {
+        var total = invoice.TotalAmount;
+
+        if (total > 0)
+        {
+            var due = invoice.DueDate is { } dueDate ? $" trước hết ngày {dueDate:dd/MM/yyyy}" : string.Empty;
+            return $"{(forTenant ? "Bạn" : "Người thuê")} cần thanh toán {Money(total)}{due}.";
+        }
+
+        if (total < 0)
+        {
+            return forTenant
+                ? $"Chủ trọ hoàn lại bạn {Money(-total)} tiền cọc còn dư."
+                : $"Bạn cần hoàn lại người thuê {Money(-total)} tiền cọc còn dư khi hoàn tất thanh lý.";
+        }
+
+        return "Số dư bằng 0, không bên nào phải trả thêm.";
+    }
+
+    /// <summary>Số tiền kiểu Việt Nam, dấu chấm ngăn hàng nghìn: 1.499.678 đồng — không phụ thuộc ngôn ngữ của máy chủ.</summary>
+    private static string Money(decimal amount)
+        => amount.ToString("#,0", CultureInfo.InvariantCulture).Replace(",", ".") + " đồng";
 
     /// <summary>Nạp thêm phí dịch vụ đã chốt trong hợp đồng để tính hóa đơn thanh lý.</summary>
     private Task<Contract?> FindForSettlementInvoiceAsync(long id, CancellationToken cancellationToken)
