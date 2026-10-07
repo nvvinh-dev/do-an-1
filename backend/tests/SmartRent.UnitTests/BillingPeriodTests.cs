@@ -107,6 +107,21 @@ public class BillingPeriodTests
     }
 
     /// <summary>
+    /// FR-91: chỉ lập khi hợp đồng đã tới ngày bắt đầu — hợp đồng bắt đầu 28/10 thì ngày 26/10 chưa lập được
+    /// kỳ đầu dù đã qua ngày 25.
+    /// </summary>
+    [Theory]
+    [InlineData(2026, 10, 26, false)]
+    [InlineData(2026, 10, 27, false)]
+    [InlineData(2026, 10, 28, true)]
+    public void CanBeInvoicedOn_KyDauBatDauSauNgay25(int year, int month, int day, bool expected)
+    {
+        var first = BillingPeriod.First(D(2026, 10, 28));
+
+        Assert.Equal(expected, first.CanBeInvoicedOn(D(year, month, day)));
+    }
+
+    /// <summary>
     /// FR-88, FR-91, database-design mục 6.1: tháng chứa ngày trả phòng dự kiến và các tháng sau đó
     /// không có hóa đơn định kỳ mà thuộc hóa đơn thanh lý. Kỳ tháng 11 với các ngày trả phòng dự kiến khác nhau.
     /// </summary>

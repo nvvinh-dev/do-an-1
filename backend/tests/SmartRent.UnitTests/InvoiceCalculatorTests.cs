@@ -314,6 +314,23 @@ public class InvoiceCalculatorTests
         Assert.Equal(expectedAllowed, amounts.IsTotalAllowed);
     }
 
+    /// <summary>
+    /// FR-41, api-design mục 9: truyền dòng không phải Điều chỉnh vào hóa đơn định kỳ là lỗi lập trình —
+    /// service phải chặn trước (422).
+    /// </summary>
+    [Fact]
+    public void CalculatePeriodic_DongKhongPhaiDieuChinh_NemLoi()
+    {
+        var penalty = new InvoiceLine { Category = InvoiceLineCategory.PhiPhat, Description = "Phạt", Amount = 500_000 };
+
+        Assert.Throws<ArgumentException>(() => InvoiceCalculator.CalculatePeriodic(
+            NewContract(),
+            November,
+            new MeterReading(1_250, 1_250),
+            new MeterReading(84.5m, 84.5m),
+            [penalty]));
+    }
+
     /// <summary>FR-41, database-design mục 6.2: hóa đơn định kỳ chỉ nhận dòng DieuChinhKhac.</summary>
     [Theory]
     [InlineData(InvoiceLineCategory.DieuChinhKhac, true)]
