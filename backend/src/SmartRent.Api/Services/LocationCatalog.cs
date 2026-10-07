@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using SmartRent.Api.Contracts;
 
 namespace SmartRent.Api.Services;
@@ -10,15 +11,45 @@ namespace SmartRent.Api.Services;
 /// </summary>
 public class LocationCatalog
 {
+    /// <summary>
+    /// Đọc chặt: thiếu khóa, sai tên khóa hay giá trị null đều là file hỏng và báo lỗi ngay,
+    /// thay vì ra một danh mục thiếu rồi từ chối nhầm địa chỉ hợp lệ.
+    /// </summary>
+    private static readonly JsonSerializerOptions ReadOptions = new(JsonSerializerDefaults.Web)
+    {
+        RespectNullableAnnotations = true,
+        RespectRequiredConstructorParameters = true,
+        UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow
+    };
+
     private readonly Dictionary<string, HashSet<string>> _wardsByCity;
 
     public LocationCatalog()
     {
         var path = Path.Combine(AppContext.BaseDirectory, "Data", "locations.json");
+        List<LocationResponse>? locations;
 
-        using var stream = File.OpenRead(path);
-        var locations = JsonSerializer.Deserialize<List<LocationResponse>>(stream, JsonSerializerOptions.Web)
-                        ?? throw new InvalidOperationException($"Khong doc duoc danh muc dia gioi: {path}");
+        try
+        {
+            using var stream = File.OpenRead(path);
+            locations = JsonSerializer.Deserialize<List<LocationResponse>>(stream, ReadOptions);
+        }
+        catch (Exception ex) when (ex is JsonException or IOException)
+        {
+            throw new InvalidOperationException($"Khong doc duoc danh muc dia gioi {path}: {ex.Message}", ex);
+        }
+
+        if (locations is null || locations.Count == 0 || locations.Any(l => l.Wards.Count == 0))
+        {
+            throw new InvalidOperationException($"Danh muc dia gioi rong hoac co tinh/thanh khong co phuong/xa: {path}");
+        }
+
+        var duplicate = locations.GroupBy(l => l.City, StringComparer.Ordinal).FirstOrDefault(g => g.Count() > 1);
+
+        if (duplicate is not null)
+        {
+            throw new InvalidOperationException($"Danh muc dia gioi trung tinh/thanh \"{duplicate.Key}\": {path}");
+        }
 
         All = locations;
         _wardsByCity = locations.ToDictionary(

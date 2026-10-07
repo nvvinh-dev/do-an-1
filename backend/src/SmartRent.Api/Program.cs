@@ -208,6 +208,9 @@ var app = builder.Build();
 // Tạo 3 vai trò, tài khoản Admin đầu tiên và danh mục tiện ích nếu chưa có.
 await DatabaseSeeder.SeedAsync(app.Services);
 
+// Nạp danh mục tỉnh/thành – phường/xã ngay khi khởi động: thiếu hoặc hỏng file thì dừng luôn (README mục 12.1).
+app.Services.GetRequiredService<LocationCatalog>();
+
 // ------------------------------------------------------------ Pipeline
 app.UseSerilogRequestLogging();
 app.UseExceptionHandler();
