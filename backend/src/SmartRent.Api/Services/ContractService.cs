@@ -1161,7 +1161,8 @@ public class ContractService
     private static bool IsLandlordOf(Contract contract, long userId)
         => contract.Room.Property.LandlordUserId == userId;
 
-    private static string RoomLabel(Contract contract)
+    /// <summary>Tên phòng kèm khu trọ trong nội dung thông báo. Cần nạp Room và Property.</summary>
+    internal static string RoomLabel(Contract contract)
         => $"{contract.Room.Code} ({contract.Room.Property.Name})";
 
     private static ServiceResult NotFound()
