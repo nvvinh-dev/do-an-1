@@ -885,10 +885,12 @@ public class SettlementService
 
         if (!SettlementCalculator.IsPenaltyAllowed(contract, landlordLines))
         {
+            var totalPenalty = landlordLines.Where(l => l.Category == InvoiceLineCategory.PhiPhat).Sum(l => l.Amount);
+
             return ServiceResult<SettlementInvoiceDraft>.Fail(
                 StatusCodes.Status422UnprocessableEntity,
                 contract.IsMoveOutPenaltyAllowed
-                    ? "Tổng phí phạt không được vượt tiền cọc của hợp đồng."
+                    ? $"Tổng phí phạt {Money(totalPenalty)} vượt tiền cọc {Money(contract.DepositAmount)} của hợp đồng."
                     : "Chỉ tính phí phạt khi người thuê là bên gửi thông báo trả phòng, báo trước ít hơn " +
                       $"{Contract.MinimumMoveOutNoticeDays} ngày và trả phòng trước ngày kết thúc hợp đồng.");
         }
