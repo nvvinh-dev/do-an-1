@@ -370,6 +370,10 @@ dotnet test
 
 **BP-10 (phần 1) đã hiện thực ở backend:** một trong hai bên gửi thông báo trả phòng khi hợp đồng đã bắt đầu, hệ thống ghi bên gửi và cho biết có được tính phí phạt hay không (BR-22); bên đã gửi rút được thông báo khi chưa có hóa đơn thanh lý; chi tiết hợp đồng có thông báo trả phòng, hóa đơn thanh lý và thời điểm thanh lý. Hóa đơn thanh lý và hoàn tất thanh lý thuộc phần 2.
 
+**Thông báo đã hiện thực ở backend:** người dùng xem thông báo của mình (lọc đã đọc hoặc chưa đọc, phân trang, mới nhất trước), đếm số thông báo chưa đọc, đánh dấu một thông báo hoặc tất cả là đã đọc.
+
+**Nhật ký hệ thống đã hiện thực ở backend:** Admin tra cứu nhật ký, lọc theo đối tượng, người thực hiện, loại thao tác và khoảng thời gian, phân trang, mới nhất trước; nhật ký khai báo và sửa tài khoản nhận tiền chỉ hiện 4 chữ số cuối của số tài khoản (BR-26). Không có endpoint sửa hay xóa nhật ký.
+
 **Frontend:** khung Vite + React + TypeScript + Tailwind và lớp gọi API; chưa có màn hình chức năng.
 
 Tài liệu thiết kế cho Phase 1 đã hoàn tất trong `docs/`: đặc tả yêu cầu chức năng, sơ đồ use case, kiến trúc phần mềm, thiết kế cơ sở dữ liệu, thiết kế API và thiết kế an toàn. Sơ đồ tuần tự chưa được thực hiện.
