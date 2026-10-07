@@ -35,7 +35,7 @@ public class Room
     /// <summary>Phòng mới tạo chưa hiển thị cho tới khi Chủ trọ chủ động bật (BP-03).</summary>
     public RoomVisibilityStatus VisibilityStatus { get; set; } = RoomVisibilityStatus.DaAnBoiChuTro;
 
-    /// <summary>Phòng đã lưu trữ chỉ còn xem được. Lưu trữ là vĩnh viễn (BR-09).</summary>
+    /// <summary>Phòng đã lưu trữ chỉ còn xem được. Lưu trữ là vĩnh viễn (BR-10, FR-20).</summary>
     public bool IsArchived => OccupancyStatus == RoomOccupancyStatus.LuuTru;
 
     /// <summary>
