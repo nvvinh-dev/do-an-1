@@ -11,4 +11,11 @@ public static class VietnamTime
     /// <summary>Ngày theo lịch Việt Nam của một thời điểm.</summary>
     public static DateOnly DateOf(DateTimeOffset instant)
         => DateOnly.FromDateTime(instant.ToOffset(Offset).DateTime);
+
+    /// <summary>
+    /// Thời điểm 0 giờ của một ngày theo lịch Việt Nam, trả ở UTC để so thẳng với cột timestamptz
+    /// (Npgsql chỉ nhận DateTimeOffset ở UTC).
+    /// </summary>
+    public static DateTimeOffset StartOf(DateOnly date)
+        => new DateTimeOffset(date.ToDateTime(TimeOnly.MinValue), Offset).ToUniversalTime();
 }
