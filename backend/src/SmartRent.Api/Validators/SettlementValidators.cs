@@ -1,5 +1,6 @@
 using FluentValidation;
 using SmartRent.Api.Contracts;
+using SmartRent.Domain.Enums;
 
 namespace SmartRent.Api.Validators;
 
@@ -49,5 +50,20 @@ public class SettlementFinalizeRequestValidator : AbstractValidator<SettlementFi
     public SettlementFinalizeRequestValidator()
     {
         RuleFor(x => x.Note).NotEmpty().MaximumLength(500);
+    }
+}
+
+public class CompleteSettlementRequestValidator : AbstractValidator<CompleteSettlementRequest>
+{
+    public CompleteSettlementRequestValidator()
+    {
+        RuleFor(x => x.RoomNextStatus).NotNull();
+
+        RuleFor(x => x.RoomNextStatus)
+            .Must(status => status is RoomOccupancyStatus.Trong or RoomOccupancyStatus.BaoTri)
+            .When(x => x.RoomNextStatus is not null)
+            .WithMessage("Sau thanh lý, phòng chỉ chuyển sang Trống hoặc Bảo trì.");
+
+        RuleFor(x => x.RefundMethod).IsInEnum();
     }
 }

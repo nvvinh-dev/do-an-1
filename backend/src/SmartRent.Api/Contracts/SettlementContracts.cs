@@ -51,3 +51,13 @@ public record SettlementChangeRequest(string Reason);
 
 /// <summary>FR-95: Chủ trọ tự chốt bảng thanh lý khi người thuê không phản hồi quá 7 ngày — ghi chú bắt buộc.</summary>
 public record SettlementFinalizeRequest(string Note);
+
+/// <summary>
+/// FR-59, FR-86: hoàn tất thanh lý. <see cref="RoomNextStatus"/> bắt buộc, chỉ <c>Trong</c> hoặc <c>BaoTri</c>.
+/// <see cref="RefundedAt"/>, <see cref="RefundMethod"/> bắt buộc khi hóa đơn thanh lý ở Chờ hoàn cọc và bị bỏ qua ở
+/// trường hợp khác — thiếu thì SettlementService trả 422 vì phụ thuộc trạng thái hóa đơn. Số tiền hoàn do server tính.
+/// </summary>
+public record CompleteSettlementRequest(
+    RoomOccupancyStatus? RoomNextStatus,
+    DateTimeOffset? RefundedAt,
+    PaymentMethod? RefundMethod);

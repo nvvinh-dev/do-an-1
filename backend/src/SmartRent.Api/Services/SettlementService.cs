@@ -537,6 +537,118 @@ public class SettlementService
         return ServiceResult.Ok();
     }
 
+    /// <summary>
+    /// FR-58, FR-59, FR-86, FR-96: Chủ trọ hoàn tất thanh lý khi bảng đã khóa. Số dư âm: ghi nhận hoàn cọc — số tiền do
+    /// server tính bằng phần cọc dư — và hóa đơn sang Đã thanh toán. Số dư dương chưa trả đủ vẫn hoàn tất, phần còn thiếu
+    /// giữ nguyên trên hóa đơn như một khoản nợ. Hợp đồng sang Đã thanh lý, phòng sang Trống hoặc Bảo trì; ghi nhật ký
+    /// (BR-23) và thông báo cho hai bên, tất cả trong một transaction (security-design mục 8, điều 10).
+    /// </summary>
+    public async Task<ServiceResult> CompleteSettlementAsync(
+        long landlordUserId,
+        long id,
+        CompleteSettlementRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var (contract, invoice) = await FindSettlementInvoiceAsync(id, cancellationToken);
+
+        if (contract is null || contract.Room.Property.LandlordUserId != landlordUserId)
+        {
+            return ServiceResult.Fail(StatusCodes.Status404NotFound, NotFoundMessage);
+        }
+
+        if (!contract.CanCompleteSettlement)
+        {
+            return ServiceResult.Fail(
+                StatusCodes.Status409Conflict, "Chỉ hoàn tất thanh lý được hợp đồng đang thanh lý.");
+        }
+
+        if (invoice is null || !invoice.IsSettlementLocked)
+        {
+            return ServiceResult.Fail(
+                StatusCodes.Status409Conflict,
+                "Bảng thanh lý chưa khóa. Chờ người thuê đồng ý, hoặc tự chốt khi người thuê không phản hồi quá 7 ngày.");
+        }
+
+        var now = DateTimeOffset.UtcNow;
+
+        if (invoice.Status == InvoiceStatus.ChoHoanCoc)
+        {
+            if (request.RefundedAt is not { } requestedRefundedAt || request.RefundMethod is not { } refundMethod)
+            {
+                return ServiceResult.Fail(
+                    StatusCodes.Status422UnprocessableEntity,
+                    "Bảng thanh lý có số dư âm: phải ghi thời điểm và hình thức hoàn cọc.");
+            }
+
+            var refundedAt = requestedRefundedAt.ToUniversalTime();
+
+            if (!contract.IsValidSettlementRefundTime(refundedAt, now))
+            {
+                return ServiceResult.Fail(
+                    StatusCodes.Status422UnprocessableEntity,
+                    "Thời điểm hoàn cọc phải từ lúc gửi thông báo trả phòng tới thời điểm hiện tại.");
+            }
+
+            // FR-86: số hoàn do server tính bằng phần cọc dư, không nhận từ client.
+            contract.RecordSettlementRefund(-invoice.TotalAmount, refundedAt, refundMethod);
+            invoice.CompleteDepositRefund(now);
+        }
+
+        var roomNextStatus = request.RoomNextStatus!.Value;
+        contract.CompleteSettlement(now);
+        contract.Room.ReleaseAfterSettlement(roomNextStatus);
+
+        // BR-23: hoàn tất thanh lý, gồm thông tin hoàn cọc nếu có.
+        _auditLogger.Write(
+            landlordUserId,
+            "HoanTatThanhLy",
+            nameof(Contract),
+            contract.Id,
+            new
+            {
+                Status = nameof(ContractStatus.DangThanhLy),
+                RoomStatus = nameof(RoomOccupancyStatus.DangThue)
+            },
+            new
+            {
+                Status = contract.Status.ToString(),
+                contract.TerminatedAt,
+                RoomStatus = roomNextStatus.ToString(),
+                SettlementInvoiceId = invoice.Id,
+                InvoiceStatus = invoice.Status.ToString(),
+                invoice.TotalAmount,
+                invoice.PaidAmount,
+                contract.DepositRefundedAmount,
+                contract.DepositRefundedAt,
+                DepositRefundMethod = contract.DepositRefundMethod?.ToString()
+            });
+
+        _notifier.Notify(
+            contract.TenantUserId,
+            "HoanTatThanhLy",
+            "Hợp đồng đã hoàn tất thanh lý",
+            $"Hợp đồng thuê phòng {ContractService.RoomLabel(contract)} đã hoàn tất thanh lý. " +
+            SettlementOutcomeText(contract, invoice, forTenant: true),
+            nameof(Contract),
+            contract.Id);
+
+        _notifier.Notify(
+            contract.Room.Property.LandlordUserId,
+            "HoanTatThanhLy",
+            "Hợp đồng đã hoàn tất thanh lý",
+            $"Hợp đồng thuê phòng {ContractService.RoomLabel(contract)} đã hoàn tất thanh lý, phòng chuyển sang " +
+            $"{(roomNextStatus == RoomOccupancyStatus.Trong ? "Trống" : "Bảo trì")}. " +
+            SettlementOutcomeText(contract, invoice, forTenant: false),
+            nameof(Contract),
+            contract.Id);
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        await _db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
+
+        return ServiceResult.Ok();
+    }
+
     /// <summary>Trường <c>moveOutNotice</c> của chi tiết hợp đồng; null khi hợp đồng chưa có thông báo trả phòng.</summary>
     internal static MoveOutNoticeResponse? MoveOutNoticeOf(Contract contract)
         => contract is
@@ -635,6 +747,37 @@ public class SettlementService
         }
 
         return "Số dư bằng 0, không bên nào phải trả thêm.";
+    }
+
+    /// <summary>
+    /// Kết quả tiền nong sau khi hoàn tất thanh lý (FR-86, FR-96): đã hoàn cọc bao nhiêu, hay người thuê còn nợ bao nhiêu
+    /// trên hóa đơn thanh lý, hay không còn khoản nào.
+    /// </summary>
+    private static string SettlementOutcomeText(Contract contract, Invoice invoice, bool forTenant)
+    {
+        if (contract is { DepositRefundedAmount: { } refunded, DepositRefundedAt: { } refundedAt, DepositRefundMethod: { } method }
+            && invoice.TotalAmount < 0)
+        {
+            var how = method == PaymentMethod.TienMat ? "tiền mặt" : "chuyển khoản";
+            var day = $"{VietnamTime.DateOf(refundedAt):dd/MM/yyyy}";
+
+            return forTenant
+                ? $"Chủ trọ đã hoàn {Money(refunded)} tiền cọc còn dư ({how}) ngày {day}."
+                : $"Đã ghi nhận hoàn {Money(refunded)} tiền cọc còn dư cho người thuê ({how}) ngày {day}.";
+        }
+
+        var remaining = invoice.TotalAmount - invoice.PaidAmount;
+
+        if (remaining > 0)
+        {
+            var due = invoice.DueDate is { } dueDate ? $", hạn {dueDate:dd/MM/yyyy}" : string.Empty;
+
+            return forTenant
+                ? $"Bạn còn nợ {Money(remaining)} trên hóa đơn thanh lý{due}; vẫn báo thanh toán được như hóa đơn thường."
+                : $"Người thuê còn nợ {Money(remaining)} trên hóa đơn thanh lý{due}; khoản này vẫn được theo dõi.";
+        }
+
+        return "Không còn khoản nào phải trả.";
     }
 
     /// <summary>Số tiền kiểu Việt Nam, dấu chấm ngăn hàng nghìn: 1.499.678 đồng — không phụ thuộc ngôn ngữ của máy chủ.</summary>

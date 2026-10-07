@@ -104,6 +104,15 @@ public class SettlementController : ControllerBase
         => NoContentOrProblem(
             await _service.FinalizeSettlementInvoiceAsync(this.CurrentUserId(), id, request, cancellationToken));
 
+    [HttpPost("contracts/{id:long}/settlement/complete")]
+    [Authorize(Roles = AppRoles.Landlord)]
+    public async Task<IActionResult> CompleteSettlement(
+        long id,
+        CompleteSettlementRequest request,
+        CancellationToken cancellationToken)
+        => NoContentOrProblem(
+            await _service.CompleteSettlementAsync(this.CurrentUserId(), id, request, cancellationToken));
+
     private IActionResult NoContentOrProblem(ServiceResult result)
         => result.Succeeded
             ? NoContent()
