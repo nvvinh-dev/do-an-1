@@ -18,7 +18,7 @@ public record AuditLogActorResponse(long Id, string FullName, string? Email);
 
 /// <summary>
 /// Một dòng nhật ký. <see cref="OldValue"/> và <see cref="NewValue"/> là JSON đúng như đã ghi,
-/// null khi thao tác không ghi giá trị đó.
+/// trừ số tài khoản ngân hàng chỉ còn 4 chữ số cuối; null khi thao tác không ghi giá trị đó.
 /// </summary>
 public record AuditLogResponse(
     long Id,

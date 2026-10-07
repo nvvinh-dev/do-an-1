@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
 using SmartRent.Api.Contracts;
 using SmartRent.Infrastructure.Persistence;
@@ -11,6 +12,11 @@ namespace SmartRent.Api.Services;
 /// </summary>
 public class AuditLogService
 {
+    /// <summary>Hai mã có số tài khoản ngân hàng của Chủ trọ trong giá trị cũ, mới (BR-26).</summary>
+    private static readonly HashSet<string> BankAccountActions = ["KhaiBaoTaiKhoanNhanTien", "SuaTaiKhoanNhanTien"];
+
+    private const int VisibleAccountDigits = 4;
+
     private readonly AppDbContext _db;
 
     public AuditLogService(AppDbContext db)
@@ -93,8 +99,8 @@ public class AuditLogService
                 row.Action,
                 row.EntityType,
                 row.EntityId,
-                ParseJson(row.OldValue),
-                ParseJson(row.NewValue),
+                ParseJson(row.Action, row.OldValue),
+                ParseJson(row.Action, row.NewValue),
                 row.OccurredAt))
             .ToList();
 
@@ -102,15 +108,33 @@ public class AuditLogService
             items, page, pageSize, total, (int)Math.Ceiling(total / (double)pageSize));
     }
 
-    /// <summary>Trả giá trị cũ, mới dưới dạng JSON thật thay vì chuỗi chứa JSON.</summary>
-    private static JsonElement? ParseJson(string? json)
+    /// <summary>
+    /// Trả giá trị cũ, mới dưới dạng JSON thật thay vì chuỗi chứa JSON. Số tài khoản ngân hàng chỉ giữ
+    /// 4 chữ số cuối (BR-26); database vẫn lưu đủ số vì nhật ký không sửa được nên không che lúc ghi.
+    /// </summary>
+    private static JsonElement? ParseJson(string action, string? json)
     {
         if (json is null)
         {
             return null;
         }
 
+        if (BankAccountActions.Contains(action)
+            && JsonNode.Parse(json) is JsonObject value
+            && value["AccountNumber"] is JsonValue accountNumber
+            && accountNumber.TryGetValue<string>(out var digits))
+        {
+            value["AccountNumber"] = MaskAccountNumber(digits);
+            return JsonSerializer.SerializeToElement(value);
+        }
+
         using var document = JsonDocument.Parse(json);
         return document.RootElement.Clone();
     }
+
+    /// <summary><c>0123456789</c> → <c>******6789</c>; số có từ 4 chữ số trở xuống thì che toàn bộ.</summary>
+    private static string MaskAccountNumber(string accountNumber)
+        => accountNumber.Length <= VisibleAccountDigits
+            ? new string('*', accountNumber.Length)
+            : new string('*', accountNumber.Length - VisibleAccountDigits) + accountNumber[^VisibleAccountDigits..];
 }
