@@ -150,11 +150,16 @@ builder.Services.AddRateLimiter(options =>
 // ------------------------------------------------- Service nghiệp vụ
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<AuditLogService>();
 builder.Services.AddScoped<LandlordApplicationService>();
 builder.Services.AddScoped<LandlordBankAccountService>();
 builder.Services.AddScoped<UserAdminService>();
+builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<RentalRequestService>();
 builder.Services.AddScoped<ContractService>();
+builder.Services.AddScoped<SettlementService>();
+builder.Services.AddScoped<PropertyService>();
+builder.Services.AddSingleton<LocationCatalog>();
 
 // Tác vụ định kỳ chạy mỗi giờ trong tiến trình API — docs/architecture.md mục 7.
 builder.Services.AddHostedService<ScheduledTaskRunner>();
@@ -205,6 +210,9 @@ var app = builder.Build();
 // --------------------------------------------------- Dữ liệu nền
 // Tạo 3 vai trò, tài khoản Admin đầu tiên và danh mục tiện ích nếu chưa có.
 await DatabaseSeeder.SeedAsync(app.Services);
+
+// Nạp danh mục tỉnh/thành – phường/xã ngay khi khởi động: thiếu hoặc hỏng file thì dừng luôn (README mục 12.1).
+app.Services.GetRequiredService<LocationCatalog>();
 
 // ------------------------------------------------------------ Pipeline
 app.UseSerilogRequestLogging();

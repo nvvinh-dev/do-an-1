@@ -172,7 +172,8 @@ SmartRent_System/
 │   │   │   ├── Controllers/
 │   │   │   ├── Services/               # Service điều phối nghiệp vụ
 │   │   │   ├── Contracts/              # Kiểu dữ liệu vào/ra của API
-│   │   │   └── Validators/             # Kiểm tra dữ liệu đầu vào (FluentValidation)
+│   │   │   ├── Validators/             # Kiểm tra dữ liệu đầu vào (FluentValidation)
+│   │   │   └── Data/                   # Dữ liệu tĩnh: danh mục tỉnh/thành – phường/xã (locations.json)
 │   │   ├── SmartRent.Domain/           # Entity, quy tắc nghiệp vụ
 │   │   │   ├── Entities/
 │   │   │   └── Enums/
@@ -203,6 +204,8 @@ SmartRent_System/
 │       └── App.tsx                      # Khai báo toàn bộ route (URL → trang)
 └── docs/                                # Tài liệu phân tích và thiết kế (không đưa lên Git)
 ```
+
+**Danh mục đơn vị hành chính** (`backend/src/SmartRent.Api/Data/locations.json`) lấy từ web service của Cục Thống kê (https://danhmuchanhchinh.nso.gov.vn/DMDVHC.asmx, thao tác `DanhMucTinh` và `DanhMucPhuongXa`) tính đến ngày 06/10/2026: 34 tỉnh/thành, 3.321 phường/xã/đặc khu, khớp trang thống kê số lượng của cùng nguồn. Tên giữ nguyên như nguồn, chỉ bỏ khoảng trắng thừa và chuẩn hóa Unicode về dạng NFC; tỉnh/thành và phường/xã xếp theo mã. Danh mục chính thức thay đổi thì tải lại từ nguồn này.
 
 **Nguyên tắc sắp xếp file:** mỗi thư mục chỉ chứa một loại code, và tên file ghép từ **chức năng nghiệp vụ + vai trò của file** — nhìn tên là biết file thuộc chức năng nào, làm nhiệm vụ gì. Không đặt tên chung chung như `Helper`, `Utils`, `Common`.
 
@@ -324,7 +327,7 @@ Lấy thông số kết nối tại Supabase: **Project Settings → Database �
 
 Hai thành viên **dùng chung một project Supabase** — cùng một database và cùng một Storage. Vì vậy phải tuân thủ quy tắc migration ở mục 11: một người chạy migration, người kia pull về trước khi đổi schema.
 
-Ứng dụng **không khởi động được** nếu thiếu `ConnectionStrings:DefaultConnection` hoặc `Jwt:Key`. Đây là hành vi cố ý: thà dừng ngay còn hơn chạy với cấu hình sai. Thiếu các giá trị `Supabase:*` hoặc `Smtp:*` thì ứng dụng vẫn khởi động, nhưng các chức năng dùng tới file (tải file, hồ sơ Chủ trọ) và gửi email đặt lại mật khẩu sẽ báo lỗi khi được gọi.
+Ứng dụng **không khởi động được** nếu thiếu `ConnectionStrings:DefaultConnection` hoặc `Jwt:Key`. Đây là hành vi cố ý: thà dừng ngay còn hơn chạy với cấu hình sai. Thiếu các giá trị `Supabase:*` hoặc `Smtp:*` thì ứng dụng vẫn khởi động, nhưng các chức năng dùng tới file (tải file, hồ sơ Chủ trọ, khu trọ và phòng — kể cả chỉ xem) và gửi email đặt lại mật khẩu sẽ báo lỗi khi được gọi.
 
 ### 12.2 Chạy backend
 
@@ -357,11 +360,19 @@ dotnet test
 
 ## 13. Trạng thái hiện tại
 
-**Backend:** solution 3 project và 1 project test (unit test cho phần Domain: hợp đồng, yêu cầu thuê, quy đổi giờ Việt Nam); cấu hình JWT, rate limiting, Serilog, Swagger. Toàn bộ 18 entity của Phase 1 đã có, cùng năm migration: `InitialPhase1` (25 bảng), `AddBankAccountDepositRefundAuditGuard` (tài khoản nhận tiền của Chủ trọ, thông tin hoàn cọc, trigger chặn sửa và xóa nhật ký hệ thống), `AddLandlordApplicationPendingUniqueIndex` (mỗi người một hồ sơ Chủ trọ chờ duyệt), `UpdateContractsAndRentalRequestsForBp06` (chỉ số đầu, bên hủy, bên gửi thông báo trả phòng và lý do giữ cọc của hợp đồng; unique index BR-27, BR-28 của yêu cầu thuê) và `UpdateInvoicesPropertiesAndAmenityNames` (bỏ loại hóa đơn điều chỉnh, thêm ba trạng thái và bốn cột của hóa đơn thanh lý, unique index BR-17 bỏ qua hóa đơn đã hủy, mỗi hợp đồng một hóa đơn thanh lý; dòng hóa đơn trỏ về hóa đơn gốc; khu trọ bỏ quận/huyện, bắt buộc phường/xã; tên tiện ích có dấu). Khi khởi động, ứng dụng tạo dữ liệu nền: 3 vai trò, tài khoản Admin đầu tiên và danh mục 16 tiện ích.
+**Backend:** solution 3 project và 1 project test (unit test cho phần Domain: hợp đồng, thông báo trả phòng, yêu cầu thuê, khu trọ, phòng, quy đổi giờ Việt Nam); cấu hình JWT, rate limiting, Serilog, Swagger. Toàn bộ 18 entity của Phase 1 đã có, cùng năm migration: `InitialPhase1` (25 bảng), `AddBankAccountDepositRefundAuditGuard` (tài khoản nhận tiền của Chủ trọ, thông tin hoàn cọc, trigger chặn sửa và xóa nhật ký hệ thống), `AddLandlordApplicationPendingUniqueIndex` (mỗi người một hồ sơ Chủ trọ chờ duyệt), `UpdateContractsAndRentalRequestsForBp06` (chỉ số đầu, bên hủy, bên gửi thông báo trả phòng và lý do giữ cọc của hợp đồng; unique index BR-27, BR-28 của yêu cầu thuê) và `UpdateInvoicesPropertiesAndAmenityNames` (bỏ loại hóa đơn điều chỉnh, thêm ba trạng thái và bốn cột của hóa đơn thanh lý, unique index BR-17 bỏ qua hóa đơn đã hủy, mỗi hợp đồng một hóa đơn thanh lý; dòng hóa đơn trỏ về hóa đơn gốc; khu trọ bỏ quận/huyện, bắt buộc phường/xã; tên tiện ích có dấu). Khi khởi động, ứng dụng tạo dữ liệu nền: 3 vai trò, tài khoản Admin đầu tiên và danh mục 16 tiện ích.
 
 **BP-01 đã hiện thực ở backend:** đăng ký, đăng nhập, đổi và đặt lại mật khẩu, xem và sửa thông tin cá nhân, nộp và duyệt hồ sơ Chủ trọ, khóa và mở khóa tài khoản, khai báo tài khoản ngân hàng nhận tiền của Chủ trọ, tải file dùng chung.
 
+**BP-02/03 đã hiện thực ở backend:** tạo, sửa, xem khu trọ của mình kèm số phòng theo trạng thái; danh mục tỉnh/thành – phường/xã (`GET /locations`) và kiểm tra địa chỉ khu trọ theo danh mục; thêm, sửa, xem phòng kèm phí dịch vụ, tiện ích và ghi nhật ký khi đổi giá (`SuaGiaPhong`); gắn tối đa 10 ảnh cho khu trọ và phòng, sắp thứ tự, ảnh đầu là ảnh đại diện; bật, tắt hiển thị tin (`isListed` theo BR-05); chuyển phòng giữa Trống và Bảo trì; lưu trữ phòng và khu trọ, tự từ chối yêu cầu thuê đang chờ và báo người thuê.
+
 **BP-06 đã hiện thực ở backend:** gửi, xem, rút yêu cầu thuê; duyệt, từ chối và hủy duyệt yêu cầu thuê, chặn một người thuê giữ hai phòng cùng lúc (BR-28); lập, sửa, gửi, thu hồi và xem hợp đồng, người thuê đồng ý hoặc yêu cầu sửa; xác nhận nhận cọc, hủy hợp đồng chưa bắt đầu và ghi nhận hoàn cọc; sửa chỉ số điện nước lúc bàn giao; các tác vụ định kỳ mỗi giờ (hết hạn yêu cầu thuê, hủy hợp đồng quá hạn giữ chỗ, nhắc hạn giữ chỗ, đánh dấu hợp đồng sắp hết hạn).
+
+**BP-10 (phần 1) đã hiện thực ở backend:** một trong hai bên gửi thông báo trả phòng khi hợp đồng đã bắt đầu, hệ thống ghi bên gửi và cho biết có được tính phí phạt hay không (BR-22); bên đã gửi rút được thông báo khi chưa có hóa đơn thanh lý; chi tiết hợp đồng có thông báo trả phòng, hóa đơn thanh lý và thời điểm thanh lý. Hóa đơn thanh lý và hoàn tất thanh lý thuộc phần 2.
+
+**Thông báo đã hiện thực ở backend:** người dùng xem thông báo của mình (lọc đã đọc hoặc chưa đọc, phân trang, mới nhất trước), đếm số thông báo chưa đọc, đánh dấu một thông báo hoặc tất cả là đã đọc.
+
+**Nhật ký hệ thống đã hiện thực ở backend:** Admin tra cứu nhật ký, lọc theo đối tượng, người thực hiện, loại thao tác và khoảng thời gian, phân trang, mới nhất trước; nhật ký khai báo và sửa tài khoản nhận tiền chỉ hiện 4 chữ số cuối của số tài khoản (BR-26). Không có endpoint sửa hay xóa nhật ký.
 
 **Frontend:** khung Vite + React + TypeScript + Tailwind và lớp gọi API; chưa có màn hình chức năng.
 

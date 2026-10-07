@@ -25,6 +25,12 @@ public class Property
 
     public PropertyStatus Status { get; set; }
 
+    /// <summary>
+    /// Khu trọ đã lưu trữ chỉ còn xem được: không sửa thông tin, không thêm phòng mới.
+    /// Lưu trữ là vĩnh viễn (BR-10).
+    /// </summary>
+    public bool IsArchived => Status == PropertyStatus.LuuTru;
+
     public ICollection<Room> Rooms { get; set; } = [];
 
     public ICollection<PropertyImage> Images { get; set; } = [];

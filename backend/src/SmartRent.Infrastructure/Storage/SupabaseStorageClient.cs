@@ -66,11 +66,14 @@ public class SupabaseStorageClient : IFileStorage
         var storedPath = $"{bucket}/{objectPath}";
 
         var url = IsPublic(purpose)
-            ? $"{_options.Url.TrimEnd('/')}/storage/v1/object/public/{bucket}/{objectPath}"
+            ? GetPublicUrl(storedPath)
             : await CreateSignedUrlAsync(storedPath, TimeSpan.FromHours(1), cancellationToken);
 
         return new StoredFile(storedPath, url);
     }
+
+    public string GetPublicUrl(string path)
+        => $"{_options.Url.TrimEnd('/')}/storage/v1/object/public/{path}";
 
     public async Task<bool> IsOwnedByAsync(
         string path,
