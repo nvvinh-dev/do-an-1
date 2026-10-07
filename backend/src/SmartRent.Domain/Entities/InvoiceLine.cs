@@ -44,4 +44,11 @@ public class InvoiceLine
     /// </summary>
     public static bool IsAllowedFromLandlordOnSettlement(InvoiceLineCategory category)
         => category is InvoiceLineCategory.BoiThuongHuHong or InvoiceLineCategory.PhiPhat or InvoiceLineCategory.DieuChinhKhac;
+
+    /// <summary>
+    /// Dòng bồi thường hư hỏng và phí phạt là khoản phải thu nên số tiền phải lớn hơn 0; muốn giảm thì dùng dòng điều
+    /// chỉnh, nhận cả số âm. Sai thì service trả 422 (api-design mục 10).
+    /// </summary>
+    public static bool IsAmountAllowedOnSettlement(InvoiceLineCategory category, decimal amount)
+        => category is not (InvoiceLineCategory.BoiThuongHuHong or InvoiceLineCategory.PhiPhat) || amount > 0;
 }

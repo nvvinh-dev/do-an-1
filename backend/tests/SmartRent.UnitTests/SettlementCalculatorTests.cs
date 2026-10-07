@@ -251,6 +251,25 @@ public class SettlementCalculatorTests
     }
 
     /// <summary>
+    /// api-design mục 10: bồi thường hư hỏng và phí phạt là khoản phải thu, số tiền phải lớn hơn 0 — một dòng phạt âm
+    /// làm bảng thanh lý khó đọc và lách được cách đọc trần phạt. Muốn giảm thì dùng dòng điều chỉnh, nhận cả số âm.
+    /// </summary>
+    [Theory]
+    [InlineData(InvoiceLineCategory.BoiThuongHuHong, 300_000, true)]
+    [InlineData(InvoiceLineCategory.BoiThuongHuHong, 0, false)]
+    [InlineData(InvoiceLineCategory.BoiThuongHuHong, -300_000, false)]
+    [InlineData(InvoiceLineCategory.PhiPhat, 1_000_000, true)]
+    [InlineData(InvoiceLineCategory.PhiPhat, 0, false)]
+    [InlineData(InvoiceLineCategory.PhiPhat, -1_000_000, false)]
+    [InlineData(InvoiceLineCategory.DieuChinhKhac, 50_000, true)]
+    [InlineData(InvoiceLineCategory.DieuChinhKhac, -50_000, true)]
+    public void IsAmountAllowedOnSettlement_BoiThuongVaPhiPhatPhaiDuong(
+        InvoiceLineCategory category, int amount, bool expected)
+    {
+        Assert.Equal(expected, InvoiceLine.IsAmountAllowedOnSettlement(category, amount));
+    }
+
+    /// <summary>
     /// FR-55, FR-58, FR-92: số dư dương — người thuê còn phải trả. Kỳ cuối 1.779.678 + công nợ tháng 11 1.420.000
     /// + bồi thường 300.000 + phí phạt 1.000.000 − tiền cọc 3.000.000 = 1.499.678.
     /// </summary>

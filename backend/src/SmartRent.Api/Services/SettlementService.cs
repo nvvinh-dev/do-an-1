@@ -470,6 +470,13 @@ public class SettlementService
                     "Chỉ gửi được dòng bồi thường hư hỏng, phí phạt và điều chỉnh.");
             }
 
+            if (!InvoiceLine.IsAmountAllowedOnSettlement(category, line.Amount!.Value))
+            {
+                return ServiceResult<SettlementInvoiceDraft>.Fail(
+                    StatusCodes.Status422UnprocessableEntity,
+                    "Số tiền bồi thường hư hỏng và phí phạt phải lớn hơn 0. Muốn giảm thì thêm dòng điều chỉnh.");
+            }
+
             if (string.IsNullOrWhiteSpace(line.Description))
             {
                 return ServiceResult<SettlementInvoiceDraft>.Fail(
