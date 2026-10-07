@@ -255,6 +255,18 @@ public class ContractTests
     }
 
     [Fact]
+    public void ShouldMarkExpiringSoon_HopDongNganChuaToiNgayBatDau_ChuaDanhDau()
+    {
+        // Đã nhận cọc trước ngày bắt đầu nên Đang hiệu lực; còn chưa tới 15 ngày tới ngày kết thúc.
+        // Đánh dấu Sắp hết hạn lúc này thì không hủy được (chỉ nhận Đang hiệu lực) và chưa gửi được thông báo trả phòng.
+        var contract = NewContract(ContractStatus.DangHieuLuc);
+        contract.EndDate = contract.StartDate.AddDays(10);
+
+        Assert.False(contract.ShouldMarkExpiringSoon(contract.StartDate.AddDays(-3)));
+        Assert.True(contract.ShouldMarkExpiringSoon(contract.StartDate));
+    }
+
+    [Fact]
     public void MarkExpiringSoon_ChuyenSapHetHan()
     {
         var contract = NewContract(ContractStatus.DangHieuLuc);

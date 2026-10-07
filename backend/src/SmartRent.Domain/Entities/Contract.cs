@@ -216,12 +216,15 @@ public class Contract
         => IsAwaitingActivation || (Status == ContractStatus.DangHieuLuc && today < StartDate);
 
     /// <summary>
-    /// Tác vụ định kỳ (architecture mục 7): hợp đồng Đang hiệu lực còn <see cref="ExpiringSoonDays"/> ngày
-    /// hoặc ít hơn tới ngày kết thúc. Hợp đồng đang thanh lý không bị đổi.
+    /// Tác vụ định kỳ (architecture mục 7): hợp đồng Đang hiệu lực đã tới ngày bắt đầu, còn
+    /// <see cref="ExpiringSoonDays"/> ngày hoặc ít hơn tới ngày kết thúc. Hợp đồng đang thanh lý không bị đổi.
+    /// Chưa tới ngày bắt đầu thì chưa đánh dấu, để hợp đồng ngắn vẫn hủy được (<see cref="CanBeCancelled"/>).
     /// </summary>
     /// <param name="today">Ngày hiện tại theo lịch Việt Nam.</param>
     public bool ShouldMarkExpiringSoon(DateOnly today)
-        => Status == ContractStatus.DangHieuLuc && EndDate.DayNumber - today.DayNumber <= ExpiringSoonDays;
+        => Status == ContractStatus.DangHieuLuc
+           && today >= StartDate
+           && EndDate.DayNumber - today.DayNumber <= ExpiringSoonDays;
 
     /// <exception cref="InvalidOperationException">Gọi khi <see cref="ShouldMarkExpiringSoon"/> sai — lỗi lập trình.</exception>
     public void MarkExpiringSoon(DateOnly today)
