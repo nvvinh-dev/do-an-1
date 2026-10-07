@@ -10,6 +10,13 @@ namespace SmartRent.Domain.Entities;
 /// </summary>
 public class Invoice
 {
+    /// <summary>
+    /// Hóa đơn đã phát hành còn phải thu — "hóa đơn chưa thu" trên dashboard (api-design mục 12). Không gồm Nháp
+    /// (chưa phát hành) và Đã chuyển thanh lý (phần nợ đã nằm trong hóa đơn thanh lý).
+    /// </summary>
+    public static readonly InvoiceStatus[] OutstandingStatuses =
+        [InvoiceStatus.ChuaThanhToan, InvoiceStatus.ChoXacNhan, InvoiceStatus.ThanhToanMotPhan, InvoiceStatus.QuaHan];
+
     public long Id { get; set; }
 
     public long ContractId { get; set; }

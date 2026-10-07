@@ -161,6 +161,7 @@ builder.Services.AddScoped<ContractService>();
 builder.Services.AddScoped<SettlementService>();
 builder.Services.AddScoped<PropertyService>();
 builder.Services.AddScoped<RoomSearchService>();
+builder.Services.AddScoped<DashboardService>();
 builder.Services.AddSingleton<LocationCatalog>();
 
 // Tác vụ định kỳ chạy mỗi giờ trong tiến trình API — docs/architecture.md mục 7.
