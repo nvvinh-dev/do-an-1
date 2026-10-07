@@ -43,5 +43,5 @@ public class InvoiceLine
     /// và dòng trừ tiền cọc do hệ thống tự thêm, Chủ trọ gửi thì service trả 422 (FR-55, api-design mục 10).
     /// </summary>
     public static bool IsAllowedFromLandlordOnSettlement(InvoiceLineCategory category)
-        => throw new NotImplementedException();
+        => category is InvoiceLineCategory.BoiThuongHuHong or InvoiceLineCategory.PhiPhat or InvoiceLineCategory.DieuChinhKhac;
 }

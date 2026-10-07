@@ -24,6 +24,25 @@ public sealed record SettlementPeriod(DateOnly Start, DateOnly End, bool Include
     /// hóa đơn đã hủy và tự chặn trường hợp còn hóa đơn định kỳ ở Nháp.
     /// </param>
     /// <param name="moveOutDate">Ngày trả phòng thực tế Chủ trọ nhập khi chốt số lần cuối.</param>
+    /// <remarks>Ngày trả phòng trước ngày bắt đầu hợp đồng không thuộc trường hợp nào, cũng trả <c>null</c>.</remarks>
     public static SettlementPeriod? For(DateOnly contractStartDate, BillingPeriod? lastPeriodicPeriod, DateOnly moveOutDate)
-        => throw new NotImplementedException();
+    {
+        if (moveOutDate < contractStartDate)
+            return null;
+
+        if (lastPeriodicPeriod is null)
+            return IsSameMonth(contractStartDate, moveOutDate)
+                ? new SettlementPeriod(contractStartDate, moveOutDate, IncludesRentAndServiceFees: true)
+                : null;
+
+        if (IsSameMonth(lastPeriodicPeriod.Start, moveOutDate))
+            return new SettlementPeriod(moveOutDate, moveOutDate, IncludesRentAndServiceFees: false);
+
+        var nextMonth = lastPeriodicPeriod.Next();
+        return IsSameMonth(nextMonth.Start, moveOutDate)
+            ? new SettlementPeriod(nextMonth.Start, moveOutDate, IncludesRentAndServiceFees: true)
+            : null;
+    }
+
+    private static bool IsSameMonth(DateOnly a, DateOnly b) => a.Year == b.Year && a.Month == b.Month;
 }

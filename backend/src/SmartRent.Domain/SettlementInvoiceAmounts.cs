@@ -14,11 +14,11 @@ public sealed record SettlementInvoiceAmounts(
     decimal TotalAmount)
 {
     /// <summary>Số dư dương: số tiền người thuê còn phải trả; số dư âm hoặc bằng 0 thì là 0 (FR-58).</summary>
-    public decimal AmountDueFromTenant => throw new NotImplementedException();
+    public decimal AmountDueFromTenant => Math.Max(TotalAmount, 0);
 
     /// <summary>
     /// Số dư âm: phần cọc dư Chủ trọ phải hoàn, bằng −<see cref="TotalAmount"/>; số dư dương hoặc bằng 0 thì là 0.
     /// Số tiền hoàn do hệ thống tính, Chủ trọ không nhập (FR-58, FR-86).
     /// </summary>
-    public decimal DepositRefundAmount => throw new NotImplementedException();
+    public decimal DepositRefundAmount => Math.Max(-TotalAmount, 0);
 }

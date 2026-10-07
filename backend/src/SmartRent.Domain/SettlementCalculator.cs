@@ -13,7 +13,15 @@ public static class SettlementCalculator
     /// Dòng trừ tiền cọc do hệ thống tự thêm: <see cref="InvoiceLineCategory.KhauTruTienCoc"/>, số tiền bằng
     /// −tiền cọc ghi trong hợp đồng; hợp đồng không cọc thì không có dòng này, trả <c>null</c> (FR-55, api-design mục 10).
     /// </summary>
-    public static InvoiceLine? DepositDeductionLine(Contract contract) => throw new NotImplementedException();
+    public static InvoiceLine? DepositDeductionLine(Contract contract)
+        => contract.DepositAmount <= 0
+            ? null
+            : new InvoiceLine
+            {
+                Category = InvoiceLineCategory.KhauTruTienCoc,
+                Description = "Trừ tiền cọc đã nộp",
+                Amount = -contract.DepositAmount
+            };
 
     /// <summary>
     /// BR-22, FR-87: các dòng <see cref="InvoiceLineCategory.PhiPhat"/> Chủ trọ gửi chỉ hợp lệ khi
@@ -22,7 +30,12 @@ public static class SettlementCalculator
     /// </summary>
     /// <param name="landlordLines">Các dòng Chủ trọ gửi lên, chưa gồm dòng do hệ thống tự thêm.</param>
     public static bool IsPenaltyAllowed(Contract contract, IEnumerable<InvoiceLine> landlordLines)
-        => throw new NotImplementedException();
+    {
+        var penalties = landlordLines.Where(l => l.Category == InvoiceLineCategory.PhiPhat).ToList();
+
+        return penalties.Count == 0
+               || (contract.IsMoveOutPenaltyAllowed && penalties.Sum(l => l.Amount) <= contract.DepositAmount);
+    }
 
     /// <summary>
     /// Tính hóa đơn thanh lý từ giá đã chốt trong hợp đồng (BR-12, BR-13). Tiền phòng và tổng phí dịch vụ tính theo
@@ -39,5 +52,27 @@ public static class SettlementCalculator
         MeterReading electricity,
         MeterReading water,
         IEnumerable<InvoiceLine> lines)
-        => throw new NotImplementedException();
+    {
+        var electricityAmount = InvoiceCalculator.MeterAmount(electricity, contract.ElectricityUnitPrice);
+        var waterAmount = InvoiceCalculator.MeterAmount(water, contract.WaterUnitPrice);
+        decimal rentAmount = 0;
+        decimal serviceFeeAmount = 0;
+
+        if (period.IncludesRentAndServiceFees)
+        {
+            var billingPeriod = new BillingPeriod(period.Start, period.End);
+            rentAmount = InvoiceCalculator.Prorate(contract.RentPrice, billingPeriod);
+            serviceFeeAmount = InvoiceCalculator.Prorate(contract.ServiceFees.Sum(f => f.Amount), billingPeriod);
+        }
+
+        var linesAmount = lines.Sum(l => l.Amount);
+
+        return new SettlementInvoiceAmounts(
+            RentAmount: rentAmount,
+            ElectricityAmount: electricityAmount,
+            WaterAmount: waterAmount,
+            ServiceFeeAmount: serviceFeeAmount,
+            LinesAmount: linesAmount,
+            TotalAmount: rentAmount + electricityAmount + waterAmount + serviceFeeAmount + linesAmount);
+    }
 }

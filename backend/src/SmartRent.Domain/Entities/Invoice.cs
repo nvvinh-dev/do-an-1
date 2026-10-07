@@ -98,7 +98,7 @@ public class Invoice
     public ICollection<PaymentReport> PaymentReports { get; set; } = [];
 
     /// <summary>Hóa đơn còn nợ, được kết chuyển khi lập hóa đơn thanh lý (FR-92).</summary>
-    public bool CanCarryOverToSettlement => throw new NotImplementedException();
+    public bool CanCarryOverToSettlement => CarryOverStatuses.Contains(Status);
 
     /// <summary>
     /// FR-92: phần còn phải trả (tổng tiền trừ số đã được xác nhận thu) trở thành một dòng <see cref="InvoiceLineCategory.CongNoKyTruoc"/> trỏ về hóa đơn này,
@@ -106,5 +106,24 @@ public class Invoice
     /// Service thêm dòng trả về vào hóa đơn thanh lý trong cùng transaction.
     /// </summary>
     /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanCarryOverToSettlement"/> sai — lỗi lập trình.</exception>
-    public InvoiceLine CarryOverToSettlement() => throw new NotImplementedException();
+    public InvoiceLine CarryOverToSettlement()
+    {
+        if (!CanCarryOverToSettlement)
+        {
+            throw new InvalidOperationException(
+                $"Hóa đơn {Id} ở trạng thái {Status}: không kết chuyển được vào hóa đơn thanh lý.");
+        }
+
+        var line = new InvoiceLine
+        {
+            Category = InvoiceLineCategory.CongNoKyTruoc,
+            Description = $"Công nợ hóa đơn kỳ {PeriodStart:dd/MM/yyyy} – {PeriodEnd:dd/MM/yyyy}",
+            Amount = TotalAmount - PaidAmount,
+            RelatedInvoiceId = Id
+        };
+
+        Status = InvoiceStatus.DaChuyenThanhLy;
+
+        return line;
+    }
 }
