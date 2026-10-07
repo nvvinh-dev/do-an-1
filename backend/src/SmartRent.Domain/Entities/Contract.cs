@@ -16,6 +16,9 @@ public class Contract
     /// <summary>Hợp đồng Đang hiệu lực chuyển Sắp hết hạn khi còn từ chừng này ngày trở xuống tới ngày kết thúc.</summary>
     public const int ExpiringSoonDays = 15;
 
+    /// <summary>Thông báo trả phòng gửi trước ít hơn chừng này ngày vẫn được nhận, nhưng có thể bị phí phạt (FR-87).</summary>
+    public const int MinimumMoveOutNoticeDays = 30;
+
     /// <summary>Hợp đồng đang chiếm dụng phòng — mỗi phòng tối đa một hợp đồng ở các trạng thái này (BR-07).</summary>
     public static readonly ContractStatus[] OccupyingStatuses =
         [ContractStatus.DangHieuLuc, ContractStatus.SapHetHan, ContractStatus.DangThanhLy];
@@ -238,6 +241,65 @@ public class Contract
         CancelReason = reason;
         CancelledByUserId = cancelledByUserId;
         CancelledAt = now;
+    }
+
+    /// <summary>
+    /// FR-53: một trong hai bên gửi thông báo trả phòng khi hợp đồng đã tới ngày bắt đầu và đang
+    /// Đang hiệu lực hoặc Sắp hết hạn. Trước ngày bắt đầu thì hủy hợp đồng, không đi luồng thanh lý.
+    /// </summary>
+    /// <param name="today">Ngày hiện tại theo lịch Việt Nam.</param>
+    public bool CanSendMoveOutNotice(DateOnly today)
+        => Status is ContractStatus.DangHieuLuc or ContractStatus.SapHetHan && today >= StartDate;
+
+    /// <summary>FR-53, FR-87: ghi bên gửi — căn cứ cho phí phạt — và chuyển hợp đồng sang Đang thanh lý.</summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanSendMoveOutNotice"/> sai — lỗi lập trình.</exception>
+    public void SendMoveOutNotice(long senderUserId, DateOnly expectedMoveOutDate, string reason, DateTimeOffset now)
+    {
+        EnsureAllowed(CanSendMoveOutNotice(VietnamTime.DateOf(now)), nameof(SendMoveOutNotice));
+
+        Status = ContractStatus.DangThanhLy;
+        MoveOutNoticeAt = now;
+        MoveOutNoticeByUserId = senderUserId;
+        ExpectedMoveOutDate = expectedMoveOutDate;
+        TerminationReason = reason;
+    }
+
+    /// <summary>Số ngày báo trước: từ ngày gửi thông báo (giờ Việt Nam) tới ngày trả phòng dự kiến.</summary>
+    public int? MoveOutNoticeDays
+        => MoveOutNoticeAt is { } noticeAt && ExpectedMoveOutDate is { } moveOutDate
+            ? moveOutDate.DayNumber - VietnamTime.DateOf(noticeAt).DayNumber
+            : null;
+
+    /// <summary>
+    /// BR-22, FR-87: hóa đơn thanh lý chỉ được có phí phạt khi người thuê là bên gửi, báo trước ít hơn
+    /// <see cref="MinimumMoveOutNoticeDays"/> ngày và trả phòng trước ngày kết thúc.
+    /// </summary>
+    public bool IsMoveOutPenaltyAllowed
+        => MoveOutNoticeByUserId == TenantUserId
+           && MoveOutNoticeDays < MinimumMoveOutNoticeDays
+           && ExpectedMoveOutDate < EndDate;
+
+    /// <summary>FR-98: chỉ bên đã gửi được rút, khi hợp đồng đang thanh lý và Chủ trọ chưa lập hóa đơn thanh lý.</summary>
+    public bool CanWithdrawMoveOutNotice(long userId, bool hasSettlementInvoice)
+        => Status == ContractStatus.DangThanhLy && MoveOutNoticeByUserId == userId && !hasSettlementInvoice;
+
+    /// <summary>
+    /// BP-10 A4: xóa thông báo trả phòng; hợp đồng về Sắp hết hạn nếu còn <see cref="ExpiringSoonDays"/> ngày
+    /// hoặc ít hơn tới ngày kết thúc — kể cả khi đã qua ngày kết thúc — ngược lại về Đang hiệu lực.
+    /// </summary>
+    /// <param name="today">Ngày hiện tại theo lịch Việt Nam.</param>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanWithdrawMoveOutNotice"/> sai — lỗi lập trình.</exception>
+    public void WithdrawMoveOutNotice(long userId, bool hasSettlementInvoice, DateOnly today)
+    {
+        EnsureAllowed(CanWithdrawMoveOutNotice(userId, hasSettlementInvoice), nameof(WithdrawMoveOutNotice));
+
+        Status = EndDate.DayNumber - today.DayNumber <= ExpiringSoonDays
+            ? ContractStatus.SapHetHan
+            : ContractStatus.DangHieuLuc;
+        MoveOutNoticeAt = null;
+        MoveOutNoticeByUserId = null;
+        ExpectedMoveOutDate = null;
+        TerminationReason = null;
     }
 
     private void Activate(DateTimeOffset now)
