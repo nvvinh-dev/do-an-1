@@ -40,11 +40,8 @@ public class RentalRequestService
         var room = await _db.Rooms
             .AsNoTracking()
             .Include(r => r.Property)
-            .Where(r => r.Id == roomId
-                        && r.OccupancyStatus == RoomOccupancyStatus.Trong
-                        && r.VisibilityStatus == RoomVisibilityStatus.DangHienThi
-                        && r.Property.Status == PropertyStatus.DangKhaiThac
-                        && _db.Users.Any(u => u.Id == r.Property.LandlordUserId && !u.IsLocked))
+            .WhereListed(_db.Users)
+            .Where(r => r.Id == roomId)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (room is null)
