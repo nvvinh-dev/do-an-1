@@ -66,6 +66,8 @@ public class Room
     /// <summary>
     /// BR-05 — phòng xuất hiện trong kết quả tìm kiếm khi đủ cả bốn điều kiện: phòng Trống, đang bật hiển thị,
     /// khu trọ đang khai thác và Chủ trọ không bị khóa. Nhận giá trị rời để dùng được với dữ liệu đã chiếu từ truy vấn.
+    /// Lọc trong SQL (tìm kiếm, chi tiết công khai, gửi yêu cầu thuê) dùng <c>RoomQueryExtensions.WhereListed</c>
+    /// ở SmartRent.Api — cùng bốn điều kiện, đổi BR-05 thì sửa cả hai.
     /// </summary>
     public static bool IsListed(
         RoomOccupancyStatus occupancyStatus,

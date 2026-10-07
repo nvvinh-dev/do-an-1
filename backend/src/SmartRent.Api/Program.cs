@@ -137,9 +137,10 @@ builder.Services.AddRateLimiter(options =>
                 Window = TimeSpan.FromHours(1)
             }));
 
+    // Tìm kiếm và chi tiết phòng công khai mỗi endpoint một bộ đếm; mọi id phòng đếm chung một bộ.
     options.AddPolicy(RateLimitPolicies.PublicSearch, context =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: GetClientIp(context),
+            partitionKey: $"{GetRouteTemplate(context)}|{GetClientIp(context)}",
             factory: _ => new FixedWindowRateLimiterOptions
             {
                 PermitLimit = 60,
@@ -159,6 +160,8 @@ builder.Services.AddScoped<RentalRequestService>();
 builder.Services.AddScoped<ContractService>();
 builder.Services.AddScoped<SettlementService>();
 builder.Services.AddScoped<PropertyService>();
+builder.Services.AddScoped<RoomSearchService>();
+builder.Services.AddScoped<DashboardService>();
 builder.Services.AddSingleton<LocationCatalog>();
 
 // Tác vụ định kỳ chạy mỗi giờ trong tiến trình API — docs/architecture.md mục 7.

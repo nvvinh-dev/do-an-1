@@ -19,6 +19,6 @@ public static class RateLimitPolicies
     /// <summary>Tải file — 20 lần mỗi giờ.</summary>
     public const string FileUpload = "file-upload";
 
-    /// <summary>Tìm kiếm phòng công khai — 60 lần mỗi phút.</summary>
+    /// <summary>Tìm kiếm và xem chi tiết phòng công khai — mỗi endpoint 60 lần mỗi phút theo IP.</summary>
     public const string PublicSearch = "public-search";
 }
