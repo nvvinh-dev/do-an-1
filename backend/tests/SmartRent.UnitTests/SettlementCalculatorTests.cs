@@ -21,10 +21,10 @@ public class SettlementCalculatorTests
     private static readonly MeterReading Water = new(85, 89);
 
     /// <summary>Kỳ cuối 01/12 – 15/12, có tiền phòng và phí dịch vụ (FR-93).</summary>
-    private static SettlementPeriod December1To15 => new(D(2026, 12, 1), D(2026, 12, 15), IncludesRentAndServiceFees: true);
+    private static SettlementPeriod December1To15 => new(D(2026, 12, 1), D(2026, 12, 15), includesRentAndServiceFees: true);
 
     /// <summary>Tháng 12 đã có hóa đơn định kỳ: kỳ thanh lý chỉ là ngày trả phòng, chỉ tính điện nước (FR-93).</summary>
-    private static SettlementPeriod MeterOnlyOn15December => new(D(2026, 12, 15), D(2026, 12, 15), IncludesRentAndServiceFees: false);
+    private static SettlementPeriod MeterOnlyOn15December => new(D(2026, 12, 15), D(2026, 12, 15), includesRentAndServiceFees: false);
 
     /// <summary>
     /// Hợp đồng chốt giá thấp hơn giá hiện tại của phòng, để thấy hóa đơn thanh lý lấy giá của hợp đồng (BR-12, BR-13).
@@ -112,7 +112,7 @@ public class SettlementCalculatorTests
     public void Calculate_TyLeTheoSoNgayCuaThangTraPhong(
         int year, int month, int moveOutDay, int expectedRent, int expectedServiceFee)
     {
-        var period = new SettlementPeriod(D(year, month, 1), D(year, month, moveOutDay), IncludesRentAndServiceFees: true);
+        var period = new SettlementPeriod(D(year, month, 1), D(year, month, moveOutDay), includesRentAndServiceFees: true);
 
         var amounts = SettlementCalculator.Calculate(NewContract(), period, Electricity, Water, []);
 

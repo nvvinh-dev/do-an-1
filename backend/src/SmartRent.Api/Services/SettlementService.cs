@@ -804,6 +804,14 @@ public class SettlementService
         SettlementInvoiceRequest request,
         CancellationToken cancellationToken)
     {
+        // FR-54: ngày trả phòng không được trước ngày bắt đầu hợp đồng.
+        if (request.MoveOutDate!.Value < contract.StartDate)
+        {
+            return ServiceResult<SettlementInvoiceDraft>.Fail(
+                StatusCodes.Status422UnprocessableEntity,
+                $"Ngày trả phòng không được trước ngày bắt đầu hợp đồng ({contract.StartDate:dd/MM/yyyy}).");
+        }
+
         var lastPeriodic = otherInvoices
             .Where(i => i.Type == InvoiceType.DinhKy && i.Status != InvoiceStatus.DaHuy)
             .MaxBy(i => i.PeriodEnd);

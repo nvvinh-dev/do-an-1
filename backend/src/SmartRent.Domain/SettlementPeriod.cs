@@ -5,8 +5,33 @@ namespace SmartRent.Domain;
 /// ngày trả phòng thực tế — Chủ trọ không tự chọn. <see cref="IncludesRentAndServiceFees"/> sai khi tháng trả phòng
 /// đã có hóa đơn định kỳ: hóa đơn thanh lý chỉ tính điện nước, kỳ là đúng ngày trả phòng.
 /// </summary>
-public sealed record SettlementPeriod(DateOnly Start, DateOnly End, bool IncludesRentAndServiceFees)
+public sealed record SettlementPeriod
 {
+    /// <summary>
+    /// Như <see cref="BillingPeriod"/>: kỳ nằm trọn trong một tháng, ngày cuối không trước ngày đầu. Kỳ chỉ tính điện
+    /// nước là đúng một ngày — ngày trả phòng.
+    /// </summary>
+    public SettlementPeriod(DateOnly start, DateOnly end, bool includesRentAndServiceFees)
+    {
+        if (start.Year != end.Year || start.Month != end.Month)
+            throw new ArgumentException($"Kỳ thanh lý {start:O} – {end:O} không nằm trọn trong một tháng.", nameof(end));
+        if (end < start)
+            throw new ArgumentException($"Kỳ thanh lý {start:O} – {end:O} có ngày cuối trước ngày đầu.", nameof(end));
+        if (!includesRentAndServiceFees && start != end)
+            throw new ArgumentException(
+                $"Kỳ thanh lý chỉ tính điện nước phải là đúng ngày trả phòng, không phải {start:O} – {end:O}.", nameof(end));
+
+        Start = start;
+        End = end;
+        IncludesRentAndServiceFees = includesRentAndServiceFees;
+    }
+
+    public DateOnly Start { get; }
+
+    public DateOnly End { get; }
+
+    public bool IncludesRentAndServiceFees { get; }
+
     /// <summary>
     /// Hai trường hợp lập được hóa đơn thanh lý (FR-93):
     /// <list type="bullet">
@@ -24,23 +49,26 @@ public sealed record SettlementPeriod(DateOnly Start, DateOnly End, bool Include
     /// hóa đơn đã hủy và tự chặn trường hợp còn hóa đơn định kỳ ở Nháp.
     /// </param>
     /// <param name="moveOutDate">Ngày trả phòng thực tế Chủ trọ nhập khi chốt số lần cuối.</param>
-    /// <remarks>Ngày trả phòng trước ngày bắt đầu hợp đồng không thuộc trường hợp nào, cũng trả <c>null</c>.</remarks>
+    /// <exception cref="ArgumentException">
+    /// Ngày trả phòng trước ngày bắt đầu hợp đồng (FR-54) — service kiểm tra trước và trả 422.
+    /// </exception>
     public static SettlementPeriod? For(DateOnly contractStartDate, BillingPeriod? lastPeriodicPeriod, DateOnly moveOutDate)
     {
         if (moveOutDate < contractStartDate)
-            return null;
+            throw new ArgumentException(
+                $"Ngày trả phòng {moveOutDate:O} trước ngày bắt đầu hợp đồng {contractStartDate:O}.", nameof(moveOutDate));
 
         if (lastPeriodicPeriod is null)
             return IsSameMonth(contractStartDate, moveOutDate)
-                ? new SettlementPeriod(contractStartDate, moveOutDate, IncludesRentAndServiceFees: true)
+                ? new SettlementPeriod(contractStartDate, moveOutDate, includesRentAndServiceFees: true)
                 : null;
 
         if (IsSameMonth(lastPeriodicPeriod.Start, moveOutDate))
-            return new SettlementPeriod(moveOutDate, moveOutDate, IncludesRentAndServiceFees: false);
+            return new SettlementPeriod(moveOutDate, moveOutDate, includesRentAndServiceFees: false);
 
         var nextMonth = lastPeriodicPeriod.Next();
         return IsSameMonth(nextMonth.Start, moveOutDate)
-            ? new SettlementPeriod(nextMonth.Start, moveOutDate, IncludesRentAndServiceFees: true)
+            ? new SettlementPeriod(nextMonth.Start, moveOutDate, includesRentAndServiceFees: true)
             : null;
     }
 

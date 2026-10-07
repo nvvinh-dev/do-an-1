@@ -27,7 +27,7 @@ public class SettlementPeriodTests
     public void For_TraPhongThangNgaySauKyCuoi_TuDauThangToiNgayTra()
     {
         Assert.Equal(
-            new SettlementPeriod(D(2026, 12, 1), D(2026, 12, 15), IncludesRentAndServiceFees: true),
+            new SettlementPeriod(D(2026, 12, 1), D(2026, 12, 15), includesRentAndServiceFees: true),
             SettlementPeriod.For(StartDate, Month(2026, 11), D(2026, 12, 15)));
     }
 
@@ -39,7 +39,7 @@ public class SettlementPeriodTests
     public void For_ChuaCoHoaDonDinhKy_TuNgayBatDauToiNgayTra()
     {
         Assert.Equal(
-            new SettlementPeriod(StartDate, D(2026, 10, 25), IncludesRentAndServiceFees: true),
+            new SettlementPeriod(StartDate, D(2026, 10, 25), includesRentAndServiceFees: true),
             SettlementPeriod.For(StartDate, lastPeriodicPeriod: null, D(2026, 10, 25)));
     }
 
@@ -48,7 +48,7 @@ public class SettlementPeriodTests
     public void For_KyCuoiThang12_TraPhongThang1NamSau()
     {
         Assert.Equal(
-            new SettlementPeriod(D(2027, 1, 1), D(2027, 1, 10), IncludesRentAndServiceFees: true),
+            new SettlementPeriod(D(2027, 1, 1), D(2027, 1, 10), includesRentAndServiceFees: true),
             SettlementPeriod.For(StartDate, Month(2026, 12), D(2027, 1, 10)));
     }
 
@@ -67,7 +67,7 @@ public class SettlementPeriodTests
         var moveOutDate = D(2026, 12, moveOutDay);
 
         Assert.Equal(
-            new SettlementPeriod(moveOutDate, moveOutDate, IncludesRentAndServiceFees: false),
+            new SettlementPeriod(moveOutDate, moveOutDate, includesRentAndServiceFees: false),
             SettlementPeriod.For(StartDate, Month(2026, 12), moveOutDate));
     }
 
@@ -79,7 +79,7 @@ public class SettlementPeriodTests
     public void For_DonDiSomTrongKyDauDaLapHoaDon_ChiTinhDienNuoc()
     {
         Assert.Equal(
-            new SettlementPeriod(D(2026, 10, 20), D(2026, 10, 20), IncludesRentAndServiceFees: false),
+            new SettlementPeriod(D(2026, 10, 20), D(2026, 10, 20), includesRentAndServiceFees: false),
             SettlementPeriod.For(StartDate, FirstPeriod, D(2026, 10, 20)));
     }
 
@@ -113,5 +113,50 @@ public class SettlementPeriodTests
     public void For_TraPhongTruocThangCuaKyCuoi_Null()
     {
         Assert.Null(SettlementPeriod.For(StartDate, Month(2026, 12), D(2026, 11, 20)));
+    }
+
+    /// <summary>
+    /// FR-93: "tháng ngay sau" phải so cả năm — kỳ cuối tháng 11/2026 mà trả phòng 15/12/2027 thì còn thiếu cả năm hóa
+    /// đơn định kỳ, không lập được.
+    /// </summary>
+    [Fact]
+    public void For_CungThangKhacNam_Null()
+    {
+        Assert.Null(SettlementPeriod.For(StartDate, Month(2026, 11), D(2027, 12, 15)));
+        Assert.Null(SettlementPeriod.For(StartDate, Month(2026, 12), D(2027, 12, 15)));
+    }
+
+    // ------------------------------ Ngày trả phòng trước ngày bắt đầu hợp đồng (FR-54)
+
+    /// <summary>
+    /// FR-54: Chủ trọ nhập nhầm ngày trả phòng 10/10, trước ngày bắt đầu 15/10. Chưa có hóa đơn định kỳ thì kỳ thành
+    /// 15/10 – 10/10 (ngày cuối trước ngày đầu); đã có kỳ đầu 15/10 – 31/10 thì lọt vào nhánh "tháng đã có hóa đơn định
+    /// kỳ". Cả hai đều là đầu vào sai — service kiểm tra trước và trả 422.
+    /// </summary>
+    [Fact]
+    public void For_TraPhongTruocNgayBatDau_ChuaCoHoaDonDinhKy_NemLoi()
+    {
+        Assert.Throws<ArgumentException>(() => SettlementPeriod.For(StartDate, lastPeriodicPeriod: null, D(2026, 10, 10)));
+    }
+
+    [Fact]
+    public void For_TraPhongTruocNgayBatDau_DaCoKyDau_NemLoi()
+    {
+        Assert.Throws<ArgumentException>(() => SettlementPeriod.For(StartDate, FirstPeriod, D(2026, 10, 10)));
+    }
+
+    // ------------------------------ Kỳ tự kiểm tra như BillingPeriod
+
+    /// <summary>
+    /// Kỳ thanh lý không dựng sai được ở chỗ khác: phải nằm trong một tháng, ngày cuối không trước ngày đầu, và kỳ chỉ
+    /// tính điện nước là đúng một ngày.
+    /// </summary>
+    [Theory]
+    [InlineData(2026, 11, 20, 2026, 12, 5, true)]
+    [InlineData(2026, 12, 15, 2026, 12, 1, true)]
+    [InlineData(2026, 12, 1, 2026, 12, 15, false)]
+    public void Constructor_KySai_NemLoi(int y1, int m1, int d1, int y2, int m2, int d2, bool includesRent)
+    {
+        Assert.Throws<ArgumentException>(() => new SettlementPeriod(D(y1, m1, d1), D(y2, m2, d2), includesRent));
     }
 }
