@@ -7,7 +7,8 @@ using SmartRent.Api.Services;
 namespace SmartRent.Api.Controllers;
 
 /// <summary>
-/// Tìm phòng cho người chưa đăng nhập — BP-04, FR-21. Chỉ trả phòng đủ BR-05 và không có thông tin Chủ trọ.
+/// Tìm phòng và xem chi tiết phòng cho người chưa đăng nhập — BP-04, FR-21. Chỉ trả phòng đủ BR-05
+/// và không có thông tin Chủ trọ.
 /// </summary>
 [ApiController]
 [Route("api/v1/rooms")]
@@ -42,5 +43,17 @@ public class PublicRoomsController : ControllerBase
             filter, Math.Clamp(page, 1, MaxPage), Math.Clamp(pageSize, 1, MaxPageSize), cancellationToken);
 
         return Ok(result);
+    }
+
+    /// <summary>Chi tiết phòng và khu trọ; phòng không đủ BR-05 hoặc không tồn tại trả 404 (FR-21).</summary>
+    [HttpGet("{id:long}/public")]
+    [EnableRateLimiting(RateLimitPolicies.PublicSearch)]
+    public async Task<IActionResult> Detail(long id, CancellationToken cancellationToken)
+    {
+        var result = await _service.GetPublicAsync(id, cancellationToken);
+
+        return result.Succeeded
+            ? Ok(result.Value)
+            : Problem(detail: result.Error, statusCode: result.StatusCode);
     }
 }

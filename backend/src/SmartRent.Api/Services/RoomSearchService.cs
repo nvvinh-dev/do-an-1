@@ -6,7 +6,7 @@ using SmartRent.Infrastructure.Storage;
 namespace SmartRent.Api.Services;
 
 /// <summary>
-/// Tìm kiếm công khai — BP-04, FR-21 đến FR-24. Người chưa đăng nhập dùng được, nên kết quả chỉ gồm phòng đủ BR-05
+/// Tìm kiếm và chi tiết phòng công khai — BP-04, FR-21 đến FR-24. Người chưa đăng nhập dùng được, nên kết quả chỉ gồm phòng đủ BR-05
 /// và không có thông tin liên hệ hay tài khoản ngân hàng của Chủ trọ (QR-07, FR-82).
 /// </summary>
 public class RoomSearchService
@@ -150,6 +150,77 @@ public class RoomSearchService
 
         return new PagedResponse<RoomSearchItemResponse>(
             items, page, pageSize, total, (int)Math.Ceiling(total / (double)pageSize));
+    }
+
+    /// <summary>
+    /// FR-21: chi tiết phòng và khu trọ cho người tìm phòng. Phòng không đủ BR-05 trả 404 như không tồn tại,
+    /// để không dò được phòng đang ẩn qua id. Người thuê xem lại phòng đã gửi yêu cầu hoặc đang thuê qua
+    /// chi tiết yêu cầu thuê và hợp đồng, không qua endpoint này.
+    /// </summary>
+    public async Task<ServiceResult<PublicRoomDetailResponse>> GetPublicAsync(
+        long roomId,
+        CancellationToken cancellationToken = default)
+    {
+        var room = await _db.Rooms
+            .AsNoTracking()
+            .WhereListed(_db.Users)
+            .Where(r => r.Id == roomId)
+            .Select(r => new
+            {
+                r.Id,
+                r.Code,
+                r.Area,
+                r.MaxOccupants,
+                r.RentPrice,
+                r.ElectricityUnitPrice,
+                r.WaterUnitPrice,
+                r.Description,
+                ImagePaths = r.Images.OrderBy(i => i.DisplayOrder).Select(i => i.Url).ToList(),
+                Amenities = r.Amenities.OrderBy(a => a.AmenityId).Select(a => a.Amenity.Name).ToList(),
+                ServiceFees = r.ServiceFees
+                    .OrderBy(f => f.Id)
+                    .Select(f => new RoomServiceFeeResponse(f.Name, f.Amount))
+                    .ToList(),
+                Property = new
+                {
+                    r.Property.Name,
+                    r.Property.Address,
+                    r.Property.City,
+                    r.Property.Ward,
+                    r.Property.Description,
+                    ImagePaths = r.Property.Images.OrderBy(i => i.DisplayOrder).Select(i => i.Url).ToList(),
+                    Amenities = r.Property.Amenities.OrderBy(a => a.AmenityId).Select(a => a.Amenity.Name).ToList()
+                }
+            })
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (room is null)
+        {
+            return ServiceResult<PublicRoomDetailResponse>.Fail(StatusCodes.Status404NotFound, "Không tìm thấy phòng.");
+        }
+
+        return ServiceResult<PublicRoomDetailResponse>.Ok(new PublicRoomDetailResponse(
+            new PublicRoomResponse(
+                room.Id,
+                room.Code,
+                room.Area,
+                room.MaxOccupants,
+                room.RentPrice,
+                room.ElectricityUnitPrice,
+                room.WaterUnitPrice,
+                room.Description,
+                room.ImagePaths.Select(_fileStorage.GetPublicUrl).ToList(),
+                room.Amenities,
+                room.ServiceFees),
+            new PublicPropertyResponse(
+                room.Property.Name,
+                room.Property.Address,
+                room.Property.City,
+                room.Property.Ward,
+                room.Property.Description,
+                room.Property.ImagePaths.Select(_fileStorage.GetPublicUrl).ToList(),
+                room.Property.Amenities)));
     }
 
     /// <summary>Danh mục tiện ích cố định (database-design mục 4.4), cho bộ lọc tìm kiếm và form của Chủ trọ.</summary>

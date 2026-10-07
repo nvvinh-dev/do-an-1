@@ -38,5 +38,38 @@ public record RoomSearchItemResponse(
     string? CoverImageUrl,
     IReadOnlyList<string> Amenities);
 
+/// <summary>
+/// Chi tiết phòng công khai — GET /rooms/{id}/public. Không có tên, số điện thoại, email hay tài khoản ngân hàng
+/// của Chủ trọ (QR-07, FR-24, FR-82).
+/// </summary>
+public record PublicRoomDetailResponse(PublicRoomResponse Room, PublicPropertyResponse Property);
+
+/// <summary>
+/// Phòng ở góc nhìn người tìm phòng. <see cref="Images"/> là URL ảnh theo thứ tự Chủ trọ sắp, ảnh đầu là ảnh đại diện;
+/// <see cref="Amenities"/> là tên tiện ích của phòng theo thứ tự danh mục.
+/// </summary>
+public record PublicRoomResponse(
+    long Id,
+    string Code,
+    decimal Area,
+    int MaxOccupants,
+    decimal RentPrice,
+    decimal ElectricityUnitPrice,
+    decimal WaterUnitPrice,
+    string? Description,
+    IReadOnlyList<string> Images,
+    IReadOnlyList<string> Amenities,
+    IReadOnlyList<RoomServiceFeeResponse> ServiceFees);
+
+/// <summary>Khu trọ chứa phòng. <see cref="Images"/>, <see cref="Amenities"/> cùng dạng với phòng.</summary>
+public record PublicPropertyResponse(
+    string Name,
+    string Address,
+    string City,
+    string Ward,
+    string? Description,
+    IReadOnlyList<string> Images,
+    IReadOnlyList<string> Amenities);
+
 /// <summary>Một tiện ích trong danh mục — <see cref="Scope"/> cho biết tiện ích của khu trọ hay của phòng.</summary>
 public record AmenityResponse(long Id, string Name, AmenityScope Scope);
