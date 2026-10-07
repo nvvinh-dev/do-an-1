@@ -150,6 +150,7 @@ builder.Services.AddRateLimiter(options =>
 // ------------------------------------------------- Service nghiệp vụ
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<AuditLogService>();
 builder.Services.AddScoped<LandlordApplicationService>();
 builder.Services.AddScoped<LandlordBankAccountService>();
 builder.Services.AddScoped<UserAdminService>();
