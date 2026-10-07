@@ -24,6 +24,12 @@ public class Invoice
     public static readonly InvoiceStatus[] CarryOverStatuses =
         [InvoiceStatus.ChuaThanhToan, InvoiceStatus.ThanhToanMotPhan, InvoiceStatus.QuaHan];
 
+    /// <summary>
+    /// FR-95: bảng thanh lý đã gửi quá chừng này mà người thuê không phản hồi thì Chủ trọ được tự chốt. Hạn bắt đầu từ
+    /// một thời điểm nên tính đủ 168 giờ kể từ lần gửi gần nhất (architecture mục 7.1).
+    /// </summary>
+    public static readonly TimeSpan SettlementResponseWindow = TimeSpan.FromDays(7);
+
     public long Id { get; set; }
 
     public long ContractId { get; set; }
@@ -125,5 +131,99 @@ public class Invoice
         Status = InvoiceStatus.DaChuyenThanhLy;
 
         return line;
+    }
+
+    /// <summary>FR-57: Chủ trọ gửi bảng thanh lý đang ở Nháp cho người thuê xác nhận.</summary>
+    public bool CanSendSettlement => Type == InvoiceType.ThanhLy && Status == InvoiceStatus.Nhap;
+
+    /// <summary>Bảng thanh lý đang chờ người thuê đồng ý hoặc yêu cầu sửa.</summary>
+    public bool IsAwaitingTenantSettlementConfirmation
+        => Type == InvoiceType.ThanhLy && Status == InvoiceStatus.ChoNguoiThueXacNhan;
+
+    /// <summary>Lần gửi gần nhất cộng <see cref="SettlementResponseWindow"/>; null khi bảng chưa gửi.</summary>
+    public DateTimeOffset? SettlementFinalizeAllowedAfter => SentAt + SettlementResponseWindow;
+
+    /// <summary>FR-95: bảng đang chờ người thuê và đã gửi quá 7 ngày (168 giờ) kể từ lần gửi gần nhất.</summary>
+    public bool CanFinalizeSettlement(DateTimeOffset now)
+        => IsAwaitingTenantSettlementConfirmation && now > SettlementFinalizeAllowedAfter;
+
+    /// <summary>FR-57: Nháp → Chờ người thuê xác nhận, ghi lần gửi gần nhất — mốc tính 7 ngày tự chốt.</summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanSendSettlement"/> sai — lỗi lập trình.</exception>
+    public void SendSettlement(DateTimeOffset now)
+    {
+        EnsureAllowed(CanSendSettlement, nameof(SendSettlement));
+
+        Status = InvoiceStatus.ChoNguoiThueXacNhan;
+        SentAt = now;
+    }
+
+    /// <summary>FR-57: người thuê chưa đồng ý kèm lý do — bảng về Nháp để Chủ trọ sửa và gửi lại.</summary>
+    /// <exception cref="InvalidOperationException">
+    /// Gọi khi <see cref="IsAwaitingTenantSettlementConfirmation"/> sai — lỗi lập trình.
+    /// </exception>
+    public void RequestSettlementChanges(string reason)
+    {
+        EnsureAllowed(IsAwaitingTenantSettlementConfirmation, nameof(RequestSettlementChanges));
+
+        Status = InvoiceStatus.Nhap;
+        ChangeRequestReason = reason;
+    }
+
+    /// <summary>FR-57: người thuê đồng ý — bảng bị khóa theo dấu số dư (<see cref="LockSettlement"/>).</summary>
+    /// <param name="paymentDueDays">Số ngày được phép thanh toán ghi trong hợp đồng.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Gọi khi <see cref="IsAwaitingTenantSettlementConfirmation"/> sai — lỗi lập trình.
+    /// </exception>
+    public void ConfirmSettlementByTenant(DateTimeOffset now, int paymentDueDays)
+    {
+        EnsureAllowed(IsAwaitingTenantSettlementConfirmation, nameof(ConfirmSettlementByTenant));
+
+        TenantConfirmedAt = now;
+        LockSettlement(now, paymentDueDays);
+    }
+
+    /// <summary>FR-95: Chủ trọ tự chốt kèm ghi chú bắt buộc; bảng bị khóa như khi người thuê đồng ý.</summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanFinalizeSettlement"/> sai — lỗi lập trình.</exception>
+    public void FinalizeSettlementByLandlord(string note, DateTimeOffset now, int paymentDueDays)
+    {
+        EnsureAllowed(CanFinalizeSettlement(now), nameof(FinalizeSettlementByLandlord));
+
+        LandlordFinalizeNote = note;
+        LockSettlement(now, paymentDueDays);
+    }
+
+    /// <summary>
+    /// database-design mục 6.1: số dư dương → Chưa thanh toán, phát hành lúc khóa, hạn thanh toán tính từ ngày khóa theo
+    /// giờ Việt Nam (BP-10 bước 6); số dư âm → Chờ hoàn cọc; bằng 0 → Đã thanh toán ngay.
+    /// </summary>
+    private void LockSettlement(DateTimeOffset now, int paymentDueDays)
+    {
+        if (TotalAmount > 0)
+        {
+            Status = InvoiceStatus.ChuaThanhToan;
+            IssuedAt = now;
+            DueDate = VietnamTime.DateOf(now).AddDays(paymentDueDays);
+        }
+        else if (TotalAmount < 0)
+        {
+            Status = InvoiceStatus.ChoHoanCoc;
+        }
+        else
+        {
+            Status = InvoiceStatus.DaThanhToan;
+            SettledAt = now;
+        }
+    }
+
+    /// <summary>
+    /// Service phải kiểm tra điều kiện và trả 409 trước khi đổi trạng thái; tới được đây mà điều kiện sai là lỗi lập
+    /// trình, không phải lỗi nghiệp vụ.
+    /// </summary>
+    private void EnsureAllowed(bool allowed, string operation)
+    {
+        if (!allowed)
+        {
+            throw new InvalidOperationException($"Hóa đơn {Id} ở trạng thái {Status}: không thực hiện được {operation}.");
+        }
     }
 }
