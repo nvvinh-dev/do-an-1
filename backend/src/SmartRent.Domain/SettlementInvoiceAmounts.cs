@@ -21,4 +21,11 @@ public sealed record SettlementInvoiceAmounts(
     /// Số tiền hoàn do hệ thống tính, Chủ trọ không nhập (FR-58, FR-86).
     /// </summary>
     public decimal DepositRefundAmount => Math.Max(-TotalAmount, 0);
+
+    /// <summary>
+    /// Mọi khoản được lưu vào hóa đơn — tiền phòng, điện, nước, phí dịch vụ và tổng — vừa cột tiền (<see cref="MoneyLimits"/>).
+    /// Số hoàn cọc bằng −tổng nên cũng vừa. Sai thì service trả 422.
+    /// </summary>
+    public bool FitsMoneyColumns
+        => new[] { RentAmount, ElectricityAmount, WaterAmount, ServiceFeeAmount, TotalAmount }.All(MoneyLimits.Fits);
 }

@@ -15,9 +15,9 @@ public class SendMoveOutNoticeRequestValidator : AbstractValidator<SendMoveOutNo
 }
 
 /// <summary>
-/// Thiếu trường bắt buộc hoặc số sai định dạng trả 400. Dòng thiếu mô tả (BR-22), loại dòng do hệ thống tự thêm, phí
-/// phạt không hợp lệ, chỉ số nhỏ hơn chỉ số cũ và đường dẫn ảnh sai là quy tắc nghiệp vụ, trả 422 ở SettlementService
-/// (api-design mục 10).
+/// Thiếu trường bắt buộc hoặc số sai định dạng trả 400. Quá 50 dòng, dòng thiếu mô tả (BR-22), loại dòng do hệ thống tự
+/// thêm, phí phạt không hợp lệ, chỉ số nhỏ hơn chỉ số cũ, đường dẫn ảnh sai và số tiền tính ra vượt cột tiền là quy tắc
+/// nghiệp vụ, trả 422 ở SettlementService (api-design mục 10).
 /// </summary>
 public class SettlementInvoiceRequestValidator : AbstractValidator<SettlementInvoiceRequest>
 {
