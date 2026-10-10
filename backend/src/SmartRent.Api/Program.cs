@@ -159,6 +159,7 @@ builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<RentalRequestService>();
 builder.Services.AddScoped<ContractService>();
 builder.Services.AddScoped<SettlementService>();
+builder.Services.AddScoped<InvoiceDetailBuilder>();
 builder.Services.AddScoped<PropertyService>();
 builder.Services.AddScoped<RoomSearchService>();
 builder.Services.AddScoped<DashboardService>();

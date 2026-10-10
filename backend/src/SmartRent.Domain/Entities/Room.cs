@@ -57,6 +57,26 @@ public class Room
     /// </summary>
     public bool CanChangeVisibility => !IsArchived && VisibilityStatus != RoomVisibilityStatus.DaAnBoiAdmin;
 
+    /// <summary>
+    /// FR-59: hoàn tất thanh lý thì phòng đang thuê chuyển Bảo trì — nếu cần dọn dẹp, sửa chữa — hoặc về thẳng Trống,
+    /// theo lựa chọn của Chủ trọ.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// Phòng không ở Đang thuê hoặc trạng thái đích không phải Trống, Bảo trì — service đã kiểm tra trước, tới đây là lỗi
+    /// lập trình hoặc dữ liệu sai.
+    /// </exception>
+    public void ReleaseAfterSettlement(RoomOccupancyStatus next)
+    {
+        if (OccupancyStatus != RoomOccupancyStatus.DangThue
+            || next is not (RoomOccupancyStatus.Trong or RoomOccupancyStatus.BaoTri))
+        {
+            throw new InvalidOperationException(
+                $"Phòng {Id} ở trạng thái {OccupancyStatus}: không chuyển sang {next} khi hoàn tất thanh lý được.");
+        }
+
+        OccupancyStatus = next;
+    }
+
     /// <summary>Phòng chỉ lưu trữ được khi đang Trống hoặc Bảo trì (FR-20).</summary>
     public bool CanBeArchived => OccupancyStatus is RoomOccupancyStatus.Trong or RoomOccupancyStatus.BaoTri;
 

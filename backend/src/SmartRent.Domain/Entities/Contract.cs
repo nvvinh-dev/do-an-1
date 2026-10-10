@@ -305,6 +305,37 @@ public class Contract
         TerminationReason = null;
     }
 
+    /// <summary>FR-59: chỉ hoàn tất thanh lý hợp đồng Đang thanh lý; bảng thanh lý đã khóa do service kiểm tra.</summary>
+    public bool CanCompleteSettlement => Status == ContractStatus.DangThanhLy;
+
+    /// <summary>FR-59: hợp đồng Đang thanh lý → Đã thanh lý, ghi thời điểm hoàn tất.</summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanCompleteSettlement"/> sai — lỗi lập trình.</exception>
+    public void CompleteSettlement(DateTimeOffset now)
+    {
+        EnsureAllowed(CanCompleteSettlement, nameof(CompleteSettlement));
+
+        Status = ContractStatus.DaThanhLy;
+        TerminatedAt = now;
+    }
+
+    /// <summary>
+    /// FR-86: thời điểm hoàn cọc khi thanh lý do Chủ trọ nhập, không trước lúc gửi thông báo trả phòng và không ở tương
+    /// lai — như khi hoàn cọc hợp đồng đã hủy (không trước lúc hủy).
+    /// </summary>
+    public bool IsValidSettlementRefundTime(DateTimeOffset refundedAt, DateTimeOffset now)
+        => refundedAt >= MoveOutNoticeAt && refundedAt <= now;
+
+    /// <summary>
+    /// FR-58, FR-86: hóa đơn thanh lý số dư âm — số hoàn do hệ thống tính bằng phần cọc dư; thời điểm và hình thức do
+    /// Chủ trọ nhập.
+    /// </summary>
+    public void RecordSettlementRefund(decimal amount, DateTimeOffset refundedAt, PaymentMethod method)
+    {
+        DepositRefundedAmount = amount;
+        DepositRefundedAt = refundedAt;
+        DepositRefundMethod = method;
+    }
+
     private void Activate(DateTimeOffset now)
     {
         Status = ContractStatus.DangHieuLuc;

@@ -37,4 +37,18 @@ public class InvoiceLine
     /// </summary>
     public static bool IsAllowedOnPeriodicInvoice(InvoiceLineCategory category)
         => category == InvoiceLineCategory.DieuChinhKhac;
+
+    /// <summary>
+    /// Chủ trọ chỉ gửi được dòng bồi thường hư hỏng, phí phạt và điều chỉnh vào hóa đơn thanh lý; dòng công nợ kỳ trước
+    /// và dòng trừ tiền cọc do hệ thống tự thêm, Chủ trọ gửi thì service trả 422 (FR-55, api-design mục 10).
+    /// </summary>
+    public static bool IsAllowedFromLandlordOnSettlement(InvoiceLineCategory category)
+        => category is InvoiceLineCategory.BoiThuongHuHong or InvoiceLineCategory.PhiPhat or InvoiceLineCategory.DieuChinhKhac;
+
+    /// <summary>
+    /// Dòng bồi thường hư hỏng và phí phạt là khoản phải thu nên số tiền phải lớn hơn 0; muốn giảm thì dùng dòng điều
+    /// chỉnh, nhận cả số âm. Sai thì service trả 422 (api-design mục 10).
+    /// </summary>
+    public static bool IsAmountAllowedOnSettlement(InvoiceLineCategory category, decimal amount)
+        => category is not (InvoiceLineCategory.BoiThuongHuHong or InvoiceLineCategory.PhiPhat) || amount > 0;
 }
