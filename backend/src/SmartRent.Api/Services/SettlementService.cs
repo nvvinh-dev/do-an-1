@@ -799,13 +799,18 @@ public class SettlementService
 
         if (period is null)
         {
+            // FR-93: tháng của ngày trả phòng dự kiến bị chặn lập hóa đơn định kỳ (FR-91), nên người thuê ở lại quá tháng
+            // đó thì "lập hóa đơn còn thiếu" không làm được — đường đúng là rút thông báo rồi gửi lại (FR-98).
             return ServiceResult<SettlementInvoiceDraft>.Fail(
                 StatusCodes.Status409Conflict,
-                lastPeriodic is null
-                    ? "Hợp đồng chưa có hóa đơn định kỳ nên ngày trả phòng phải thuộc tháng của ngày bắt đầu hợp đồng. " +
-                      "Lập trước hóa đơn định kỳ của các tháng còn thiếu."
-                    : $"Ngày trả phòng phải thuộc tháng của kỳ hóa đơn định kỳ cuối cùng ({lastPeriodic.PeriodEnd:MM/yyyy}) " +
-                      "hoặc tháng ngay sau đó. Lập trước hóa đơn định kỳ của các tháng còn thiếu.");
+                contract.IsMoveOutAfterExpectedMonth(request.MoveOutDate!.Value)
+                    ? $"Người thuê ở lại quá tháng trả phòng dự kiến ({contract.ExpectedMoveOutDate:MM/yyyy}). " +
+                      "Bên đã gửi thông báo rút thông báo rồi gửi lại với ngày trả phòng mới."
+                    : lastPeriodic is null
+                        ? "Hợp đồng chưa có hóa đơn định kỳ nên ngày trả phòng phải thuộc tháng của ngày bắt đầu hợp đồng. " +
+                          "Lập trước hóa đơn định kỳ của các tháng còn thiếu."
+                        : $"Ngày trả phòng phải thuộc tháng của kỳ hóa đơn định kỳ cuối cùng ({lastPeriodic.PeriodEnd:MM/yyyy}) " +
+                          "hoặc tháng ngay sau đó. Lập trước hóa đơn định kỳ của các tháng còn thiếu.");
         }
 
         // BR-14: chỉ số cũ là chỉ số mới của hóa đơn chưa hủy gần nhất, hoặc chỉ số lúc bàn giao ghi trong hợp đồng.

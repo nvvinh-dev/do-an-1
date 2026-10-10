@@ -282,6 +282,15 @@ public class Contract
            && MoveOutNoticeDays < MinimumMoveOutNoticeDays
            && ExpectedMoveOutDate < EndDate;
 
+    /// <summary>
+    /// FR-93: ngày trả phòng thực tế thuộc tháng sau tháng của ngày trả phòng dự kiến — người thuê ở lại quá tháng dự
+    /// kiến. Tháng dự kiến bị chặn lập hóa đơn định kỳ (FR-91), nên chỉ lập được hóa đơn thanh lý sau khi bên đã gửi rút
+    /// thông báo rồi gửi lại với ngày trả phòng mới (FR-98). Chưa có thông báo trả phòng thì sai.
+    /// </summary>
+    public bool IsMoveOutAfterExpectedMonth(DateOnly moveOutDate)
+        => ExpectedMoveOutDate is { } expected
+           && (moveOutDate.Year, moveOutDate.Month).CompareTo((expected.Year, expected.Month)) > 0;
+
     /// <summary>FR-98: chỉ bên đã gửi được rút, khi hợp đồng đang thanh lý và Chủ trọ chưa lập hóa đơn thanh lý.</summary>
     public bool CanWithdrawMoveOutNotice(long userId, bool hasSettlementInvoice)
         => Status == ContractStatus.DangThanhLy && MoveOutNoticeByUserId == userId && !hasSettlementInvoice;
