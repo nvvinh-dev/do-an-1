@@ -588,11 +588,11 @@ public class SettlementService
 
             var refundedAt = requestedRefundedAt.ToUniversalTime();
 
-            if (!contract.IsValidSettlementRefundTime(refundedAt, now))
+            if (!invoice.IsValidSettlementRefundTime(refundedAt, now))
             {
                 return ServiceResult.Fail(
                     StatusCodes.Status422UnprocessableEntity,
-                    "Thời điểm hoàn cọc phải từ lúc gửi thông báo trả phòng tới thời điểm hiện tại.");
+                    $"Thời điểm hoàn cọc phải từ ngày trả phòng ({invoice.PeriodEnd:dd/MM/yyyy}) tới thời điểm hiện tại.");
             }
 
             // FR-86: số hoàn do server tính bằng phần cọc dư, không nhận từ client.

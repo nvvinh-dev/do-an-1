@@ -328,13 +328,6 @@ public class Contract
     }
 
     /// <summary>
-    /// FR-86: thời điểm hoàn cọc khi thanh lý do Chủ trọ nhập, không trước lúc gửi thông báo trả phòng và không ở tương
-    /// lai — như khi hoàn cọc hợp đồng đã hủy (không trước lúc hủy).
-    /// </summary>
-    public bool IsValidSettlementRefundTime(DateTimeOffset refundedAt, DateTimeOffset now)
-        => refundedAt >= MoveOutNoticeAt && refundedAt <= now;
-
-    /// <summary>
     /// FR-58, FR-86: hóa đơn thanh lý số dư âm — số hoàn do hệ thống tính bằng phần cọc dư; thời điểm và hình thức do
     /// Chủ trọ nhập.
     /// </summary>
