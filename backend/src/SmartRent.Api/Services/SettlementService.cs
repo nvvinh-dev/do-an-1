@@ -23,6 +23,15 @@ public class SettlementService
     private const string MoveOutDateInFutureMessage =
         "Hóa đơn thanh lý lập vào hoặc sau ngày trả phòng thực tế — ngày trả phòng không được sau hôm nay.";
 
+    /// <summary>
+    /// Số dòng Chủ trọ gửi tối đa trong một bảng thanh lý (api-design mục 10). Mỗi ảnh hư hỏng là một lần gọi Storage,
+    /// nên giới hạn số dòng cũng giới hạn số lần gọi trong một request.
+    /// </summary>
+    private const int MaxSettlementLines = 50;
+
+    private const string AmountTooLargeMessage =
+        "Số tiền của hóa đơn thanh lý quá lớn. Kiểm tra lại chỉ số điện nước và số tiền của các dòng.";
+
     private readonly AppDbContext _db;
     private readonly Notifier _notifier;
     private readonly AuditLogger _auditLogger;
@@ -225,6 +234,16 @@ public class SettlementService
             .Select(i => i.CarryOverToSettlement())
             .ToList();
 
+        var calculation = SettlementCalculator.Calculate(
+            contract, draft.Period, draft.Electricity, draft.Water, debtLines, draft.LandlordLines);
+
+        if (!calculation.Amounts.FitsMoneyColumns)
+        {
+            // Chưa lưu gì: trạng thái kết chuyển vừa gán chỉ nằm trong DbContext của request này.
+            return ServiceResult<InvoiceDetailResponse>.Fail(
+                StatusCodes.Status422UnprocessableEntity, AmountTooLargeMessage);
+        }
+
         var invoice = new Invoice
         {
             ContractId = contract.Id,
@@ -233,7 +252,7 @@ public class SettlementService
             Status = InvoiceStatus.Nhap
         };
 
-        ApplySettlementInvoice(invoice, contract, draft, debtLines);
+        ApplySettlementInvoice(invoice, contract, draft, calculation);
         _db.Invoices.Add(invoice);
         MarkContractChanged(contract);
 
@@ -315,14 +334,25 @@ public class SettlementService
             return ServiceResult<InvoiceDetailResponse>.Fail(prepared.StatusCode, prepared.Error!);
         }
 
-        var before = SettlementInvoiceAudit.Of(settlementInvoice);
+        var draft = prepared.Value!;
 
         // Dòng công nợ đã kết chuyển lúc lập giữ nguyên; các dòng Chủ trọ gửi và dòng trừ cọc được dựng lại.
         var debtLines = settlementInvoice.Lines
             .Where(l => l.Category == InvoiceLineCategory.CongNoKyTruoc)
             .ToList();
 
-        ApplySettlementInvoice(settlementInvoice, contract, prepared.Value!, debtLines);
+        var calculation = SettlementCalculator.Calculate(
+            contract, draft.Period, draft.Electricity, draft.Water, debtLines, draft.LandlordLines);
+
+        if (!calculation.Amounts.FitsMoneyColumns)
+        {
+            return ServiceResult<InvoiceDetailResponse>.Fail(
+                StatusCodes.Status422UnprocessableEntity, AmountTooLargeMessage);
+        }
+
+        var before = SettlementInvoiceAudit.Of(settlementInvoice);
+
+        ApplySettlementInvoice(settlementInvoice, contract, draft, calculation);
         MarkContractChanged(contract);
 
         _auditLogger.Write(
@@ -558,11 +588,11 @@ public class SettlementService
 
             var refundedAt = requestedRefundedAt.ToUniversalTime();
 
-            if (!contract.IsValidSettlementRefundTime(refundedAt, now))
+            if (!invoice.IsValidSettlementRefundTime(refundedAt, now))
             {
                 return ServiceResult.Fail(
                     StatusCodes.Status422UnprocessableEntity,
-                    "Thời điểm hoàn cọc phải từ lúc gửi thông báo trả phòng tới thời điểm hiện tại.");
+                    $"Thời điểm hoàn cọc phải từ ngày trả phòng ({invoice.PeriodEnd:dd/MM/yyyy}) tới thời điểm hiện tại.");
             }
 
             // FR-86: số hoàn do server tính bằng phần cọc dư, không nhận từ client.
@@ -770,7 +800,8 @@ public class SettlementService
 
     /// <summary>
     /// Kiểm tra phần chung của lập và sửa hóa đơn thanh lý: kỳ (FR-93, 409), chỉ số (BR-14, 422), các dòng Chủ trọ gửi
-    /// (FR-55, FR-87, BR-16, BR-22 — 422) và đường dẫn ảnh (api-design mục 14 — 422).
+    /// (tối đa <see cref="MaxSettlementLines"/> dòng; FR-55, FR-87, BR-16, BR-22 — 422) và đường dẫn ảnh (api-design mục
+    /// 14 — 422). Số dòng kiểm tra trước, nên request quá nhiều dòng không tới bước gọi Storage.
     /// </summary>
     /// <param name="otherInvoices">Các hóa đơn khác của hợp đồng, không gồm hóa đơn thanh lý.</param>
     private async Task<ServiceResult<SettlementInvoiceDraft>> PrepareSettlementInvoiceAsync(
@@ -799,13 +830,18 @@ public class SettlementService
 
         if (period is null)
         {
+            // FR-93: tháng của ngày trả phòng dự kiến bị chặn lập hóa đơn định kỳ (FR-91), nên người thuê ở lại quá tháng
+            // đó thì "lập hóa đơn còn thiếu" không làm được — đường đúng là rút thông báo rồi gửi lại (FR-98).
             return ServiceResult<SettlementInvoiceDraft>.Fail(
                 StatusCodes.Status409Conflict,
-                lastPeriodic is null
-                    ? "Hợp đồng chưa có hóa đơn định kỳ nên ngày trả phòng phải thuộc tháng của ngày bắt đầu hợp đồng. " +
-                      "Lập trước hóa đơn định kỳ của các tháng còn thiếu."
-                    : $"Ngày trả phòng phải thuộc tháng của kỳ hóa đơn định kỳ cuối cùng ({lastPeriodic.PeriodEnd:MM/yyyy}) " +
-                      "hoặc tháng ngay sau đó. Lập trước hóa đơn định kỳ của các tháng còn thiếu.");
+                contract.IsMoveOutAfterExpectedMonth(request.MoveOutDate!.Value)
+                    ? $"Người thuê ở lại quá tháng trả phòng dự kiến ({contract.ExpectedMoveOutDate:MM/yyyy}). " +
+                      "Bên đã gửi thông báo rút thông báo rồi gửi lại với ngày trả phòng mới."
+                    : lastPeriodic is null
+                        ? "Hợp đồng chưa có hóa đơn định kỳ nên ngày trả phòng phải thuộc tháng của ngày bắt đầu hợp đồng. " +
+                          "Lập trước hóa đơn định kỳ của các tháng còn thiếu."
+                        : $"Ngày trả phòng phải thuộc tháng của kỳ hóa đơn định kỳ cuối cùng ({lastPeriodic.PeriodEnd:MM/yyyy}) " +
+                          "hoặc tháng ngay sau đó. Lập trước hóa đơn định kỳ của các tháng còn thiếu.");
         }
 
         // BR-14: chỉ số cũ là chỉ số mới của hóa đơn chưa hủy gần nhất, hoặc chỉ số lúc bàn giao ghi trong hợp đồng.
@@ -827,6 +863,13 @@ public class SettlementService
             return ServiceResult<SettlementInvoiceDraft>.Fail(
                 StatusCodes.Status422UnprocessableEntity,
                 $"Chỉ số mới không được nhỏ hơn chỉ số cũ (điện {electricity.Previous}, nước {water.Previous}).");
+        }
+
+        if (request.Lines is { Count: > MaxSettlementLines })
+        {
+            return ServiceResult<SettlementInvoiceDraft>.Fail(
+                StatusCodes.Status422UnprocessableEntity,
+                $"Bảng thanh lý có tối đa {MaxSettlementLines} dòng bồi thường, phí phạt và điều chỉnh.");
         }
 
         var landlordLines = new List<InvoiceLine>();
@@ -935,19 +978,17 @@ public class SettlementService
     }
 
     /// <summary>
-    /// Tính lại hóa đơn thanh lý ở Domain từ dòng công nợ đã kết chuyển và các dòng Chủ trọ gửi — Domain tự thêm dòng trừ
-    /// tiền cọc — rồi ghi danh sách dòng, kỳ, chỉ số, đơn giá đã chốt trong hợp đồng (BR-13) và các khoản tiền. Dòng cũ
-    /// không còn trong kết quả bị xóa, nên tổng luôn khớp các dòng được lưu.
+    /// Ghi kết quả Domain đã tính — từ dòng công nợ đã kết chuyển và các dòng Chủ trọ gửi, Domain tự thêm dòng trừ tiền
+    /// cọc — vào hóa đơn: danh sách dòng, kỳ, chỉ số, đơn giá đã chốt trong hợp đồng (BR-13) và các khoản tiền. Dòng cũ
+    /// không còn trong kết quả bị xóa, nên tổng luôn khớp các dòng được lưu. Bên gọi kiểm tra
+    /// <see cref="SettlementInvoiceAmounts.FitsMoneyColumns"/> trước khi gọi.
     /// </summary>
     private void ApplySettlementInvoice(
         Invoice invoice,
         Contract contract,
         SettlementInvoiceDraft draft,
-        IReadOnlyList<InvoiceLine> carriedOverLines)
+        SettlementInvoiceCalculation calculation)
     {
-        var calculation = SettlementCalculator.Calculate(
-            contract, draft.Period, draft.Electricity, draft.Water, carriedOverLines, draft.LandlordLines);
-
         var staleLines = invoice.Lines.Where(l => !calculation.Lines.Contains(l)).ToList();
 
         foreach (var line in staleLines)

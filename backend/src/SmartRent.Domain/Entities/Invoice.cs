@@ -213,6 +213,15 @@ public class Invoice
     }
 
     /// <summary>
+    /// FR-86, api-design mục 10: thời điểm hoàn cọc khi thanh lý do Chủ trọ nhập, từ 0 giờ ngày trả phòng thực tế (giờ
+    /// Việt Nam) — ngày cuối kỳ của hóa đơn thanh lý (FR-93) — tới hiện tại. Kiểm phòng xong mới biết trừ bao nhiêu nên
+    /// không hoàn trước ngày trả phòng; không so với lúc gửi thông báo, vì thông báo có thể được ghi sau khi người thuê đã
+    /// dọn đi và nhận lại cọc. Sai thì service trả 422.
+    /// </summary>
+    public bool IsValidSettlementRefundTime(DateTimeOffset refundedAt, DateTimeOffset now)
+        => refundedAt >= VietnamTime.StartOf(PeriodEnd) && refundedAt <= now;
+
+    /// <summary>
     /// database-design mục 6.1: số dư dương → Chưa thanh toán, phát hành lúc khóa, hạn thanh toán tính từ ngày khóa theo
     /// giờ Việt Nam (BP-10 bước 6); số dư âm → Chờ hoàn cọc; bằng 0 → Đã thanh toán ngay.
     /// </summary>
