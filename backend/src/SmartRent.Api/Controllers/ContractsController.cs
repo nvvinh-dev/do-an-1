@@ -16,6 +16,9 @@ namespace SmartRent.Api.Controllers;
 [Authorize]
 public class ContractsController : ControllerBase
 {
+    /// <summary>Trần của page để (page - 1) * pageSize không tràn số int.</summary>
+    private const int MaxPage = 1_000_000;
+
     private readonly ContractService _service;
 
     public ContractsController(ContractService service)
@@ -49,7 +52,7 @@ public class ContractsController : ControllerBase
             User.IsInRole(AppRoles.Landlord),
             status,
             roomId,
-            Math.Max(page, 1),
+            Math.Clamp(page, 1, MaxPage),
             Math.Clamp(pageSize, 1, 100),
             cancellationToken);
 

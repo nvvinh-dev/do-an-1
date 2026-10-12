@@ -15,6 +15,9 @@ namespace SmartRent.Api.Controllers;
 [Authorize(Roles = AppRoles.Admin)]
 public class AdminAuditLogsController : ControllerBase
 {
+    /// <summary>Trần của page để (page - 1) * pageSize không tràn số int.</summary>
+    private const int MaxPage = 1_000_000;
+
     private readonly AuditLogService _service;
 
     public AdminAuditLogsController(AuditLogService service)
@@ -31,7 +34,7 @@ public class AdminAuditLogsController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var result = await _service.ListAsync(
-            filter, Math.Max(page, 1), Math.Clamp(pageSize, 1, 100), cancellationToken);
+            filter, Math.Clamp(page, 1, MaxPage), Math.Clamp(pageSize, 1, 100), cancellationToken);
 
         return Ok(result);
     }
