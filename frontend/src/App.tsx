@@ -1,44 +1,44 @@
 import { createBrowserRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
-import ProtectedRoute from './components/ProtectedRoute'
-import AdminDashboardPage from './pages/admin/AdminDashboardPage'
-import AuditLogPage from './pages/admin/AuditLogPage'
-import LandlordApplicationListPage from './pages/admin/LandlordApplicationListPage'
-import LandlordApplicationReviewPage from './pages/admin/LandlordApplicationReviewPage'
-import UserListPage from './pages/admin/UserListPage'
-import ForgotPasswordPage from './pages/auth/ForgotPasswordPage'
-import LoginPage from './pages/auth/LoginPage'
-import RegisterPage from './pages/auth/RegisterPage'
-import ResetPasswordPage from './pages/auth/ResetPasswordPage'
-import BankAccountPage from './pages/landlord/BankAccountPage'
-import ContractFormPage from './pages/landlord/ContractFormPage'
-import InvoiceFormPage from './pages/landlord/InvoiceFormPage'
-import LandlordContractDetailPage from './pages/landlord/LandlordContractDetailPage'
-import LandlordContractListPage from './pages/landlord/LandlordContractListPage'
-import LandlordDashboardPage from './pages/landlord/LandlordDashboardPage'
-import LandlordInvoiceDetailPage from './pages/landlord/LandlordInvoiceDetailPage'
-import LandlordInvoiceListPage from './pages/landlord/LandlordInvoiceListPage'
-import LandlordRentalRequestDetailPage from './pages/landlord/LandlordRentalRequestDetailPage'
-import LandlordRentalRequestListPage from './pages/landlord/LandlordRentalRequestListPage'
-import LandlordRoomDetailPage from './pages/landlord/LandlordRoomDetailPage'
-import PropertyDetailPage from './pages/landlord/PropertyDetailPage'
-import PropertyFormPage from './pages/landlord/PropertyFormPage'
-import PropertyListPage from './pages/landlord/PropertyListPage'
-import RoomFormPage from './pages/landlord/RoomFormPage'
-import SettlementPage from './pages/landlord/SettlementPage'
-import NotFoundPage from './pages/public/NotFoundPage'
-import RoomPublicDetailPage from './pages/public/RoomPublicDetailPage'
-import SearchPage from './pages/public/SearchPage'
-import AccountPage from './pages/shared/AccountPage'
-import NotificationsPage from './pages/shared/NotificationsPage'
-import LandlordApplicationPage from './pages/tenant/LandlordApplicationPage'
-import TenantContractDetailPage from './pages/tenant/TenantContractDetailPage'
-import TenantContractListPage from './pages/tenant/TenantContractListPage'
-import TenantDashboardPage from './pages/tenant/TenantDashboardPage'
-import TenantInvoiceDetailPage from './pages/tenant/TenantInvoiceDetailPage'
-import TenantInvoiceListPage from './pages/tenant/TenantInvoiceListPage'
-import TenantRentalRequestDetailPage from './pages/tenant/TenantRentalRequestDetailPage'
-import TenantRentalRequestListPage from './pages/tenant/TenantRentalRequestListPage'
+import ProtectedRoute from '@/components/ProtectedRoute'
+import AdminDashboardPage from '@/pages/admin/AdminDashboardPage'
+import AuditLogPage from '@/pages/admin/AuditLogPage'
+import LandlordApplicationListPage from '@/pages/admin/LandlordApplicationListPage'
+import LandlordApplicationReviewPage from '@/pages/admin/LandlordApplicationReviewPage'
+import UserListPage from '@/pages/admin/UserListPage'
+import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage'
+import LoginPage from '@/pages/auth/LoginPage'
+import RegisterPage from '@/pages/auth/RegisterPage'
+import ResetPasswordPage from '@/pages/auth/ResetPasswordPage'
+import BankAccountPage from '@/pages/landlord/BankAccountPage'
+import ContractFormPage from '@/pages/landlord/ContractFormPage'
+import InvoiceFormPage from '@/pages/landlord/InvoiceFormPage'
+import LandlordContractDetailPage from '@/pages/landlord/LandlordContractDetailPage'
+import LandlordContractListPage from '@/pages/landlord/LandlordContractListPage'
+import LandlordDashboardPage from '@/pages/landlord/LandlordDashboardPage'
+import LandlordInvoiceDetailPage from '@/pages/landlord/LandlordInvoiceDetailPage'
+import LandlordInvoiceListPage from '@/pages/landlord/LandlordInvoiceListPage'
+import LandlordRentalRequestDetailPage from '@/pages/landlord/LandlordRentalRequestDetailPage'
+import LandlordRentalRequestListPage from '@/pages/landlord/LandlordRentalRequestListPage'
+import LandlordRoomDetailPage from '@/pages/landlord/LandlordRoomDetailPage'
+import PropertyDetailPage from '@/pages/landlord/PropertyDetailPage'
+import PropertyFormPage from '@/pages/landlord/PropertyFormPage'
+import PropertyListPage from '@/pages/landlord/PropertyListPage'
+import RoomFormPage from '@/pages/landlord/RoomFormPage'
+import SettlementPage from '@/pages/landlord/SettlementPage'
+import NotFoundPage from '@/pages/public/NotFoundPage'
+import RoomPublicDetailPage from '@/pages/public/RoomPublicDetailPage'
+import SearchPage from '@/pages/public/SearchPage'
+import AccountPage from '@/pages/shared/AccountPage'
+import NotificationsPage from '@/pages/shared/NotificationsPage'
+import LandlordApplicationPage from '@/pages/tenant/LandlordApplicationPage'
+import TenantContractDetailPage from '@/pages/tenant/TenantContractDetailPage'
+import TenantContractListPage from '@/pages/tenant/TenantContractListPage'
+import TenantDashboardPage from '@/pages/tenant/TenantDashboardPage'
+import TenantInvoiceDetailPage from '@/pages/tenant/TenantInvoiceDetailPage'
+import TenantInvoiceListPage from '@/pages/tenant/TenantInvoiceListPage'
+import TenantRentalRequestDetailPage from '@/pages/tenant/TenantRentalRequestDetailPage'
+import TenantRentalRequestListPage from '@/pages/tenant/TenantRentalRequestListPage'
 
 // Đường dẫn và file trang theo docs/frontend-screens.md mục 2–7. Đường dẫn lạ trong
 // nhóm của một vai trò vẫn qua kiểm tra vai trò trước khi tới NotFoundPage.
@@ -54,15 +54,18 @@ const router = createBrowserRouter([
   // Đã đăng nhập, vai trò nào cũng vào được
   {
     element: <ProtectedRoute />,
-    children: [
-      { path: '/account', element: <AccountPage /> },
-      { path: '/notifications', element: <NotificationsPage /> },
-    ],
+    children: [{ path: '/account', element: <AccountPage /> }],
+  },
+
+  // Admin không có màn Thông báo (docs/frontend-screens.md mục 1, 8.4)
+  {
+    element: <ProtectedRoute roles={['Tenant', 'Landlord']} />,
+    children: [{ path: '/notifications', element: <NotificationsPage /> }],
   },
 
   {
     path: '/tenant',
-    element: <ProtectedRoute role="Tenant" />,
+    element: <ProtectedRoute roles={['Tenant']} />,
     children: [
       { index: true, element: <TenantDashboardPage /> },
       { path: 'landlord-application', element: <LandlordApplicationPage /> },
@@ -78,7 +81,7 @@ const router = createBrowserRouter([
 
   {
     path: '/landlord',
-    element: <ProtectedRoute role="Landlord" />,
+    element: <ProtectedRoute roles={['Landlord']} />,
     children: [
       { index: true, element: <LandlordDashboardPage /> },
       { path: 'properties', element: <PropertyListPage /> },
@@ -106,7 +109,7 @@ const router = createBrowserRouter([
 
   {
     path: '/admin',
-    element: <ProtectedRoute role="Admin" />,
+    element: <ProtectedRoute roles={['Admin']} />,
     children: [
       { index: true, element: <AdminDashboardPage /> },
       { path: 'landlord-applications', element: <LandlordApplicationListPage /> },
