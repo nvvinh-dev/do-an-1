@@ -167,7 +167,6 @@ Với 02 thành viên và 2.5 tháng, phạm vi in-scope là rất lớn. Thứ 
 ```
 SmartRent_System/
 ├── .github/workflows/                   # Kiểm tra tự động mỗi PR (GitHub Actions)
-├── postman/                             # Bộ Postman kiểm thử API, không chứa mật khẩu hay token
 ├── backend/
 │   ├── SmartRent.slnx
 │   ├── src/
@@ -208,6 +207,7 @@ SmartRent_System/
 │       ├── utils/                       # Hàm tiện ích: định dạng tiền, ngày
 │       └── App.tsx                      # Khai báo toàn bộ route (URL → trang)
 └── docs/                                # Tài liệu phân tích và thiết kế — repo riêng do-an-1-docs (mục 14)
+    └── postman/                         # Bộ Postman kiểm thử API, không chứa mật khẩu hay token
 ```
 
 **Danh mục đơn vị hành chính** (`backend/src/SmartRent.Api/Data/locations.json`) lấy từ web service của Cục Thống kê (https://danhmuchanhchinh.nso.gov.vn/DMDVHC.asmx, thao tác `DanhMucTinh` và `DanhMucPhuongXa`) tính đến ngày 06/10/2026: 34 tỉnh/thành, 3.321 phường/xã/đặc khu, khớp trang thống kê số lượng của cùng nguồn. Tên giữ nguyên như nguồn, chỉ bỏ khoảng trắng thừa và chuẩn hóa Unicode về dạng NFC; tỉnh/thành và phường/xã xếp theo mã. Danh mục chính thức thay đổi thì tải lại từ nguồn này.
