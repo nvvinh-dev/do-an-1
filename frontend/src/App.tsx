@@ -1,6 +1,11 @@
 import { createBrowserRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import ProtectedRoute from '@/components/ProtectedRoute'
+import AdminLayout from '@/layouts/AdminLayout'
+import CurrentRoleLayout from '@/layouts/CurrentRoleLayout'
+import LandlordLayout from '@/layouts/LandlordLayout'
+import PublicLayout from '@/layouts/PublicLayout'
+import TenantLayout from '@/layouts/TenantLayout'
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage'
 import AuditLogPage from '@/pages/admin/AuditLogPage'
 import LandlordApplicationListPage from '@/pages/admin/LandlordApplicationListPage'
@@ -40,42 +45,59 @@ import TenantInvoiceListPage from '@/pages/tenant/TenantInvoiceListPage'
 import TenantRentalRequestDetailPage from '@/pages/tenant/TenantRentalRequestDetailPage'
 import TenantRentalRequestListPage from '@/pages/tenant/TenantRentalRequestListPage'
 
-// Đường dẫn và file trang theo docs/frontend-screens.md mục 2–7. Đường dẫn lạ trong
-// nhóm của một vai trò vẫn qua kiểm tra vai trò trước khi tới NotFoundPage.
+// Đường dẫn và file trang theo docs/frontend-screens.md mục 2–7; layout theo mục 1.
+// Đường dẫn lạ trong nhóm của một vai trò vẫn qua kiểm tra vai trò trước khi tới NotFoundPage.
 const router = createBrowserRouter([
   // Khách và mọi vai trò
-  { path: '/', element: <SearchPage /> },
-  { path: '/rooms/:id', element: <RoomPublicDetailPage /> },
-  { path: '/login', element: <LoginPage /> },
-  { path: '/register', element: <RegisterPage /> },
-  { path: '/forgot-password', element: <ForgotPasswordPage /> },
-  { path: '/reset-password', element: <ResetPasswordPage /> },
-
-  // Đã đăng nhập, vai trò nào cũng vào được
   {
-    element: <ProtectedRoute />,
-    children: [{ path: '/account', element: <AccountPage /> }],
+    element: <PublicLayout />,
+    children: [
+      { path: '/', element: <SearchPage /> },
+      { path: '/rooms/:id', element: <RoomPublicDetailPage /> },
+      { path: '/login', element: <LoginPage /> },
+      { path: '/register', element: <RegisterPage /> },
+      { path: '/forgot-password', element: <ForgotPasswordPage /> },
+      { path: '/reset-password', element: <ResetPasswordPage /> },
+      { path: '*', element: <NotFoundPage /> },
+    ],
   },
 
-  // Admin không có màn Thông báo (docs/frontend-screens.md mục 1, 8.4)
+  // Dùng chung, hiện trong layout của vai trò đang đăng nhập
   {
-    element: <ProtectedRoute roles={['Tenant', 'Landlord']} />,
-    children: [{ path: '/notifications', element: <NotificationsPage /> }],
+    element: <ProtectedRoute />,
+    children: [
+      {
+        element: <CurrentRoleLayout />,
+        children: [
+          { path: '/account', element: <AccountPage /> },
+          // Admin không có màn Thông báo (docs/frontend-screens.md mục 1, 8.4)
+          {
+            element: <ProtectedRoute roles={['Tenant', 'Landlord']} />,
+            children: [{ path: '/notifications', element: <NotificationsPage /> }],
+          },
+        ],
+      },
+    ],
   },
 
   {
     path: '/tenant',
     element: <ProtectedRoute roles={['Tenant']} />,
     children: [
-      { index: true, element: <TenantDashboardPage /> },
-      { path: 'landlord-application', element: <LandlordApplicationPage /> },
-      { path: 'rental-requests', element: <TenantRentalRequestListPage /> },
-      { path: 'rental-requests/:id', element: <TenantRentalRequestDetailPage /> },
-      { path: 'contracts', element: <TenantContractListPage /> },
-      { path: 'contracts/:id', element: <TenantContractDetailPage /> },
-      { path: 'invoices', element: <TenantInvoiceListPage /> },
-      { path: 'invoices/:id', element: <TenantInvoiceDetailPage /> },
-      { path: '*', element: <NotFoundPage /> },
+      {
+        element: <TenantLayout />,
+        children: [
+          { index: true, element: <TenantDashboardPage /> },
+          { path: 'landlord-application', element: <LandlordApplicationPage /> },
+          { path: 'rental-requests', element: <TenantRentalRequestListPage /> },
+          { path: 'rental-requests/:id', element: <TenantRentalRequestDetailPage /> },
+          { path: 'contracts', element: <TenantContractListPage /> },
+          { path: 'contracts/:id', element: <TenantContractDetailPage /> },
+          { path: 'invoices', element: <TenantInvoiceListPage /> },
+          { path: 'invoices/:id', element: <TenantInvoiceDetailPage /> },
+          { path: '*', element: <NotFoundPage /> },
+        ],
+      },
     ],
   },
 
@@ -83,27 +105,32 @@ const router = createBrowserRouter([
     path: '/landlord',
     element: <ProtectedRoute roles={['Landlord']} />,
     children: [
-      { index: true, element: <LandlordDashboardPage /> },
-      { path: 'properties', element: <PropertyListPage /> },
-      { path: 'properties/new', element: <PropertyFormPage /> },
-      { path: 'properties/:id', element: <PropertyDetailPage /> },
-      { path: 'properties/:id/edit', element: <PropertyFormPage /> },
-      { path: 'properties/:propertyId/rooms/new', element: <RoomFormPage /> },
-      { path: 'rooms/:id', element: <LandlordRoomDetailPage /> },
-      { path: 'rooms/:id/edit', element: <RoomFormPage /> },
-      { path: 'bank-account', element: <BankAccountPage /> },
-      { path: 'rental-requests', element: <LandlordRentalRequestListPage /> },
-      { path: 'rental-requests/:id', element: <LandlordRentalRequestDetailPage /> },
-      { path: 'contracts', element: <LandlordContractListPage /> },
-      { path: 'contracts/new', element: <ContractFormPage /> },
-      { path: 'contracts/:id', element: <LandlordContractDetailPage /> },
-      { path: 'contracts/:id/edit', element: <ContractFormPage /> },
-      { path: 'contracts/:id/invoices/new', element: <InvoiceFormPage /> },
-      { path: 'contracts/:id/settlement', element: <SettlementPage /> },
-      { path: 'invoices', element: <LandlordInvoiceListPage /> },
-      { path: 'invoices/:id', element: <LandlordInvoiceDetailPage /> },
-      { path: 'invoices/:id/edit', element: <InvoiceFormPage /> },
-      { path: '*', element: <NotFoundPage /> },
+      {
+        element: <LandlordLayout />,
+        children: [
+          { index: true, element: <LandlordDashboardPage /> },
+          { path: 'properties', element: <PropertyListPage /> },
+          { path: 'properties/new', element: <PropertyFormPage /> },
+          { path: 'properties/:id', element: <PropertyDetailPage /> },
+          { path: 'properties/:id/edit', element: <PropertyFormPage /> },
+          { path: 'properties/:propertyId/rooms/new', element: <RoomFormPage /> },
+          { path: 'rooms/:id', element: <LandlordRoomDetailPage /> },
+          { path: 'rooms/:id/edit', element: <RoomFormPage /> },
+          { path: 'bank-account', element: <BankAccountPage /> },
+          { path: 'rental-requests', element: <LandlordRentalRequestListPage /> },
+          { path: 'rental-requests/:id', element: <LandlordRentalRequestDetailPage /> },
+          { path: 'contracts', element: <LandlordContractListPage /> },
+          { path: 'contracts/new', element: <ContractFormPage /> },
+          { path: 'contracts/:id', element: <LandlordContractDetailPage /> },
+          { path: 'contracts/:id/edit', element: <ContractFormPage /> },
+          { path: 'contracts/:id/invoices/new', element: <InvoiceFormPage /> },
+          { path: 'contracts/:id/settlement', element: <SettlementPage /> },
+          { path: 'invoices', element: <LandlordInvoiceListPage /> },
+          { path: 'invoices/:id', element: <LandlordInvoiceDetailPage /> },
+          { path: 'invoices/:id/edit', element: <InvoiceFormPage /> },
+          { path: '*', element: <NotFoundPage /> },
+        ],
+      },
     ],
   },
 
@@ -111,16 +138,19 @@ const router = createBrowserRouter([
     path: '/admin',
     element: <ProtectedRoute roles={['Admin']} />,
     children: [
-      { index: true, element: <AdminDashboardPage /> },
-      { path: 'landlord-applications', element: <LandlordApplicationListPage /> },
-      { path: 'landlord-applications/:id', element: <LandlordApplicationReviewPage /> },
-      { path: 'users', element: <UserListPage /> },
-      { path: 'audit-logs', element: <AuditLogPage /> },
-      { path: '*', element: <NotFoundPage /> },
+      {
+        element: <AdminLayout />,
+        children: [
+          { index: true, element: <AdminDashboardPage /> },
+          { path: 'landlord-applications', element: <LandlordApplicationListPage /> },
+          { path: 'landlord-applications/:id', element: <LandlordApplicationReviewPage /> },
+          { path: 'users', element: <UserListPage /> },
+          { path: 'audit-logs', element: <AuditLogPage /> },
+          { path: '*', element: <NotFoundPage /> },
+        ],
+      },
     ],
   },
-
-  { path: '*', element: <NotFoundPage /> },
 ])
 
 export default function App() {
