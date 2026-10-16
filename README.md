@@ -320,6 +320,14 @@ dotnet user-secrets set "Smtp:User" "<dia-chi-gmail>"
 dotnet user-secrets set "Smtp:AppPassword" "<app-password-16-ky-tu>"
 ```
 
+Phase 2 thêm khóa gọi Google Gemini. Thiếu khóa này thì ứng dụng vẫn chạy, chỉ phần AI báo không dùng được:
+
+```bash
+dotnet user-secrets set "Gemini:ApiKey" "<api-key>"
+```
+
+`Gemini:ApiKey` tạo trong Google AI Studio. Hạn mức gọi tính theo từng project, nên dùng một project riêng cho buổi demo. Tên model đặt ở `Gemini:Model` trong `appsettings.json`.
+
 `Supabase:ServiceRoleKey` lấy ở **Project Settings → API Keys**, phần `service_role`. Key này có toàn quyền trên database và storage — không bao giờ đưa vào frontend.
 
 `Smtp:AppPassword` tạo tại tài khoản Google: bật xác minh 2 bước, rồi vào **Bảo mật → Mật khẩu ứng dụng**. Không dùng mật khẩu Gmail thường.
