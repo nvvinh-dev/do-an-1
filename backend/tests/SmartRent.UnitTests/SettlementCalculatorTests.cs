@@ -386,4 +386,68 @@ public class SettlementCalculatorTests
         Assert.Throws<ArgumentException>(() => SettlementCalculator.Calculate(
             NewContract(), December1To15, Electricity, Water, [Damage(300_000)], []));
     }
+
+    // ---------------------------------------------------- Số tiền phải vừa cột tiền numeric(14,2)
+
+    /// <summary>database-design mục 1: cột tiền numeric(14,2) chứa tới 999.999.999.999,99, cả số âm.</summary>
+    [Fact]
+    public void MoneyLimits_Fits_TheoCotNumeric14Va2()
+    {
+        Assert.True(MoneyLimits.Fits(999_999_999_999.99m));
+        Assert.True(MoneyLimits.Fits(-999_999_999_999.99m));
+        Assert.False(MoneyLimits.Fits(1_000_000_000_000m));
+        Assert.False(MoneyLimits.Fits(-1_000_000_000_000m));
+    }
+
+    [Fact]
+    public void Calculate_ViDuApiDesign_VuaCotTien()
+    {
+        Assert.True(SettlementCalculator.Calculate(
+            NewContract(), December1To15, Electricity, Water, [Debt(1_420_000)], [Damage(300_000)]).Amounts.FitsMoneyColumns);
+    }
+
+    /// <summary>
+    /// Hai dòng bồi thường 999.999.999.999 — mỗi dòng đều vừa cột — nhưng tổng 1.779.678 + 1.999.999.999.998
+    /// − 3.000.000 = 1.999.998.779.676 thì vượt. Service trả 422, không để database báo tràn số.
+    /// </summary>
+    [Fact]
+    public void Calculate_TongDuongVuotCotTien_KhongVuaCot()
+    {
+        var amounts = SettlementCalculator.Calculate(
+            NewContract(), December1To15, Electricity, Water, [],
+            [Damage(999_999_999_999), Damage(999_999_999_999)]).Amounts;
+
+        Assert.Equal(1_999_998_779_676m, amounts.TotalAmount);
+        Assert.False(amounts.FitsMoneyColumns);
+    }
+
+    /// <summary>Dòng điều chỉnh nhận số âm, nên tổng cũng có thể vượt cột về phía âm.</summary>
+    [Fact]
+    public void Calculate_TongAmVuotCotTien_KhongVuaCot()
+    {
+        var adjustment = Line(InvoiceLineCategory.DieuChinhKhac, -999_999_999_999, "Giảm trừ");
+
+        var amounts = SettlementCalculator.Calculate(
+            NewContract(), December1To15, Electricity, Water, [], [adjustment, adjustment]).Amounts;
+
+        Assert.True(amounts.TotalAmount < -MoneyLimits.MaxAmount);
+        Assert.False(amounts.FitsMoneyColumns);
+    }
+
+    /// <summary>
+    /// Chỉ số điện 0 → 9.999.999.999,99 vừa cột chỉ số numeric(12,2), nhưng tiền điện × 3.500 = 34.999.999.999.965 vượt
+    /// cột tiền. Mọi khoản được lưu đều phải vừa cột, không chỉ tổng — ở đây một dòng điều chỉnh âm kéo tổng về −1.940.035.
+    /// </summary>
+    [Fact]
+    public void Calculate_TienDienVuotCotDuTongVuaCot_KhongVuaCot()
+    {
+        var adjustment = Line(InvoiceLineCategory.DieuChinhKhac, -34_999_999_000_000, "Giảm trừ");
+
+        var amounts = SettlementCalculator.Calculate(
+            NewContract(), MeterOnlyOn15December, new MeterReading(0, 9_999_999_999.99m), Water, [], [adjustment]).Amounts;
+
+        Assert.Equal(34_999_999_999_965m, amounts.ElectricityAmount);
+        Assert.Equal(-1_940_035m, amounts.TotalAmount);
+        Assert.False(amounts.FitsMoneyColumns);
+    }
 }

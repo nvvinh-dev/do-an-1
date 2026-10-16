@@ -171,4 +171,29 @@ public class ContractMoveOutNoticeTests
         Assert.Equal(ContractStatus.DangThanhLy, contract.Status);
         Assert.Equal(TenantId, contract.MoveOutNoticeByUserId);
     }
+
+    /// <summary>
+    /// FR-93, FR-98: ngày trả phòng dự kiến 15/12/2026. Người thuê ở tới 05/01/2027 là đã ở quá tháng dự kiến — tháng
+    /// 12 bị chặn lập hóa đơn định kỳ (FR-91), bên gửi phải rút thông báo rồi gửi lại. Trả phòng trong tháng 12, kể cả
+    /// ngày cuối tháng, hoặc sớm hơn dự kiến thì không. Tháng 12 năm sau cũng là quá tháng dự kiến — phải so cả năm.
+    /// </summary>
+    [Theory]
+    [InlineData(2027, 1, 5, true)]
+    [InlineData(2027, 12, 15, true)]
+    [InlineData(2026, 12, 31, false)]
+    [InlineData(2026, 12, 1, false)]
+    [InlineData(2026, 11, 20, false)]
+    public void IsMoveOutAfterExpectedMonth_SoThangVaNamVoiNgayTraPhongDuKien(
+        int year, int month, int day, bool expected)
+    {
+        var contract = WithNotice(TenantId, new DateOnly(2026, 11, 1), new DateOnly(2026, 12, 15));
+
+        Assert.Equal(expected, contract.IsMoveOutAfterExpectedMonth(new DateOnly(year, month, day)));
+    }
+
+    [Fact]
+    public void IsMoveOutAfterExpectedMonth_ChuaCoThongBao_False()
+    {
+        Assert.False(NewContract().IsMoveOutAfterExpectedMonth(new DateOnly(2027, 1, 5)));
+    }
 }

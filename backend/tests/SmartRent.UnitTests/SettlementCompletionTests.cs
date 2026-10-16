@@ -29,11 +29,14 @@ public class SettlementCompletionTests
         ExpectedMoveOutDate = new DateOnly(2026, 12, 15)
     };
 
+    /// <summary>Hóa đơn thanh lý kỳ 01/12 – 15/12/2026: trả phòng 15/12 (FR-93).</summary>
     private static Invoice Settlement(InvoiceStatus status, decimal total, decimal paid = 0) => new()
     {
         Id = 13,
         ContractId = 4,
         Type = InvoiceType.ThanhLy,
+        PeriodStart = new DateOnly(2026, 12, 1),
+        PeriodEnd = new DateOnly(2026, 12, 15),
         TotalAmount = total,
         PaidAmount = paid,
         Status = status
@@ -72,19 +75,38 @@ public class SettlementCompletionTests
     // ---------------------------------------------------------------- Số dư âm: hoàn cọc
 
     /// <summary>
-    /// FR-86 và quyết định 07/10: thời điểm hoàn cọc Chủ trọ nhập không trước lúc gửi thông báo trả phòng và không ở
-    /// tương lai; sai thì service trả 422.
+    /// FR-86, api-design mục 10: thời điểm hoàn cọc Chủ trọ nhập từ 0 giờ ngày trả phòng (giờ Việt Nam) tới hiện tại —
+    /// kiểm phòng xong mới biết trừ bao nhiêu nên không hoàn trước ngày trả phòng, và ghi nhận việc đã làm nên không ở
+    /// tương lai. Lúc gửi thông báo (9 giờ 01/12) trước ngày trả phòng nên không nhận; sai thì service trả 422.
     /// </summary>
     [Theory]
-    [InlineData(2026, 12, 1, 9, 0, true)]
-    [InlineData(2026, 11, 30, 23, 59, false)]
+    [InlineData(2026, 12, 15, 0, 0, true)]
+    [InlineData(2026, 12, 14, 23, 59, false)]
+    [InlineData(2026, 12, 1, 9, 0, false)]
     [InlineData(2026, 12, 16, 10, 0, true)]
     [InlineData(2026, 12, 20, 15, 0, true)]
     [InlineData(2026, 12, 20, 15, 1, false)]
-    public void IsValidSettlementRefundTime_TuLucBaoTraPhongToiHienTai(
+    public void IsValidSettlementRefundTime_TuNgayTraPhongToiHienTai(
         int year, int month, int day, int hour, int minute, bool expected)
     {
-        Assert.Equal(expected, ContractInSettlement().IsValidSettlementRefundTime(Vn(year, month, day, hour, minute), Now));
+        Assert.Equal(
+            expected,
+            Settlement(InvoiceStatus.ChoHoanCoc, -920_322).IsValidSettlementRefundTime(Vn(year, month, day, hour, minute), Now));
+    }
+
+    /// <summary>
+    /// Mục 16 tài liệu phân tích: người thuê dọn đi 25/11, Chủ trọ kiểm phòng và trả phần cọc dư ngay hôm đó, tới 01/12 mới
+    /// ghi thông báo trả phòng lên hệ thống. Thời điểm hoàn thật — trước lúc gửi thông báo — vẫn được nhận.
+    /// </summary>
+    [Fact]
+    public void IsValidSettlementRefundTime_GhiThongBaoSauKhiDaHoanCoc_NhanThoiDiemThat()
+    {
+        var invoice = Settlement(InvoiceStatus.ChoHoanCoc, -920_322);
+        invoice.PeriodEnd = new DateOnly(2026, 11, 25);
+        invoice.PeriodStart = new DateOnly(2026, 11, 25);
+
+        Assert.True(invoice.IsValidSettlementRefundTime(Vn(2026, 11, 25, 18), Now));
+        Assert.True(Vn(2026, 11, 25, 18) < NoticeAt);
     }
 
     /// <summary>FR-58, FR-86: số dư −920.322 → hoàn 920.322 do hệ thống tính, ghi thời điểm và hình thức Chủ trọ nhập.</summary>
