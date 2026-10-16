@@ -14,6 +14,9 @@ namespace SmartRent.Api.Controllers;
 [Authorize]
 public class RentalRequestsController : ControllerBase
 {
+    /// <summary>Trần của page để (page - 1) * pageSize không tràn số int.</summary>
+    private const int MaxPage = 1_000_000;
+
     private readonly RentalRequestService _service;
 
     public RentalRequestsController(RentalRequestService service)
@@ -51,7 +54,7 @@ public class RentalRequestsController : ControllerBase
             User.IsInRole(AppRoles.Landlord),
             status,
             roomId,
-            Math.Max(page, 1),
+            Math.Clamp(page, 1, MaxPage),
             Math.Clamp(pageSize, 1, 100),
             cancellationToken);
 

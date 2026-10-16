@@ -13,6 +13,9 @@ namespace SmartRent.Api.Controllers;
 [Authorize]
 public class NotificationsController : ControllerBase
 {
+    /// <summary>Trần của page để (page - 1) * pageSize không tràn số int.</summary>
+    private const int MaxPage = 1_000_000;
+
     private readonly NotificationService _service;
 
     public NotificationsController(NotificationService service)
@@ -30,7 +33,7 @@ public class NotificationsController : ControllerBase
         var result = await _service.ListAsync(
             this.CurrentUserId(),
             isRead,
-            Math.Max(page, 1),
+            Math.Clamp(page, 1, MaxPage),
             Math.Clamp(pageSize, 1, 100),
             cancellationToken);
 
