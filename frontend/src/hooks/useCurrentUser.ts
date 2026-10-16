@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { isAxiosError } from 'axios'
-import { getAccessToken } from '../lib/api'
-import { getCurrentUser } from '../services/authService'
-import type { CurrentUser } from '../types/authTypes'
+import { getAccessToken } from '@/lib/api'
+import { getCurrentUser } from '@/services/authService'
+import type { CurrentUser } from '@/types/authTypes'
 
 /** Đăng nhập, đăng xuất và sửa hồ sơ cập nhật thẳng dữ liệu dưới khóa này. */
 export const currentUserQueryKey = ['auth', 'me'] as const
