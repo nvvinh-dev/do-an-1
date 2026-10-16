@@ -153,9 +153,10 @@ Với 02 thành viên và 2.5 tháng, phạm vi in-scope là rất lớn. Thứ 
 | **Gửi email** | SMTP Gmail, MailKit |
 | **Trợ lý AI** | Google Gemini API, gọi qua `HttpClient` |
 | **Authentication** | JWT Authentication |
-| **Frontend** | React + TypeScript, Tailwind CSS, React Router, React Hook Form, TanStack Query, Axios, qrcode (vẽ mã VietQR) |
+| **Frontend** | React + TypeScript, Tailwind CSS, shadcn/ui (Radix UI), lucide-react, React Router, React Hook Form, TanStack Query, Axios, qrcode (vẽ mã VietQR) |
 | **Kiến trúc** | Web không truy cập database trực tiếp, giao tiếp hoàn toàn qua Backend API |
-| **Công cụ** | Trello (tiến độ), GitHub (mã nguồn), Postman (kiểm thử), PlantUML (thiết kế CSDL/UML) |
+| **Kiểm thử** | xUnit (backend), Vitest và Playwright (frontend), Postman (API), GitHub Actions (build, test, lint mỗi PR) |
+| **Công cụ** | Trello (tiến độ), GitHub (mã nguồn), PlantUML (thiết kế CSDL/UML) |
 
 **Nguyên tắc kiểm soát phạm vi:** Không tự ý thêm chức năng nằm ngoài nghiệp vụ. Mọi chức năng mới phải có cơ sở từ nghiệp vụ, yêu cầu của hệ thống hoặc tiêu chí môn học.
 
@@ -165,6 +166,7 @@ Với 02 thành viên và 2.5 tháng, phạm vi in-scope là rất lớn. Thứ 
 
 ```
 SmartRent_System/
+├── .github/workflows/                   # Kiểm tra tự động mỗi PR (GitHub Actions)
 ├── backend/
 │   ├── SmartRent.slnx
 │   ├── src/
@@ -185,9 +187,11 @@ SmartRent_System/
 │   └── tests/
 │       └── SmartRent.UnitTests/
 ├── frontend/                            # React + TypeScript + Tailwind
+│   ├── e2e/                             # Kiểm thử đầu-cuối (Playwright) và script dữ liệu mẫu
 │   └── src/
 │       ├── assets/                      # Ảnh, icon, font
-│       ├── components/                  # Thành phần giao diện dùng lại: nút, ô nhập, hộp thoại
+│       ├── components/                  # Thành phần giao diện riêng của SmartRent, ghép từ components/ui
+│       │   └── ui/                      # Component của shadcn/ui, thêm bằng CLI
 │       ├── layouts/                     # Khung trang: header, sidebar theo từng vai trò
 │       ├── pages/                       # Mỗi màn hình một file, chia thư mục con theo vai trò
 │       │   ├── public/                  # Khách: trang chủ, tìm phòng, chi tiết phòng
@@ -199,10 +203,11 @@ SmartRent_System/
 │       ├── services/                    # Hàm gọi API, nhóm theo nghiệp vụ
 │       ├── types/                       # Kiểu dữ liệu TypeScript của request/response, nhóm theo nghiệp vụ
 │       ├── hooks/                       # Custom hook
-│       ├── lib/                         # Cấu hình gọi API (axios)
+│       ├── lib/                         # Cấu hình gọi API (axios), hàm cn() của shadcn
 │       ├── utils/                       # Hàm tiện ích: định dạng tiền, ngày
 │       └── App.tsx                      # Khai báo toàn bộ route (URL → trang)
-└── docs/                                # Tài liệu phân tích và thiết kế (không đưa lên Git)
+└── docs/                                # Tài liệu phân tích và thiết kế — repo riêng do-an-1-docs (mục 14)
+    └── postman/                         # Bộ Postman kiểm thử API, không chứa mật khẩu hay token
 ```
 
 **Danh mục đơn vị hành chính** (`backend/src/SmartRent.Api/Data/locations.json`) lấy từ web service của Cục Thống kê (https://danhmuchanhchinh.nso.gov.vn/DMDVHC.asmx, thao tác `DanhMucTinh` và `DanhMucPhuongXa`) tính đến ngày 06/10/2026: 34 tỉnh/thành, 3.321 phường/xã/đặc khu, khớp trang thống kê số lượng của cùng nguồn. Tên giữ nguyên như nguồn, chỉ bỏ khoảng trắng thừa và chuẩn hóa Unicode về dạng NFC; tỉnh/thành và phường/xã xếp theo mã. Danh mục chính thức thay đổi thì tải lại từ nguồn này.
@@ -218,6 +223,8 @@ SmartRent_System/
 | Kiểu dữ liệu (`types/`) | camelCase, hậu tố `Types`, cùng nghiệp vụ với file service | `authTypes.ts`, `invoiceTypes.ts` |
 | Hook (`hooks/`) | camelCase, tiền tố `use` | `useCurrentUser.ts` |
 | Tiện ích (`utils/`) | camelCase, nêu rõ việc làm | `formatCurrency.ts`, `formatDate.ts` |
+
+**Import trong frontend:** file trong `frontend/src/` import nhau qua alias `@/` (trỏ tới `src/`), ví dụ `import { api } from '@/lib/api'`; không dùng đường dẫn tương đối `./`, `../`. Alias khai báo ở `tsconfig.json`, `tsconfig.app.json` và `vite.config.ts` (`docs/design-system.md` mục 10).
 
 **Chữ hiển thị cho người dùng viết tiếng Việt có dấu:** `detail` của lỗi trả về, tiêu đề và nội dung thông báo, tiêu đề và nội dung email, dữ liệu danh mục. Log và thông báo lỗi cấu hình dành cho lập trình viên (thiếu secret, lỗi gọi Supabase Storage) không bắt buộc có dấu. Commit message vẫn viết không dấu (mục 11).
 
@@ -315,6 +322,14 @@ dotnet user-secrets set "Smtp:User" "<dia-chi-gmail>"
 dotnet user-secrets set "Smtp:AppPassword" "<app-password-16-ky-tu>"
 ```
 
+Phase 2 thêm khóa gọi Google Gemini. Thiếu khóa này thì ứng dụng vẫn chạy, chỉ phần AI báo không dùng được:
+
+```bash
+dotnet user-secrets set "Gemini:ApiKey" "<api-key>"
+```
+
+`Gemini:ApiKey` tạo trong Google AI Studio. Hạn mức gọi tính theo từng project, nên dùng một project riêng cho buổi demo. Tên model đặt ở `Gemini:Model` trong `appsettings.json`.
+
 `Supabase:ServiceRoleKey` lấy ở **Project Settings → API Keys**, phần `service_role`. Key này có toàn quyền trên database và storage — không bao giờ đưa vào frontend.
 
 `Smtp:AppPassword` tạo tại tài khoản Google: bật xác minh 2 bước, rồi vào **Bảo mật → Mật khẩu ứng dụng**. Không dùng mật khẩu Gmail thường.
@@ -356,6 +371,16 @@ cd backend
 dotnet test
 ```
 
+Frontend, sau khi dựng Vitest và Playwright:
+
+```bash
+cd frontend
+npm test
+npx playwright test
+```
+
+Kiểm thử đầu-cuối cần backend và frontend đang chạy, cùng biến môi trường chứa mật khẩu các tài khoản mẫu (`docs/testing-strategy.md` mục 4.3).
+
 ---
 
 ## 13. Trạng thái hiện tại
@@ -384,7 +409,7 @@ dotnet test
 
 **Frontend:** khung Vite + React + TypeScript + Tailwind và lớp gọi API; chưa có màn hình chức năng.
 
-Tài liệu thiết kế cho Phase 1 đã hoàn tất trong `docs/`: đặc tả yêu cầu chức năng, sơ đồ use case, kiến trúc phần mềm, thiết kế cơ sở dữ liệu, thiết kế API và thiết kế an toàn. Sơ đồ tuần tự chưa được thực hiện.
+Tài liệu thiết kế cho Phase 1 đã hoàn tất trong `docs/`: đặc tả yêu cầu chức năng, sơ đồ use case và bảng truy vết use case, kiến trúc phần mềm, thiết kế cơ sở dữ liệu, thiết kế API, thiết kế an toàn, danh sách màn hình và sơ đồ điều hướng, hệ thống giao diện, chiến lược kiểm thử; `schema.sql` và `openapi.yaml` sinh từ code. Sơ đồ tuần tự chưa được thực hiện.
 
 ---
 
@@ -392,6 +417,12 @@ Tài liệu thiết kế cho Phase 1 đã hoàn tất trong `docs/`: đặc tả
 
 README này là bản tóm tắt phục vụ người đọc nhanh. Nguồn nghiệp vụ đầy đủ là tài liệu **System & Business Analysis — Hệ thống Quản lý và Cho thuê Phòng trọ **, bao gồm phân tích chi tiết 13 quy trình nghiệp vụ, 30 quy tắc nghiệp vụ, 9 vòng đời trạng thái, danh mục sự kiện thông báo và ranh giới quyền hạn của AI.
 
-Tài liệu phân tích và thiết kế được lưu trong thư mục `docs/` trên máy từng thành viên và **không được đưa lên Git** — hai thành viên trao đổi trực tiếp với nhau. Bao gồm: tài liệu phân tích nghiệp vụ, đặc tả yêu cầu chức năng, sơ đồ use case, kiến trúc phần mềm, thiết kế cơ sở dữ liệu, thiết kế API và thiết kế an toàn.
+Tài liệu phân tích và thiết kế nằm ở repo riêng tư [do-an-1-docs](https://github.com/nvvinh-dev/do-an-1-docs) (cần được chủ repo cấp quyền), clone vào thư mục `docs/` của repo này; `.gitignore` của repo code bỏ qua thư mục đó:
+
+```bash
+git clone https://github.com/nvvinh-dev/do-an-1-docs.git docs
+```
+
+Danh sách tài liệu, thứ tự ưu tiên khi các tài liệu lệch nhau và cách đọc theo từng việc nằm ở `docs/README.md`.
 
 Quy ước làm việc chung của nhóm cũng được giữ ngoài Git và trao đổi trực tiếp giữa hai thành viên.
