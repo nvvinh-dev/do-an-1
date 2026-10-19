@@ -258,9 +258,11 @@ Api  ──►  Infrastructure  ──►  Domain
 | `docs/` | Chỉ sửa tài liệu |
 | `chore/` | Cấu hình, dọn dẹp |
 
-**Kích thước một nhánh:** mỗi nhánh gói trọn **một quy trình nghiệp vụ (BP)**, không tách nhỏ hơn. Ví dụ toàn bộ BP-01 — đăng ký, đăng nhập, đổi mật khẩu, nộp và duyệt hồ sơ Chủ trọ — nằm trên một nhánh `feat/`. Nếu một BP quá lớn thì tách làm hai phần theo luồng nghiệp vụ, ví dụ BP-07 tách thành phần chốt số và lập hóa đơn, phần ghi nhận thanh toán.
+**Kích thước một nhánh:** mỗi **thẻ trên board Trello** là một nhánh và một Pull Request, mở ngay khi thẻ xong — không dồn nhiều thẻ hay cả một BP vào một PR, vì PR lớn rất khó duyệt. Tên nhánh theo việc của thẻ, ví dụ `feat/bp07-chi-so-cu-ky-ke-tiep`.
 
-Nhánh nên sống từ vài ngày đến một tuần. Nhánh sống lâu hơn sẽ lệch xa `develop` và xung đột khi merge.
+**Thẻ phụ thuộc thẻ chưa merge:** nhánh tách từ nhánh của thẻ trước thay vì từ `develop`, và PR đặt base là nhánh đó để người duyệt chỉ thấy phần của thẻ mới. PR trước merge xong thì đổi base của PR sau sang `develop`.
+
+Nhánh nên sống không quá vài ngày. Nhánh sống lâu hơn sẽ lệch xa `develop` và xung đột khi merge.
 
 **Pull Request:** bắt buộc với nhánh `feat/` và `fix/` — phải được người còn lại duyệt trước khi merge, và **không ai merge PR của chính mình**. Với `docs/` và `chore/` — sửa tài liệu, đổi cấu hình lặt vặt — được commit thẳng vào `develop`, không cần PR.
 
