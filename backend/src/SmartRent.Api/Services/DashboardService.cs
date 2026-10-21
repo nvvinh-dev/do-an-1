@@ -100,4 +100,66 @@ public class DashboardService
 
         return new LandlordDashboardResponse(roomCounts, unpaidInvoices, monthlyRevenue, pendingActions);
     }
+
+    /// <summary>FR-68: hợp đồng hiện tại, hóa đơn chưa thanh toán, tổng đã thanh toán và việc cần xử lý của Người thuê.</summary>
+    public async Task<TenantDashboardResponse> GetTenantAsync(
+        long tenantUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        // Người thuê thấy hợp đồng mình đứng tên kể cả ở Nháp, như ở danh sách hợp đồng; id tăng theo thứ tự lập.
+        var contracts = await _db.Contracts
+            .AsNoTracking()
+            .Where(c => c.TenantUserId == tenantUserId
+                        && c.Status != ContractStatus.DaThanhLy
+                        && c.Status != ContractStatus.DaHuy)
+            .OrderByDescending(c => c.Id)
+            .Select(c => new TenantDashboardContractResponse(
+                c.Id,
+                c.Room.Code,
+                c.Room.Property.Name,
+                c.Status,
+                c.StartDate,
+                c.EndDate,
+                c.RentPrice))
+            .ToListAsync(cancellationToken);
+
+        // Cùng cách tính với dashboard Chủ trọ; người thuê không thấy hóa đơn Nháp nên tập này cũng không gồm Nháp.
+        var outstanding = _db.Invoices
+            .AsNoTracking()
+            .Where(i => i.Contract.TenantUserId == tenantUserId && Invoice.OutstandingStatuses.Contains(i.Status));
+
+        var unpaidInvoices = new UnpaidInvoicesResponse(
+            await outstanding.CountAsync(cancellationToken),
+            await outstanding.SumAsync(i => i.TotalAmount - i.PaidAmount, cancellationToken));
+
+        // Chỉ các khoản Chủ trọ đã xác nhận thu, như doanh thu ở FR-67; tiền cọc không đi qua lượt báo thanh toán.
+        var totalPaid = await _db.PaymentReports
+            .AsNoTracking()
+            .Where(p => p.Status == PaymentReportStatus.DaXacNhan
+                        && p.ConfirmedAmount != null
+                        && p.Invoice.Contract.TenantUserId == tenantUserId)
+            .SumAsync(p => p.ConfirmedAmount!.Value, cancellationToken);
+
+        // Hợp đồng đã quá hạn giữ chỗ thì người thuê không đồng ý được nữa (Contract.CanConfirmByTenant), dù tác vụ định
+        // kỳ chưa kịp hủy — cùng điều kiện với Contract.IsHoldExpired.
+        var holdFrom = now - RentalRequest.HoldWindow;
+
+        var pendingActions = new TenantPendingActionsResponse(
+            await _db.Contracts.CountAsync(
+                c => c.TenantUserId == tenantUserId
+                     && c.Status == ContractStatus.ChoNguoiThueXacNhan
+                     && (c.RentalRequest == null
+                         || c.RentalRequest.ProcessedAt == null
+                         || c.RentalRequest.ProcessedAt >= holdFrom),
+                cancellationToken),
+            await _db.Invoices.CountAsync(
+                i => i.Contract.TenantUserId == tenantUserId
+                     && i.Type == InvoiceType.ThanhLy
+                     && i.Status == InvoiceStatus.ChoNguoiThueXacNhan,
+                cancellationToken));
+
+        return new TenantDashboardResponse(contracts, unpaidInvoices, totalPaid, pendingActions);
+    }
 }
