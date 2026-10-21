@@ -22,4 +22,9 @@ public class DashboardController : ControllerBase
     [Authorize(Roles = AppRoles.Landlord)]
     public async Task<IActionResult> Landlord(CancellationToken cancellationToken)
         => Ok(await _service.GetLandlordAsync(this.CurrentUserId(), cancellationToken));
+
+    [HttpGet("tenant")]
+    [Authorize(Roles = AppRoles.Tenant)]
+    public async Task<IActionResult> Tenant(CancellationToken cancellationToken)
+        => Ok(await _service.GetTenantAsync(this.CurrentUserId(), cancellationToken));
 }

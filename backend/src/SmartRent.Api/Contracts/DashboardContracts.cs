@@ -1,3 +1,5 @@
+using SmartRent.Domain.Enums;
+
 namespace SmartRent.Api.Contracts;
 
 /// <summary>
@@ -21,3 +23,29 @@ public record MonthlyRevenueResponse(string Month, decimal Amount);
 /// đã quá hạn giữ chỗ không tính, dù tác vụ định kỳ chưa kịp chuyển trạng thái.
 /// </summary>
 public record LandlordPendingActionsResponse(int RentalRequests, int PaymentReports, int ContractsAwaitingDeposit);
+
+/// <summary>
+/// Dashboard Người thuê — FR-68, api-design mục 12. <see cref="TotalPaid"/> là tổng đã được Chủ trọ xác nhận thu trên các
+/// hóa đơn của người thuê, không tính tiền cọc.
+/// </summary>
+public record TenantDashboardResponse(
+    IReadOnlyList<TenantDashboardContractResponse> Contracts,
+    UnpaidInvoicesResponse UnpaidInvoices,
+    decimal TotalPaid,
+    TenantPendingActionsResponse PendingActions);
+
+/// <summary>Hợp đồng chưa kết thúc (khác Đã thanh lý, Đã hủy) của người thuê.</summary>
+public record TenantDashboardContractResponse(
+    long Id,
+    string RoomCode,
+    string PropertyName,
+    ContractStatus Status,
+    DateOnly StartDate,
+    DateOnly EndDate,
+    decimal RentPrice);
+
+/// <summary>
+/// Việc cần xử lý của Người thuê — hợp đồng chờ mình xác nhận và bảng thanh lý chờ mình đồng ý. Hợp đồng đã quá hạn giữ
+/// chỗ không tính, dù tác vụ định kỳ chưa kịp hủy.
+/// </summary>
+public record TenantPendingActionsResponse(int ContractsToConfirm, int SettlementsToConfirm);
