@@ -62,7 +62,10 @@ public record RefundDepositRequest(
 
 public record InitialMeterReadingsRequest(decimal? InitialElectricityIndex, decimal? InitialWaterIndex);
 
-/// <summary>Chỉ số điện nước cuối cùng đã ghi nhận của phòng, dùng điền sẵn chỉ số đầu khi lập hợp đồng.</summary>
+/// <summary>
+/// Chỉ số điện nước: chỉ số cuối đã ghi nhận của phòng, dùng điền sẵn chỉ số đầu khi lập hợp đồng; hoặc chỉ số cũ của
+/// kỳ kế tiếp của một hợp đồng, dùng ở màn chốt số.
+/// </summary>
 public record MeterReadingsResponse(decimal ElectricityIndex, decimal WaterIndex);
 
 public record ContractListItemResponse(

@@ -143,6 +143,27 @@ public class Contract
     /// </summary>
     public bool IsHoldExpired(DateTimeOffset now) => HoldDeadline is { } deadline && now > deadline;
 
+    /// <summary>
+    /// BR-14, FR-38: chỉ số cũ của hóa đơn kế tiếp — chỉ số mới của hóa đơn chưa hủy gần nhất, hoặc chỉ số lúc bàn giao
+    /// nếu hợp đồng chưa có hóa đơn nào chưa hủy. Server tự điền, không nhận từ client (security-design mục 5.2).
+    /// Hóa đơn thanh lý, nếu có, là lần chốt số cuối cùng của hợp đồng: kỳ của nó có thể nằm trong tháng đã có hóa đơn
+    /// định kỳ (FR-93) nên không xếp theo ngày cuối kỳ được. Các hóa đơn còn lại xếp theo ngày cuối kỳ.
+    /// </summary>
+    /// <param name="invoices">Các hóa đơn của hợp đồng này; hóa đơn Đã hủy được bỏ qua.</param>
+    public (decimal Electricity, decimal Water) LatestMeterIndexes(IEnumerable<Invoice> invoices)
+    {
+        var latest = invoices
+            .Where(i => i.Status != InvoiceStatus.DaHuy)
+            .OrderByDescending(i => i.Type == InvoiceType.ThanhLy)
+            .ThenByDescending(i => i.PeriodEnd)
+            .ThenByDescending(i => i.Id)
+            .FirstOrDefault();
+
+        return latest is null
+            ? (InitialElectricityIndex, InitialWaterIndex)
+            : (latest.CurrentElectricityIndex, latest.CurrentWaterIndex);
+    }
+
     /// <summary>Đã hủy, đã nhận cọc mà Chủ trọ chưa ghi nhận hoàn cọc.</summary>
     public bool IsAwaitingDepositRefund
         => Status == ContractStatus.DaHuy && DepositReceivedAt is not null && DepositRefundedAt is null;
