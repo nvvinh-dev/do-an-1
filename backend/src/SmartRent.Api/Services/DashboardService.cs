@@ -4,13 +4,15 @@ using SmartRent.Api.Contracts;
 using SmartRent.Domain;
 using SmartRent.Domain.Entities;
 using SmartRent.Domain.Enums;
+using SmartRent.Infrastructure.Identity;
 using SmartRent.Infrastructure.Persistence;
 
 namespace SmartRent.Api.Services;
 
 /// <summary>
-/// Dashboard theo vai trò — FR-65 đến FR-68, api-design mục 12. Chỉ đọc; mọi số liệu tính từ dữ liệu của chính
-/// người gọi, xác định qua chuỗi hóa đơn → hợp đồng → phòng → khu trọ → Chủ trọ.
+/// Dashboard theo vai trò — FR-65 đến FR-68, api-design mục 12. Chỉ đọc; số liệu của Chủ trọ và Người thuê tính từ
+/// dữ liệu của chính người gọi, xác định qua chuỗi hóa đơn → hợp đồng → phòng → khu trọ → Chủ trọ; số liệu của Admin
+/// là toàn hệ thống.
 /// </summary>
 public class DashboardService
 {
@@ -19,6 +21,40 @@ public class DashboardService
     public DashboardService(AppDbContext db)
     {
         _db = db;
+    }
+
+    /// <summary>FR-65: số tài khoản theo vai trò, khu trọ, phòng và hồ sơ Chủ trọ chờ duyệt của toàn hệ thống.</summary>
+    public async Task<AdminDashboardResponse> GetAdminAsync(CancellationToken cancellationToken = default)
+    {
+        // Tính cả tài khoản bị khóa: dashboard đếm tài khoản, không đếm tài khoản đang hoạt động.
+        var totalUsers = await _db.Users.AsNoTracking().CountAsync(cancellationToken);
+
+        var roleCounts = await (from userRole in _db.UserRoles.AsNoTracking()
+                                join role in _db.Roles.AsNoTracking() on userRole.RoleId equals role.Id
+                                group userRole by role.Name into g
+                                select new { Role = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.Role!, g => g.Count, cancellationToken);
+
+        var users = new UserCountsResponse(
+            totalUsers,
+            roleCounts.GetValueOrDefault(AppRoles.Admin),
+            roleCounts.GetValueOrDefault(AppRoles.Landlord),
+            roleCounts.GetValueOrDefault(AppRoles.Tenant));
+
+        // Khu trọ và phòng đã lưu trữ không tính; phòng của khu đã lưu trữ cũng ở Lưu trữ (BR-10).
+        var properties = await _db.Properties
+            .AsNoTracking()
+            .CountAsync(p => p.Status != PropertyStatus.LuuTru, cancellationToken);
+
+        var rooms = await _db.Rooms
+            .AsNoTracking()
+            .CountAsync(r => r.OccupancyStatus != RoomOccupancyStatus.LuuTru, cancellationToken);
+
+        var pendingApplications = await _db.LandlordApplications
+            .AsNoTracking()
+            .CountAsync(a => a.Status == LandlordApplicationStatus.ChoDuyet, cancellationToken);
+
+        return new AdminDashboardResponse(users, properties, rooms, pendingApplications);
     }
 
     /// <summary>FR-66, FR-67: số phòng, hóa đơn chưa thu, doanh thu 6 tháng và việc cần xử lý của Chủ trọ.</summary>

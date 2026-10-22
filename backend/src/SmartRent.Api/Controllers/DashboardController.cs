@@ -5,7 +5,10 @@ using SmartRent.Infrastructure.Identity;
 
 namespace SmartRent.Api.Controllers;
 
-/// <summary>Dashboard theo vai trò — api-design mục 12. Số liệu luôn là của người gọi, xác định từ token.</summary>
+/// <summary>
+/// Dashboard theo vai trò — api-design mục 12. Số liệu của Chủ trọ và Người thuê là của người gọi, xác định từ token;
+/// số liệu của Admin là toàn hệ thống.
+/// </summary>
 [ApiController]
 [Route("api/v1/dashboard")]
 [Authorize]
@@ -17,6 +20,11 @@ public class DashboardController : ControllerBase
     {
         _service = service;
     }
+
+    [HttpGet("admin")]
+    [Authorize(Roles = AppRoles.Admin)]
+    public async Task<IActionResult> Admin(CancellationToken cancellationToken)
+        => Ok(await _service.GetAdminAsync(cancellationToken));
 
     [HttpGet("landlord")]
     [Authorize(Roles = AppRoles.Landlord)]
