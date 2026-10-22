@@ -180,14 +180,22 @@ public class Contract
     /// <param name="invoices">Các hóa đơn của hợp đồng này; hóa đơn Đã hủy được bỏ qua.</param>
     public BillingPeriod NextBillingPeriod(IEnumerable<Invoice> invoices)
     {
-        var latest = invoices
-            .Where(i => i.Type == InvoiceType.DinhKy && i.Status != InvoiceStatus.DaHuy)
-            .MaxBy(i => i.PeriodEnd);
+        var latest = LatestPeriodicInvoice(invoices);
 
         return latest is null
             ? BillingPeriod.First(StartDate)
             : new BillingPeriod(latest.PeriodStart, latest.PeriodEnd).Next();
     }
+
+    /// <summary>
+    /// Hóa đơn định kỳ chưa hủy có kỳ muộn nhất, null khi chưa có. Chỉ hóa đơn này được sửa hoặc hủy (FR-49, FR-52):
+    /// sửa hóa đơn cũ hơn làm gãy chuỗi chỉ số của BR-14. Mỗi kỳ chỉ có một hóa đơn định kỳ chưa hủy (BR-17).
+    /// </summary>
+    /// <param name="invoices">Các hóa đơn của hợp đồng này; hóa đơn Đã hủy và hóa đơn thanh lý được bỏ qua.</param>
+    public Invoice? LatestPeriodicInvoice(IEnumerable<Invoice> invoices)
+        => invoices
+            .Where(i => i.Type == InvoiceType.DinhKy && i.Status != InvoiceStatus.DaHuy)
+            .MaxBy(i => i.PeriodEnd);
 
     /// <summary>
     /// FR-88, FR-91: hợp đồng đang thanh lý không lập hóa đơn định kỳ cho tháng chứa ngày trả phòng dự kiến và các tháng

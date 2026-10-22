@@ -204,4 +204,57 @@ public class ContractPeriodicInvoiceTests
 
         Assert.False(NewContract().IsPeriodicInvoiceBlockedByMoveOut(december));
     }
+
+    // ------------------------------------------------------------ Hóa đơn định kỳ mới nhất
+
+    /// <summary>
+    /// FR-49, FR-52: hóa đơn định kỳ mới nhất là hóa đơn chưa hủy có kỳ muộn nhất — tháng 12 dù được lập (id) trước
+    /// hóa đơn tháng 11 lập lại sau khi hủy.
+    /// </summary>
+    [Fact]
+    public void LatestPeriodicInvoice_KyMuonNhatChuaHuy()
+    {
+        Invoice[] invoices =
+        [
+            October(1),
+            Monthly(2, 2026, 11, InvoiceStatus.DaHuy),
+            Monthly(4, 2026, 11),
+            Monthly(3, 2026, 12, InvoiceStatus.ChuaThanhToan)
+        ];
+
+        Assert.Equal(3, NewContract().LatestPeriodicInvoice(invoices)!.Id);
+    }
+
+    /// <summary>Hóa đơn tháng 12 bị hủy thì hóa đơn tháng 11 trở lại là mới nhất — sửa, hủy được.</summary>
+    [Fact]
+    public void LatestPeriodicInvoice_KyCuoiDaHuy_LuiVeKyTruoc()
+    {
+        Invoice[] invoices =
+        [
+            October(1),
+            Monthly(2, 2026, 11, InvoiceStatus.ChuaThanhToan),
+            Monthly(3, 2026, 12, InvoiceStatus.DaHuy)
+        ];
+
+        Assert.Equal(2, NewContract().LatestPeriodicInvoice(invoices)!.Id);
+    }
+
+    /// <summary>Hóa đơn thanh lý không phải hóa đơn định kỳ: không tính khi tìm hóa đơn mới nhất để sửa, hủy.</summary>
+    [Fact]
+    public void LatestPeriodicInvoice_BoQuaHoaDonThanhLy()
+    {
+        Invoice[] invoices =
+        [
+            October(1),
+            NewInvoice(2, InvoiceType.ThanhLy, D(2026, 11, 1), D(2026, 11, 10), InvoiceStatus.Nhap)
+        ];
+
+        Assert.Equal(1, NewContract().LatestPeriodicInvoice(invoices)!.Id);
+    }
+
+    [Fact]
+    public void LatestPeriodicInvoice_ChiCoHoaDonDaHuy_Null()
+    {
+        Assert.Null(NewContract().LatestPeriodicInvoice([October(1, InvoiceStatus.DaHuy)]));
+    }
 }
