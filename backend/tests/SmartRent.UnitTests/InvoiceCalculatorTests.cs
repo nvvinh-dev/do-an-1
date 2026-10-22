@@ -314,6 +314,56 @@ public class InvoiceCalculatorTests
         Assert.Equal(expectedAllowed, amounts.IsTotalAllowed);
     }
 
+    /// <summary>Tháng 11 có dòng điều chỉnh: tổng 3.412.500 và mọi khoản đều vừa cột tiền numeric(14,2).</summary>
+    [Fact]
+    public void CalculatePeriodic_SoTienBinhThuong_VuaCotTien()
+    {
+        var amounts = InvoiceCalculator.CalculatePeriodic(
+            NewContract(),
+            November,
+            new MeterReading(1_250, 1_330),
+            new MeterReading(84.5m, 90),
+            [Adjustment(-70_000)]);
+
+        Assert.True(amounts.FitsMoneyColumns);
+    }
+
+    /// <summary>
+    /// Chỉ số điện 0 → 9.999.999.999,99 vừa cột chỉ số numeric(12,2), nhưng tiền điện × 3.500 = 34.999.999.999.965 vượt
+    /// cột tiền — dù một dòng điều chỉnh âm kéo tổng về mức vừa cột. Service trả 422, không để database báo tràn số.
+    /// </summary>
+    [Fact]
+    public void CalculatePeriodic_TienDienVuotCotTien_KhongVuaCot()
+    {
+        var amounts = InvoiceCalculator.CalculatePeriodic(
+            NewContract(withServiceFees: false),
+            November,
+            new MeterReading(0, 9_999_999_999.99m),
+            new MeterReading(90, 90),
+            [Adjustment(-34_999_999_000_000)]);
+
+        Assert.Equal(34_999_999_999_965m, amounts.ElectricityAmount);
+        Assert.True(MoneyLimits.Fits(amounts.TotalAmount));
+        Assert.False(amounts.FitsMoneyColumns);
+    }
+
+    /// <summary>
+    /// Hai dòng điều chỉnh 999.999.999.999 — mỗi dòng đều vừa cột — nhưng tổng 3.000.000 + 1.999.999.999.998 thì vượt.
+    /// </summary>
+    [Fact]
+    public void CalculatePeriodic_TongVuotCotTien_KhongVuaCot()
+    {
+        var amounts = InvoiceCalculator.CalculatePeriodic(
+            NewContract(withServiceFees: false),
+            November,
+            new MeterReading(1_330, 1_330),
+            new MeterReading(90, 90),
+            [Adjustment(999_999_999_999), Adjustment(999_999_999_999)]);
+
+        Assert.Equal(2_000_002_999_998m, amounts.TotalAmount);
+        Assert.False(amounts.FitsMoneyColumns);
+    }
+
     /// <summary>
     /// FR-41, api-design mục 9: truyền dòng không phải Điều chỉnh vào hóa đơn định kỳ là lỗi lập trình —
     /// service phải chặn trước (422).
