@@ -1,4 +1,4 @@
-import type { UserRole } from '../types/authTypes'
+import type { UserRole } from '@/types/authTypes'
 
 const ROLE_HOME_PATHS: Record<UserRole, string> = {
   Tenant: '/tenant',
