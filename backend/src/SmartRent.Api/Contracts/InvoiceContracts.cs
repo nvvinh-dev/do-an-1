@@ -3,6 +3,29 @@ using SmartRent.Domain.Enums;
 namespace SmartRent.Api.Contracts;
 
 /// <summary>
+/// FR-38, FR-41: chốt chỉ số và lập hóa đơn định kỳ (api-design mục 9); sửa hóa đơn định kỳ dùng cùng body. Chỉ số cũ,
+/// kỳ và mọi số tiền do server tính. Trường bắt buộc để nullable để thiếu trường thì validator trả 400; vi phạm quy tắc
+/// nghiệp vụ trả 409 hoặc 422 ở InvoiceService.
+/// </summary>
+public record PeriodicInvoiceRequest(
+    decimal? CurrentElectricityIndex,
+    decimal? CurrentWaterIndex,
+    string? ElectricityMeterPhotoPath,
+    string? WaterMeterPhotoPath,
+    IReadOnlyList<InvoiceAdjustmentLineRequest>? AdjustmentLines);
+
+/// <summary>
+/// Một dòng điều chỉnh của hóa đơn định kỳ: chỉ nhận <c>DieuChinhKhac</c>, có mô tả; số tiền dương là khoản thu thêm, âm là
+/// khoản giảm (FR-41). <see cref="RelatedInvoiceId"/> trỏ về hóa đơn trước cùng hợp đồng khi dòng điều chỉnh sai sót của
+/// hóa đơn đó (BR-16).
+/// </summary>
+public record InvoiceAdjustmentLineRequest(
+    InvoiceLineCategory? Category,
+    string? Description,
+    decimal? Amount,
+    long? RelatedInvoiceId);
+
+/// <summary>
 /// Chi tiết hóa đơn — cấu trúc của GET /invoices/{id} (api-design mục 9), dùng chung cho hóa đơn định kỳ và hóa đơn
 /// thanh lý. <see cref="DaysCharged"/> trên <see cref="DaysInMonth"/> là tỷ lệ ngày đã dùng tính tiền phòng và phí dịch
 /// vụ (BR-15); hóa đơn thanh lý không tính tiền phòng (FR-93) có <see cref="DaysCharged"/> bằng 0.
