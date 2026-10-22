@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SmartRent.Api.Contracts;
 using SmartRent.Api.Services;
 using SmartRent.Infrastructure.Identity;
 
@@ -19,6 +20,25 @@ public class InvoicesController : ControllerBase
     public InvoicesController(InvoiceService service)
     {
         _service = service;
+    }
+
+    /// <summary>
+    /// Chốt chỉ số và lập hóa đơn định kỳ ở Nháp cho kỳ kế tiếp; trả 201 kèm chi tiết hóa đơn theo cấu trúc
+    /// GET /invoices/{id}.
+    /// </summary>
+    [HttpPost("contracts/{contractId:long}/invoices")]
+    [Authorize(Roles = AppRoles.Landlord)]
+    public async Task<IActionResult> CreatePeriodicInvoice(
+        long contractId,
+        PeriodicInvoiceRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _service.CreatePeriodicInvoiceAsync(
+            this.CurrentUserId(), contractId, request, cancellationToken);
+
+        return result.Succeeded
+            ? Created($"/api/v1/invoices/{result.Value!.Id}", result.Value)
+            : Problem(detail: result.Error, statusCode: result.StatusCode);
     }
 
     /// <summary>Chỉ số cũ của kỳ kế tiếp, để màn chốt số hiện cho Chủ trọ.</summary>
