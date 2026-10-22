@@ -85,34 +85,41 @@ export default function TenantLayout() {
                 <SheetHeader>
                   <SheetTitle>Menu</SheetTitle>
                 </SheetHeader>
-                <nav aria-label="Menu chính" className="flex flex-col gap-1 px-2">
-                  {menuItems.map((item) => (
+                {/* Màn hình thấp (điện thoại xoay ngang) không chứa hết menu nên phần dưới tiêu đề tự cuộn. */}
+                <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-4">
+                  <nav aria-label="Menu chính" className="flex flex-col gap-1 px-2">
+                    {menuItems.map((item) => (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        end={item.end}
+                        onClick={closeMenu}
+                        className={({ isActive }) => cn(menuLinkClass(isActive), 'h-11')}
+                      >
+                        <item.icon className="size-5" />
+                        {item.label}
+                      </NavLink>
+                    ))}
+                  </nav>
+                  <Separator className="my-2" />
+                  <div className="flex flex-col gap-1 px-2">
                     <NavLink
-                      key={item.to}
-                      to={item.to}
-                      end={item.end}
+                      to="/account"
                       onClick={closeMenu}
                       className={({ isActive }) => cn(menuLinkClass(isActive), 'h-11')}
                     >
-                      <item.icon className="size-5" />
-                      {item.label}
+                      <CircleUser className="size-5" />
+                      Tài khoản của tôi
                     </NavLink>
-                  ))}
-                </nav>
-                <Separator className="my-2" />
-                <div className="flex flex-col gap-1 px-2">
-                  <NavLink
-                    to="/account"
-                    onClick={closeMenu}
-                    className={({ isActive }) => cn(menuLinkClass(isActive), 'h-11')}
-                  >
-                    <CircleUser className="size-5" />
-                    Tài khoản của tôi
-                  </NavLink>
-                  <button type="button" onClick={logout} className={cn(menuLinkClass(false), 'h-11')}>
-                    <LogOut className="size-5" />
-                    Đăng xuất
-                  </button>
+                    <button
+                      type="button"
+                      onClick={logout}
+                      className={cn(menuLinkClass(false), 'h-11')}
+                    >
+                      <LogOut className="size-5" />
+                      Đăng xuất
+                    </button>
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>
