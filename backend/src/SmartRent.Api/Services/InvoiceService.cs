@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using SmartRent.Api.Contracts;
@@ -12,27 +13,33 @@ namespace SmartRent.Api.Services;
 /// <summary>
 /// Hóa đơn định kỳ và thanh toán — BP-07. Chủ trọ chỉ thao tác trên hợp đồng và hóa đơn thuộc phòng của mình: quyền sở
 /// hữu truy hóa đơn → hợp đồng → phòng → khu trọ → Chủ trọ, tài nguyên không thuộc người gọi trả 404 như không tồn tại.
+/// Người thuê chỉ xem hóa đơn của hợp đồng mình đứng tên, và chỉ từ khi hóa đơn được phát hành hoặc gửi.
 /// </summary>
 public class InvoiceService
 {
     private const string ContractNotFoundMessage = "Không tìm thấy hợp đồng.";
+
+    private const string InvoiceNotFoundMessage = "Không tìm thấy hóa đơn.";
 
     private const string AmountTooLargeMessage =
         "Số tiền của hóa đơn quá lớn. Kiểm tra lại chỉ số điện nước và số tiền của các dòng điều chỉnh.";
 
     private readonly AppDbContext _db;
     private readonly AuditLogger _auditLogger;
+    private readonly Notifier _notifier;
     private readonly IFileStorage _fileStorage;
     private readonly InvoiceDetailBuilder _invoiceDetailBuilder;
 
     public InvoiceService(
         AppDbContext db,
         AuditLogger auditLogger,
+        Notifier notifier,
         IFileStorage fileStorage,
         InvoiceDetailBuilder invoiceDetailBuilder)
     {
         _db = db;
         _auditLogger = auditLogger;
+        _notifier = notifier;
         _fileStorage = fileStorage;
         _invoiceDetailBuilder = invoiceDetailBuilder;
     }
@@ -120,17 +127,9 @@ public class InvoiceService
         var draft = prepared.Value!;
         var amounts = InvoiceCalculator.CalculatePeriodic(contract, period, draft.Electricity, draft.Water, draft.Lines);
 
-        if (!amounts.FitsMoneyColumns)
+        if (AmountsError(amounts) is { } amountsError)
         {
-            return ServiceResult<InvoiceDetailResponse>.Fail(
-                StatusCodes.Status422UnprocessableEntity, AmountTooLargeMessage);
-        }
-
-        if (!amounts.IsTotalAllowed)
-        {
-            return ServiceResult<InvoiceDetailResponse>.Fail(
-                StatusCodes.Status422UnprocessableEntity,
-                "Tổng hóa đơn định kỳ không được âm. Khoản giảm lớn hơn tiền tháng thì chia sang các kỳ sau.");
+            return amountsError;
         }
 
         var invoice = new Invoice
@@ -140,23 +139,10 @@ public class InvoiceService
             Type = InvoiceType.DinhKy,
             Status = InvoiceStatus.Nhap,
             PeriodStart = period.Start,
-            PeriodEnd = period.End,
-            PreviousElectricityIndex = draft.Electricity.Previous,
-            CurrentElectricityIndex = draft.Electricity.Current,
-            ElectricityUnitPrice = contract.ElectricityUnitPrice,
-            ElectricityAmount = amounts.ElectricityAmount,
-            PreviousWaterIndex = draft.Water.Previous,
-            CurrentWaterIndex = draft.Water.Current,
-            WaterUnitPrice = contract.WaterUnitPrice,
-            WaterAmount = amounts.WaterAmount,
-            RentAmount = amounts.RentAmount,
-            ServiceFeeAmount = amounts.ServiceFeeAmount,
-            TotalAmount = amounts.TotalAmount,
-            ElectricityMeterPhotoUrl = draft.ElectricityMeterPhotoPath,
-            WaterMeterPhotoUrl = draft.WaterMeterPhotoPath,
-            Lines = draft.Lines.ToList()
+            PeriodEnd = period.End
         };
 
+        ApplyPeriodicInvoice(invoice, contract, draft, amounts);
         _db.Invoices.Add(invoice);
         MarkContractChanged(contract);
 
@@ -190,6 +176,365 @@ public class InvoiceService
     }
 
     /// <summary>
+    /// FR-49, FR-50, BR-16: Chủ trọ sửa hóa đơn định kỳ mới nhất của hợp đồng khi chưa thu đồng nào, body giống lúc lập;
+    /// kỳ giữ nguyên, server tính lại chỉ số cũ và mọi số tiền. Hóa đơn đã phát hành có lại trọn hạn thanh toán tính từ
+    /// ngày sửa, hoặc sang Đã thanh toán nếu tổng mới bằng 0, và người thuê nhận thông báo. Ghi nhật ký giá trị cũ và mới
+    /// (BR-23).
+    /// </summary>
+    public async Task<ServiceResult<InvoiceDetailResponse>> UpdatePeriodicInvoiceAsync(
+        long landlordUserId,
+        long id,
+        PeriodicInvoiceRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var invoice = await _db.Invoices
+            .Include(i => i.Contract)
+            .ThenInclude(c => c.ServiceFees)
+            .Include(i => i.Contract)
+            .ThenInclude(c => c.Room)
+            .ThenInclude(r => r.Property)
+            .Include(i => i.Lines)
+            .Include(i => i.PaymentReports)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(
+                i => i.Id == id && i.Contract.Room.Property.LandlordUserId == landlordUserId,
+                cancellationToken);
+
+        if (invoice is null)
+        {
+            return ServiceResult<InvoiceDetailResponse>.Fail(StatusCodes.Status404NotFound, InvoiceNotFoundMessage);
+        }
+
+        var contractInvoices = await LoadContractInvoicesAsync(invoice.ContractId, cancellationToken);
+
+        if (ChangeError(invoice, contractInvoices, "sửa") is { } changeError)
+        {
+            return ServiceResult<InvoiceDetailResponse>.Fail(StatusCodes.Status409Conflict, changeError);
+        }
+
+        var contract = invoice.Contract;
+        var otherInvoices = contractInvoices.Where(i => i.Id != invoice.Id).ToList();
+        var prepared = await PreparePeriodicInvoiceAsync(landlordUserId, contract, otherInvoices, request, cancellationToken);
+
+        if (!prepared.Succeeded)
+        {
+            return ServiceResult<InvoiceDetailResponse>.Fail(prepared.StatusCode, prepared.Error!);
+        }
+
+        var draft = prepared.Value!;
+        var period = new BillingPeriod(invoice.PeriodStart, invoice.PeriodEnd);
+        var amounts = InvoiceCalculator.CalculatePeriodic(contract, period, draft.Electricity, draft.Water, draft.Lines);
+
+        if (AmountsError(amounts) is { } amountsError)
+        {
+            return amountsError;
+        }
+
+        var wasIssued = invoice.Status != InvoiceStatus.Nhap;
+        var before = PeriodicInvoiceAudit.Of(invoice);
+
+        ApplyPeriodicInvoice(invoice, contract, draft, amounts);
+        invoice.ResetPaymentAfterEdit(DateTimeOffset.UtcNow, contract.PaymentDueDays);
+        MarkContractChanged(contract);
+
+        _auditLogger.Write(
+            landlordUserId,
+            "SuaHoaDon",
+            nameof(Invoice),
+            invoice.Id,
+            before,
+            PeriodicInvoiceAudit.Of(invoice));
+
+        // Hóa đơn Nháp người thuê chưa thấy nên không thông báo.
+        if (wasIssued)
+        {
+            _notifier.Notify(
+                contract.TenantUserId,
+                "HoaDonDuocSua",
+                "Hóa đơn đã được sửa",
+                $"Chủ trọ đã sửa hóa đơn kỳ {PeriodText(invoice)} phòng {ContractService.RoomLabel(contract)}. " +
+                AmountDueText(invoice),
+                nameof(Invoice),
+                invoice.Id);
+        }
+
+        // Thao tác khác vừa đổi cùng hợp đồng thì DbUpdateConcurrencyException được
+        // ConcurrencyConflictExceptionHandler trả 409.
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return ServiceResult<InvoiceDetailResponse>.Ok(
+            await _invoiceDetailBuilder.BuildAsync(invoice, paymentQr: null, cancellationToken));
+    }
+
+    /// <summary>
+    /// api-design mục 9: Chủ trọ phát hành hóa đơn định kỳ ở Nháp — Chưa thanh toán với hạn tính từ ngày phát hành, hoặc
+    /// Đã thanh toán ngay khi tổng bằng 0 (FR-41). Người thuê nhận thông báo mức Cao.
+    /// </summary>
+    public async Task<ServiceResult> IssueAsync(
+        long landlordUserId,
+        long id,
+        CancellationToken cancellationToken = default)
+    {
+        var invoice = await FindOwnedAsync(landlordUserId, id, cancellationToken);
+
+        if (invoice is null)
+        {
+            return ServiceResult.Fail(StatusCodes.Status404NotFound, InvoiceNotFoundMessage);
+        }
+
+        if (!invoice.CanIssue)
+        {
+            return ServiceResult.Fail(
+                StatusCodes.Status409Conflict,
+                invoice.Type == InvoiceType.ThanhLy
+                    ? "Hóa đơn thanh lý không phát hành ở đây: gửi bảng thanh lý cho người thuê xác nhận."
+                    : "Chỉ phát hành được hóa đơn đang ở Nháp.");
+        }
+
+        var contract = invoice.Contract;
+        invoice.Issue(DateTimeOffset.UtcNow, contract.PaymentDueDays);
+        MarkContractChanged(contract);
+
+        _notifier.Notify(
+            contract.TenantUserId,
+            "HoaDonMoi",
+            "Hóa đơn mới",
+            $"Chủ trọ đã phát hành hóa đơn kỳ {PeriodText(invoice)} phòng {ContractService.RoomLabel(contract)}. " +
+            AmountDueText(invoice),
+            nameof(Invoice),
+            invoice.Id);
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return ServiceResult.Ok();
+    }
+
+    /// <summary>
+    /// FR-52: Chủ trọ hủy hóa đơn định kỳ mới nhất của hợp đồng khi chưa thu đồng nào, lý do bắt buộc. Ghi nhật ký
+    /// (BR-23); hóa đơn đã phát hành thì người thuê nhận thông báo — hủy hóa đơn Nháp thì không, vì người thuê chưa thấy.
+    /// </summary>
+    public async Task<ServiceResult> CancelAsync(
+        long landlordUserId,
+        long id,
+        string reason,
+        CancellationToken cancellationToken = default)
+    {
+        var invoice = await FindOwnedAsync(landlordUserId, id, cancellationToken);
+
+        if (invoice is null)
+        {
+            return ServiceResult.Fail(StatusCodes.Status404NotFound, InvoiceNotFoundMessage);
+        }
+
+        var contractInvoices = await LoadContractInvoicesAsync(invoice.ContractId, cancellationToken);
+
+        if (ChangeError(invoice, contractInvoices, "hủy") is { } changeError)
+        {
+            return ServiceResult.Fail(StatusCodes.Status409Conflict, changeError);
+        }
+
+        var contract = invoice.Contract;
+        var wasIssued = invoice.Status != InvoiceStatus.Nhap;
+        var before = new { Status = invoice.Status.ToString(), invoice.TotalAmount, invoice.DueDate };
+        var trimmedReason = reason.Trim();
+
+        invoice.Cancel(trimmedReason);
+        MarkContractChanged(contract);
+
+        _auditLogger.Write(
+            landlordUserId,
+            "HuyHoaDon",
+            nameof(Invoice),
+            invoice.Id,
+            before,
+            new { Status = invoice.Status.ToString(), CancelReason = trimmedReason });
+
+        if (wasIssued)
+        {
+            _notifier.Notify(
+                contract.TenantUserId,
+                "HoaDonBiHuy",
+                "Hóa đơn bị hủy",
+                $"Chủ trọ đã hủy hóa đơn kỳ {PeriodText(invoice)} phòng {ContractService.RoomLabel(contract)}. " +
+                $"Lý do: {trimmedReason}",
+                nameof(Invoice),
+                invoice.Id);
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return ServiceResult.Ok();
+    }
+
+    /// <summary>
+    /// FR-44, FR-78: chi tiết hóa đơn cho người thuê đứng tên hoặc Chủ trọ sở hữu phòng; người khác, và người thuê với hóa
+    /// đơn chưa phát hành, nhận 404. Mã VietQR chỉ dành cho người thuê, khi hóa đơn còn phải trả và Chủ trọ đã khai báo
+    /// tài khoản nhận tiền; số tiền và nội dung chuyển khoản do server tính (mục 9.1).
+    /// </summary>
+    public async Task<ServiceResult<InvoiceDetailResponse>> GetDetailAsync(
+        long userId,
+        long id,
+        CancellationToken cancellationToken = default)
+    {
+        var invoice = await _db.Invoices
+            .AsNoTracking()
+            .Include(i => i.Contract)
+            .ThenInclude(c => c.ServiceFees)
+            .Include(i => i.Contract)
+            .ThenInclude(c => c.Room)
+            .ThenInclude(r => r.Property)
+            .Include(i => i.Lines)
+            .Include(i => i.PaymentReports)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(
+                i => i.Id == id
+                     && (i.Contract.TenantUserId == userId || i.Contract.Room.Property.LandlordUserId == userId),
+                cancellationToken);
+
+        var viewerIsTenant = invoice?.Contract.TenantUserId == userId;
+
+        if (invoice is null || (viewerIsTenant && !invoice.IsVisibleToTenant))
+        {
+            return ServiceResult<InvoiceDetailResponse>.Fail(StatusCodes.Status404NotFound, InvoiceNotFoundMessage);
+        }
+
+        PaymentQrResponse? paymentQr = null;
+
+        if (viewerIsTenant && invoice.IsAwaitingPayment)
+        {
+            var landlord = await _db.Users
+                .AsNoTracking()
+                .Where(u => u.Id == invoice.Contract.Room.Property.LandlordUserId)
+                .Select(u => new { u.BankBin, u.BankAccountNumber, u.BankAccountName })
+                .FirstAsync(cancellationToken);
+
+            if (landlord is { BankBin: { } bankBin, BankAccountNumber: { } accountNumber, BankAccountName: { } accountName })
+            {
+                paymentQr = new PaymentQrResponse(
+                    bankBin, accountNumber, accountName, invoice.RemainingAmount, $"SMARTRENT HD{invoice.Id}");
+            }
+        }
+
+        return ServiceResult<InvoiceDetailResponse>.Ok(
+            await _invoiceDetailBuilder.BuildAsync(invoice, paymentQr, cancellationToken));
+    }
+
+    /// <summary>
+    /// Hóa đơn của một hợp đồng, kỳ mới trước, không phân trang — cho người thuê đứng tên hoặc Chủ trọ sở hữu phòng, người
+    /// khác nhận 404. Người thuê không thấy hóa đơn chưa phát hành.
+    /// </summary>
+    public async Task<ServiceResult<IReadOnlyList<ContractInvoiceListItemResponse>>> ListByContractAsync(
+        long userId,
+        long contractId,
+        CancellationToken cancellationToken = default)
+    {
+        var parties = await _db.Contracts
+            .AsNoTracking()
+            .Where(c => c.Id == contractId)
+            .Select(c => new { c.TenantUserId, c.Room.Property.LandlordUserId })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (parties is null || (parties.TenantUserId != userId && parties.LandlordUserId != userId))
+        {
+            return ServiceResult<IReadOnlyList<ContractInvoiceListItemResponse>>.Fail(
+                StatusCodes.Status404NotFound, ContractNotFoundMessage);
+        }
+
+        var query = _db.Invoices.AsNoTracking().Where(i => i.ContractId == contractId);
+
+        if (parties.TenantUserId == userId)
+        {
+            query = WhereVisibleToTenant(query);
+        }
+
+        var items = await OrderNewestFirst(query)
+            .Select(i => new ContractInvoiceListItemResponse(
+                i.Id,
+                i.Type,
+                i.PeriodStart,
+                i.PeriodEnd,
+                i.TotalAmount,
+                i.PaidAmount,
+                i.Status,
+                i.IssuedAt,
+                i.DueDate))
+            .ToListAsync(cancellationToken);
+
+        return ServiceResult<IReadOnlyList<ContractInvoiceListItemResponse>>.Ok(items);
+    }
+
+    /// <summary>
+    /// FR-103: Chủ trọ thấy hóa đơn trên các khu trọ của mình, Người thuê thấy hóa đơn đã phát hành của các hợp đồng mình
+    /// đứng tên. Lọc theo trạng thái, tháng của ngày đầu kỳ, loại hóa đơn; khu trọ và phòng chỉ dành cho Chủ trọ.
+    /// </summary>
+    public async Task<PagedResponse<InvoiceListItemResponse>> ListAsync(
+        long userId,
+        bool asLandlord,
+        InvoiceListFilter filter,
+        int page,
+        int pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _db.Invoices.AsNoTracking();
+
+        query = asLandlord
+            ? query.Where(i => i.Contract.Room.Property.LandlordUserId == userId)
+            : WhereVisibleToTenant(query.Where(i => i.Contract.TenantUserId == userId));
+
+        if (filter.Status is { Length: > 0 } statuses)
+        {
+            query = query.Where(i => statuses.Contains(i.Status));
+        }
+
+        if (filter.Month is { } month && InvoiceListFilter.TryParseMonth(month, out var firstDay))
+        {
+            var nextMonth = firstDay.AddMonths(1);
+            query = query.Where(i => i.PeriodStart >= firstDay && i.PeriodStart < nextMonth);
+        }
+
+        // Lọc theo khu trọ và phòng chỉ dành cho Chủ trọ.
+        if (asLandlord && filter.PropertyId is { } propertyId)
+        {
+            query = query.Where(i => i.Contract.Room.PropertyId == propertyId);
+        }
+
+        if (asLandlord && filter.RoomId is { } roomId)
+        {
+            query = query.Where(i => i.Contract.RoomId == roomId);
+        }
+
+        if (filter.Type is { } type)
+        {
+            query = query.Where(i => i.Type == type);
+        }
+
+        var total = await query.CountAsync(cancellationToken);
+
+        var items = await OrderNewestFirst(query)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .Select(i => new InvoiceListItemResponse(
+                i.Id,
+                i.ContractId,
+                i.Contract.Room.Code,
+                i.Contract.Room.Property.Name,
+                _db.Users.Where(u => u.Id == i.Contract.TenantUserId).Select(u => u.FullName).FirstOrDefault()
+                    ?? string.Empty,
+                i.Type,
+                i.PeriodStart,
+                i.PeriodEnd,
+                i.TotalAmount,
+                i.PaidAmount,
+                i.Status,
+                i.IssuedAt,
+                i.DueDate))
+            .ToListAsync(cancellationToken);
+
+        return new PagedResponse<InvoiceListItemResponse>(
+            items, page, pageSize, total, (int)Math.Ceiling(total / (double)pageSize));
+    }
+
+    /// <summary>
     /// FR-38: chỉ số cũ của hóa đơn kỳ kế tiếp, để màn chốt số hiện cho Chủ trọ. Chỉ để hiển thị — lập hóa đơn thì server
     /// tự tính lại bằng cùng quy tắc, không nhận chỉ số cũ từ client (security-design mục 5.2).
     /// </summary>
@@ -213,6 +558,84 @@ public class InvoiceService
         var (electricity, water) = contract.LatestMeterIndexes(contract.Invoices);
 
         return ServiceResult<MeterReadingsResponse>.Ok(new MeterReadingsResponse(electricity, water));
+    }
+
+    /// <summary>
+    /// Người thuê thấy hóa đơn định kỳ từ khi phát hành, hóa đơn thanh lý từ khi được gửi (api-design mục 9). Cùng điều
+    /// kiện với <see cref="Invoice.IsVisibleToTenant"/> (dùng ở chi tiết hóa đơn) — đổi quy tắc thì sửa cả hai.
+    /// </summary>
+    private static IQueryable<Invoice> WhereVisibleToTenant(IQueryable<Invoice> invoices)
+        => invoices.Where(i => i.Status != InvoiceStatus.Nhap
+                               && (i.Status != InvoiceStatus.DaHuy || i.IssuedAt != null));
+
+    /// <summary>
+    /// Kỳ mới trước: theo ngày đầu kỳ giảm dần, cùng ngày đầu kỳ thì hóa đơn lập sau đứng trước — hóa đơn thanh lý nằm
+    /// trong tháng đã có hóa đơn định kỳ (FR-93) vẫn đứng đầu (api-design mục 9).
+    /// </summary>
+    private static IQueryable<Invoice> OrderNewestFirst(IQueryable<Invoice> invoices)
+        => invoices.OrderByDescending(i => i.PeriodStart).ThenByDescending(i => i.Id);
+
+    /// <summary>Hóa đơn thuộc phòng của Chủ trọ, kèm hợp đồng, phòng và khu trọ để ghi nội dung thông báo.</summary>
+    private Task<Invoice?> FindOwnedAsync(long landlordUserId, long id, CancellationToken cancellationToken)
+        => _db.Invoices
+            .Include(i => i.Contract)
+            .ThenInclude(c => c.Room)
+            .ThenInclude(r => r.Property)
+            .FirstOrDefaultAsync(
+                i => i.Id == id && i.Contract.Room.Property.LandlordUserId == landlordUserId,
+                cancellationToken);
+
+    /// <summary>Mọi hóa đơn của hợp đồng, chỉ đọc — tìm hóa đơn định kỳ mới nhất, tính chỉ số cũ.</summary>
+    private Task<List<Invoice>> LoadContractInvoicesAsync(long contractId, CancellationToken cancellationToken)
+        => _db.Invoices
+            .AsNoTracking()
+            .Where(i => i.ContractId == contractId)
+            .ToListAsync(cancellationToken);
+
+    /// <summary>
+    /// FR-49, FR-52, BR-16: lý do hóa đơn không sửa hoặc hủy được (409), null khi được. Chỉ hóa đơn định kỳ mới nhất chưa
+    /// hủy của hợp đồng, ở Nháp, Chưa thanh toán hoặc Quá hạn và chưa thu đồng nào.
+    /// </summary>
+    /// <param name="action">"sửa" hoặc "hủy", để ghép câu báo lỗi.</param>
+    private static string? ChangeError(Invoice invoice, IReadOnlyList<Invoice> contractInvoices, string action)
+    {
+        if (!invoice.CanBeEditedOrCancelled)
+        {
+            return invoice.Type == InvoiceType.ThanhLy
+                ? action == "sửa"
+                    ? "Hóa đơn thanh lý sửa bằng chức năng sửa bảng thanh lý, khi bảng còn ở Nháp."
+                    : "Hóa đơn thanh lý không hủy được."
+                : invoice.Status switch
+                {
+                    InvoiceStatus.DaHuy => "Hóa đơn đã hủy.",
+                    InvoiceStatus.DaChuyenThanhLy => $"Hóa đơn đã chuyển vào hóa đơn thanh lý nên không {action} được.",
+                    InvoiceStatus.ChoXacNhan =>
+                        $"Hóa đơn có lượt báo thanh toán chờ xác nhận. Xác nhận hoặc từ chối trước khi {action}.",
+                    _ => $"Hóa đơn đã thu tiền nên không {action} được. Sai sót điều chỉnh bằng một dòng điều chỉnh " +
+                         "ở hóa đơn kỳ kế tiếp hoặc hóa đơn thanh lý."
+                };
+        }
+
+        return invoice.Contract.LatestPeriodicInvoice(contractInvoices)?.Id == invoice.Id
+            ? null
+            : $"Chỉ {action} được hóa đơn định kỳ mới nhất của hợp đồng. Sai sót ở hóa đơn cũ hơn điều chỉnh bằng một " +
+              "dòng điều chỉnh ở hóa đơn kỳ kế tiếp.";
+    }
+
+    /// <summary>422 khi số tiền tính ra vượt cột tiền, hoặc tổng hóa đơn định kỳ âm (FR-41); null khi hợp lệ.</summary>
+    private static ServiceResult<InvoiceDetailResponse>? AmountsError(PeriodicInvoiceAmounts amounts)
+    {
+        if (!amounts.FitsMoneyColumns)
+        {
+            return ServiceResult<InvoiceDetailResponse>.Fail(
+                StatusCodes.Status422UnprocessableEntity, AmountTooLargeMessage);
+        }
+
+        return amounts.IsTotalAllowed
+            ? null
+            : ServiceResult<InvoiceDetailResponse>.Fail(
+                StatusCodes.Status422UnprocessableEntity,
+                "Tổng hóa đơn định kỳ không được âm. Khoản giảm lớn hơn tiền tháng thì chia sang các kỳ sau.");
     }
 
     /// <summary>
@@ -306,13 +729,61 @@ public class InvoiceService
     }
 
     /// <summary>
-    /// Lập hóa đơn định kỳ cũng ghi lại hợp đồng, để lệnh UPDATE kèm điều kiện xmin chạy trong cùng transaction: lập bảng
-    /// thanh lý chạy song song — cũng ghi hợp đồng, và không lập khi còn hóa đơn định kỳ ở Nháp — sẽ có một bên nhận
-    /// DbUpdateConcurrencyException (409), thay vì hợp đồng vừa có hóa đơn thanh lý vừa có thêm hóa đơn định kỳ (FR-91).
-    /// Chỉ khóa dòng (SELECT ... FOR UPDATE) thì không đổi xmin nên không đủ.
+    /// Ghi kết quả đã kiểm tra và đã tính vào hóa đơn: chỉ số, đơn giá đã chốt trong hợp đồng (BR-13), các khoản tiền, ảnh
+    /// đồng hồ và các dòng điều chỉnh. Hóa đơn định kỳ chỉ có dòng điều chỉnh do Chủ trọ gửi, nên khi sửa thì thay toàn
+    /// bộ dòng cũ. Bên gọi kiểm tra <see cref="AmountsError"/> trước khi gọi.
+    /// </summary>
+    private void ApplyPeriodicInvoice(
+        Invoice invoice,
+        Contract contract,
+        PeriodicInvoiceDraft draft,
+        PeriodicInvoiceAmounts amounts)
+    {
+        var staleLines = invoice.Lines.ToList();
+        invoice.Lines.Clear();
+        _db.InvoiceLines.RemoveRange(staleLines);
+
+        foreach (var line in draft.Lines)
+        {
+            invoice.Lines.Add(line);
+        }
+
+        invoice.PreviousElectricityIndex = draft.Electricity.Previous;
+        invoice.CurrentElectricityIndex = draft.Electricity.Current;
+        invoice.ElectricityUnitPrice = contract.ElectricityUnitPrice;
+        invoice.ElectricityAmount = amounts.ElectricityAmount;
+        invoice.PreviousWaterIndex = draft.Water.Previous;
+        invoice.CurrentWaterIndex = draft.Water.Current;
+        invoice.WaterUnitPrice = contract.WaterUnitPrice;
+        invoice.WaterAmount = amounts.WaterAmount;
+        invoice.RentAmount = amounts.RentAmount;
+        invoice.ServiceFeeAmount = amounts.ServiceFeeAmount;
+        invoice.TotalAmount = amounts.TotalAmount;
+        invoice.ElectricityMeterPhotoUrl = draft.ElectricityMeterPhotoPath;
+        invoice.WaterMeterPhotoUrl = draft.WaterMeterPhotoPath;
+    }
+
+    /// <summary>
+    /// Lập, sửa, phát hành và hủy hóa đơn định kỳ đều ghi lại hợp đồng, để lệnh UPDATE kèm điều kiện xmin chạy trong
+    /// cùng transaction: lập bảng thanh lý chạy song song — cũng ghi hợp đồng, không lập khi còn hóa đơn định kỳ ở Nháp,
+    /// và kết chuyển công nợ theo số tiền của từng hóa đơn — sẽ có một bên nhận DbUpdateConcurrencyException (409), thay
+    /// vì kết chuyển một số tiền vừa bị sửa, một hóa đơn vừa bị hủy, hoặc lập thêm hóa đơn định kỳ sau hóa đơn thanh lý
+    /// (FR-91, FR-92). Chỉ khóa dòng (SELECT ... FOR UPDATE) thì không đổi xmin nên không đủ.
     /// </summary>
     private void MarkContractChanged(Contract contract)
         => _db.Entry(contract).Property(c => c.Status).IsModified = true;
+
+    private static string PeriodText(Invoice invoice) => $"{invoice.PeriodStart:dd/MM/yyyy} – {invoice.PeriodEnd:dd/MM/yyyy}";
+
+    /// <summary>Số tiền phải trả và hạn của hóa đơn vừa phát hành hoặc vừa sửa, cho thông báo gửi người thuê.</summary>
+    private static string AmountDueText(Invoice invoice)
+        => invoice.Status == InvoiceStatus.DaThanhToan
+            ? "Tổng 0 đồng, bạn không phải thanh toán."
+            : $"Tổng {Money(invoice.TotalAmount)}, hạn thanh toán hết ngày {invoice.DueDate:dd/MM/yyyy}.";
+
+    /// <summary>Số tiền kiểu Việt Nam, dấu chấm ngăn hàng nghìn: 2.350.000 đồng — không phụ thuộc ngôn ngữ của máy chủ.</summary>
+    private static string Money(decimal amount)
+        => amount.ToString("#,0", CultureInfo.InvariantCulture).Replace(",", ".") + " đồng";
 
     /// <summary>Chỉ số, ảnh đồng hồ và các dòng điều chỉnh đã qua kiểm tra, dùng chung cho lập và sửa.</summary>
     private sealed record PeriodicInvoiceDraft(
@@ -322,7 +793,10 @@ public class InvoiceService
         string? WaterMeterPhotoPath,
         IReadOnlyList<InvoiceLine> Lines);
 
-    /// <summary>Giá trị ghi nhật ký TaoHoaDon, SuaHoaDon (BR-23): kỳ, chỉ số, các khoản tiền và từng dòng điều chỉnh.</summary>
+    /// <summary>
+    /// Giá trị ghi nhật ký TaoHoaDon, SuaHoaDon (BR-23): kỳ, chỉ số, các khoản tiền, từng dòng điều chỉnh, cùng trạng thái
+    /// và hạn thanh toán — sửa hóa đơn đã phát hành tính lại hạn (FR-50).
+    /// </summary>
     private sealed record PeriodicInvoiceAudit(
         DateOnly PeriodStart,
         DateOnly PeriodEnd,
@@ -335,6 +809,8 @@ public class InvoiceService
         decimal WaterAmount,
         decimal ServiceFeeAmount,
         decimal TotalAmount,
+        string Status,
+        DateOnly? DueDate,
         IReadOnlyList<PeriodicInvoiceAuditLine> Lines)
     {
         public static PeriodicInvoiceAudit Of(Invoice invoice) => new(
@@ -349,6 +825,8 @@ public class InvoiceService
             invoice.WaterAmount,
             invoice.ServiceFeeAmount,
             invoice.TotalAmount,
+            invoice.Status.ToString(),
+            invoice.DueDate,
             invoice.Lines
                 .Select(l => new PeriodicInvoiceAuditLine(l.Description, l.Amount, l.RelatedInvoiceId))
                 .ToList());

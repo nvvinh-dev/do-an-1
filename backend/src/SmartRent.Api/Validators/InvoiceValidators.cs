@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using FluentValidation;
 using SmartRent.Api.Contracts;
 
@@ -24,5 +25,26 @@ public class PeriodicInvoiceRequestValidator : AbstractValidator<PeriodicInvoice
             line.RuleFor(l => l.Amount).NotNull().PrecisionScale(12, 0, true);
             line.RuleFor(l => l.Description).MaximumLength(500);
         });
+    }
+}
+
+public class CancelInvoiceRequestValidator : AbstractValidator<CancelInvoiceRequest>
+{
+    public CancelInvoiceRequestValidator()
+    {
+        RuleFor(x => x.Reason).NotEmpty();
+    }
+}
+
+/// <summary><c>month</c> sai dạng <c>YYYY-MM</c> trả 400 (api-design mục 9).</summary>
+public class InvoiceListFilterValidator : AbstractValidator<InvoiceListFilter>
+{
+    public InvoiceListFilterValidator()
+    {
+        // Mẫu giữ đúng 4 chữ số năm và 2 chữ số tháng; TryParseMonth loại tháng ngoài 01–12 và năm 0000.
+        RuleFor(x => x.Month)
+            .Must(month => Regex.IsMatch(month!, @"^\d{4}-\d{2}$") && InvoiceListFilter.TryParseMonth(month!, out _))
+            .When(x => x.Month is not null)
+            .WithMessage("Tháng phải có dạng YYYY-MM, ví dụ 2026-10.");
     }
 }
