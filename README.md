@@ -373,7 +373,7 @@ cd backend
 dotnet test
 ```
 
-Frontend, sau khi dựng Vitest và Playwright:
+Frontend: `npm test` chạy unit test bằng Vitest cho các hàm trong `utils/`; kiểm thử đầu-cuối bằng Playwright, sau khi dựng:
 
 ```bash
 cd frontend
@@ -409,7 +409,7 @@ Kiểm thử đầu-cuối cần backend và frontend đang chạy, cùng biến
 
 **Dashboard Chủ trọ đã hiện thực ở backend:** số phòng theo trạng thái, số hóa đơn chưa thu và phần còn phải trả, doanh thu đã xác nhận của 6 tháng gần nhất gom theo tháng giờ Việt Nam, và việc cần xử lý — yêu cầu thuê chờ duyệt, lượt báo thanh toán chờ xác nhận, hợp đồng chờ nhận cọc, không đếm việc đã quá hạn. Dashboard Người thuê và Admin chưa có.
 
-**Frontend:** khung Vite + React + TypeScript + Tailwind và lớp gọi API; chưa có màn hình chức năng.
+**Frontend:** khung Vite + React + TypeScript + Tailwind, lớp gọi API và nền shadcn/ui theo hệ thống giao diện; định tuyến theo vai trò với route bảo vệ và file trang khung cho mọi màn hình, bốn layout (menu theo vai trò, chuông thông báo, đăng xuất), xử lý phiên hết hạn khi gặp `401` và hiển thị lỗi API theo mã trạng thái; thành phần dùng chung `StatusBadge`, `MoneyText`, `CountdownText`, `ConfirmDialog`, `ApiErrorAlert`, `PageHeader`, `ImageUploader` cùng các hàm định dạng tiền, ngày và nhãn trạng thái trong `utils/` có unit test bằng Vitest. Chưa có màn hình chức năng: các trang mới chỉ là trang khung.
 
 Tài liệu thiết kế cho Phase 1 đã hoàn tất trong `docs/`: đặc tả yêu cầu chức năng, sơ đồ use case và bảng truy vết use case, kiến trúc phần mềm, thiết kế cơ sở dữ liệu, thiết kế API, thiết kế an toàn, danh sách màn hình và sơ đồ điều hướng, hệ thống giao diện, chiến lược kiểm thử; `schema.sql` và `openapi.yaml` sinh từ code. Sơ đồ tuần tự chưa được thực hiện.
 
