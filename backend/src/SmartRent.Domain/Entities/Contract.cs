@@ -164,6 +164,41 @@ public class Contract
             : (latest.CurrentElectricityIndex, latest.CurrentWaterIndex);
     }
 
+    /// <summary>
+    /// FR-91: lập được hóa đơn định kỳ khi hợp đồng ở Đang hiệu lực, Sắp hết hạn hoặc Đang thanh lý và đã tới ngày bắt
+    /// đầu. Hợp đồng qua ngày kết thúc mà chưa có thông báo trả phòng vẫn lập được (FR-88).
+    /// </summary>
+    /// <param name="today">Ngày hiện tại theo lịch Việt Nam.</param>
+    public bool CanCreatePeriodicInvoice(DateOnly today)
+        => OccupyingStatuses.Contains(Status) && today >= StartDate;
+
+    /// <summary>
+    /// BR-15, BR-17, FR-91: kỳ của hóa đơn định kỳ kế tiếp — tháng liền sau kỳ của hóa đơn định kỳ chưa hủy gần nhất,
+    /// hoặc từ ngày bắt đầu hợp đồng tới cuối tháng đó nếu chưa có. Hóa đơn thanh lý không tính: hợp đồng đã có hóa đơn
+    /// thanh lý thì không lập thêm hóa đơn định kỳ, service kiểm tra riêng.
+    /// </summary>
+    /// <param name="invoices">Các hóa đơn của hợp đồng này; hóa đơn Đã hủy được bỏ qua.</param>
+    public BillingPeriod NextBillingPeriod(IEnumerable<Invoice> invoices)
+    {
+        var latest = invoices
+            .Where(i => i.Type == InvoiceType.DinhKy && i.Status != InvoiceStatus.DaHuy)
+            .MaxBy(i => i.PeriodEnd);
+
+        return latest is null
+            ? BillingPeriod.First(StartDate)
+            : new BillingPeriod(latest.PeriodStart, latest.PeriodEnd).Next();
+    }
+
+    /// <summary>
+    /// FR-88, FR-91: hợp đồng đang thanh lý không lập hóa đơn định kỳ cho tháng chứa ngày trả phòng dự kiến và các tháng
+    /// sau đó — phần đó thuộc hóa đơn thanh lý. Tháng sau tháng trả phòng xuất hiện khi hóa đơn tháng trả phòng đã lập
+    /// trước khi có thông báo.
+    /// </summary>
+    public bool IsPeriodicInvoiceBlockedByMoveOut(BillingPeriod period)
+        => Status == ContractStatus.DangThanhLy
+           && ExpectedMoveOutDate is { } expected
+           && period.IsInOrAfterMoveOutMonth(expected);
+
     /// <summary>Đã hủy, đã nhận cọc mà Chủ trọ chưa ghi nhận hoàn cọc.</summary>
     public bool IsAwaitingDepositRefund
         => Status == ContractStatus.DaHuy && DepositReceivedAt is not null && DepositRefundedAt is null;
