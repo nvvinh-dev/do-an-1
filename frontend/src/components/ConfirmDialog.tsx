@@ -36,7 +36,10 @@ interface ConfirmDialogProps {
   reason?: ReasonField
   /** Đang gọi API: khóa nút, hiện vòng xoay, không cho đóng hộp thoại. */
   isPending?: boolean
-  /** Lỗi của lời gọi API vừa rồi, hiện ngay trên nút xác nhận. */
+  /**
+   * Lỗi của lời gọi API vừa rồi, hiện ngay trên nút xác nhận. Chỉ hiện sau khi bấm xác nhận
+   * trong lần mở này, nên lỗi còn lại của lần mở trước không hiện khi mở lại hộp thoại.
+   */
   error?: unknown
   /** Gọi khi bấm xác nhận, kèm lý do đã bỏ khoảng trắng hai đầu (chuỗi rỗng nếu không có ô lý do). */
   onConfirm: (reason: string) => void
@@ -71,6 +74,9 @@ function ConfirmDialogBody({
   onConfirm,
 }: Omit<ConfirmDialogProps, 'open' | 'onOpenChange'> & { isPending: boolean }) {
   const [reasonText, setReasonText] = useState('')
+  // `error` thường lấy từ `useMutation` của trang và còn giữ tới khi mutation chạy lại; chưa bấm
+  // xác nhận trong lần mở này thì đó là lỗi cũ, không hiện.
+  const [hasConfirmed, setHasConfirmed] = useState(false)
   const reasonId = useId()
 
   const isReasonMissing = reason?.required === true && reasonText.trim() === ''
@@ -100,7 +106,7 @@ function ConfirmDialogBody({
         </div>
       )}
 
-      <ApiErrorAlert error={error} />
+      <ApiErrorAlert error={hasConfirmed ? error : null} />
 
       <AlertDialogFooter>
         <AlertDialogCancel disabled={isPending}>{cancelLabel}</AlertDialogCancel>
@@ -108,7 +114,10 @@ function ConfirmDialogBody({
           type="button"
           variant={destructive ? 'destructive' : 'default'}
           disabled={isPending || isReasonMissing}
-          onClick={() => onConfirm(reasonText.trim())}
+          onClick={() => {
+            setHasConfirmed(true)
+            onConfirm(reasonText.trim())
+          }}
         >
           {isPending && <Spinner />}
           {confirmLabel}
