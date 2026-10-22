@@ -18,6 +18,11 @@ public class DashboardController : ControllerBase
         _service = service;
     }
 
+    [HttpGet("admin")]
+    [Authorize(Roles = AppRoles.Admin)]
+    public async Task<IActionResult> Admin(CancellationToken cancellationToken)
+        => Ok(await _service.GetAdminAsync(cancellationToken));
+
     [HttpGet("landlord")]
     [Authorize(Roles = AppRoles.Landlord)]
     public async Task<IActionResult> Landlord(CancellationToken cancellationToken)

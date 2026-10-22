@@ -3,6 +3,19 @@ using SmartRent.Domain.Enums;
 namespace SmartRent.Api.Contracts;
 
 /// <summary>
+/// Dashboard Admin — FR-65, api-design mục 12. <see cref="Properties"/> và <see cref="Rooms"/> không tính khu trọ và
+/// phòng đã lưu trữ.
+/// </summary>
+public record AdminDashboardResponse(
+    UserCountsResponse Users,
+    int Properties,
+    int Rooms,
+    int PendingLandlordApplications);
+
+/// <summary>Số tài khoản, tính cả tài khoản đang bị khóa; mỗi tài khoản có đúng một vai trò.</summary>
+public record UserCountsResponse(int Total, int Admins, int Landlords, int Tenants);
+
+/// <summary>
 /// Dashboard Chủ trọ — FR-66, api-design mục 12. <see cref="RoomCounts"/> không tính phòng đã lưu trữ; hóa đơn chưa thu,
 /// doanh thu và việc cần xử lý vẫn tính cả phòng đã lưu trữ.
 /// </summary>
