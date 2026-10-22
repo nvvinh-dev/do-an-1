@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { useUploadFile } from '@/hooks/useUploadFile'
+import { getApiErrorInfo } from '@/lib/apiError'
 import { cn } from '@/lib/utils'
 import type { UploadedImage, UploadPurpose } from '@/types/fileTypes'
 import { getMaxUploadBytes, validateImageFile } from '@/utils/validateImageFile'
@@ -30,6 +31,12 @@ interface ImageUploaderProps {
   /** Hiện nút đổi chỗ ảnh; ảnh đầu tiên là ảnh đại diện (FR-100). */
   reorderable?: boolean
   disabled?: boolean
+  /**
+   * Gọi `true` khi bắt đầu tải và `false` khi tải xong hoặc dừng. Trang phải khóa nút gửi form
+   * trong lúc `true`: gửi khi ảnh chưa tải xong thì danh sách `path` thiếu ảnh, còn các ảnh tải
+   * xong sau đó nằm lại trên Storage mà không gắn vào đâu.
+   */
+  onUploadingChange?: (isUploading: boolean) => void
   /** Ghi đè tên dùng cho `alt`, ví dụ "Ảnh phòng P101". */
   imageLabel?: string
   className?: string
@@ -48,6 +55,7 @@ export default function ImageUploader({
   maxFiles = 1,
   reorderable = false,
   disabled = false,
+  onUploadingChange,
   imageLabel = DEFAULT_IMAGE_LABELS[purpose],
   className,
 }: ImageUploaderProps) {
@@ -67,6 +75,11 @@ export default function ImageUploader({
   const isFull = value.length >= maxFiles
   const isLocked = disabled || isUploading
   const maxMegabytes = getMaxUploadBytes(purpose) / (1024 * 1024)
+
+  function changeUploading(next: boolean) {
+    setIsUploading(next)
+    onUploadingChange?.(next)
+  }
 
   async function handleFilesSelected(event: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? [])
@@ -95,26 +108,44 @@ export default function ImageUploader({
     if (skippedForSpace > 0) {
       problems.push(`Chỉ thêm được tối đa ${maxFiles} ảnh, ${skippedForSpace} ảnh chưa được tải lên.`)
     }
-    setRejections(problems)
+    setRejections([...problems])
+    if (accepted.length === 0) {
+      return
+    }
 
     // Tải lần lượt để ảnh vào danh sách đúng thứ tự đã chọn và không vượt hạn mức tải lên.
-    setIsUploading(true)
+    changeUploading(true)
     let images = value
     try {
-      for (const file of accepted) {
-        const uploaded = await upload.mutateAsync({ file, purpose })
-        let previewUrl = uploaded.url
-        if (previewUrl === null) {
-          previewUrl = URL.createObjectURL(file)
-          localPreviewUrls.current.add(previewUrl)
+      for (let index = 0; index < accepted.length; index += 1) {
+        const file = accepted[index]
+        try {
+          const uploaded = await upload.mutateAsync({ file, purpose })
+          let previewUrl = uploaded.url
+          if (previewUrl === null) {
+            previewUrl = URL.createObjectURL(file)
+            localPreviewUrls.current.add(previewUrl)
+          }
+          images = [...images, { path: uploaded.path, url: previewUrl }]
+          onChange(images)
+        } catch (error) {
+          const { status, message } = getApiErrorInfo(error)
+          if (status === 422) {
+            // Lỗi của riêng file này (đổi đuôi thành .jpg, quá dung lượng...): báo tên file rồi
+            // tải tiếp các ảnh sau. Xóa lỗi của lần gọi để ApiErrorAlert không hiện trùng.
+            problems.push(`"${file.name}": ${message}`)
+            upload.reset()
+            continue
+          }
+          // 429, lỗi mạng, 5xx... thì các file sau cũng lỗi theo: dừng và để ApiErrorAlert hiện
+          // nguyên nhân. Ảnh đã tải xong trước đó vẫn giữ.
+          problems.push(`${accepted.length - index} ảnh chưa được tải lên, bắt đầu từ "${file.name}".`)
+          break
         }
-        images = [...images, { path: uploaded.path, url: previewUrl }]
-        onChange(images)
       }
-    } catch {
-      // Lỗi đã nằm trong `upload.error` và hiện ở ApiErrorAlert; ảnh đã tải xong trước đó vẫn giữ.
     } finally {
-      setIsUploading(false)
+      changeUploading(false)
+      setRejections([...problems])
     }
   }
 
