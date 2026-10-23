@@ -367,6 +367,198 @@ public class InvoiceService
     }
 
     /// <summary>
+    /// FR-45, BR-06b: người thuê đứng tên báo đã thanh toán kèm minh chứng do chính mình tải lên, khi hóa đơn ở Chưa thanh
+    /// toán, Thanh toán một phần hoặc Quá hạn; hóa đơn sang Chờ xác nhận và Chủ trọ nhận thông báo. Hóa đơn người thuê
+    /// chưa thấy trả 404 như không tồn tại.
+    /// </summary>
+    public async Task<ServiceResult<PaymentReportResponse>> ReportPaymentAsync(
+        long tenantUserId,
+        long id,
+        ReportPaymentRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var invoice = await _db.Invoices
+            .Include(i => i.Contract)
+            .ThenInclude(c => c.Room)
+            .ThenInclude(r => r.Property)
+            .FirstOrDefaultAsync(i => i.Id == id && i.Contract.TenantUserId == tenantUserId, cancellationToken);
+
+        if (invoice is null || !invoice.IsVisibleToTenant)
+        {
+            return ServiceResult<PaymentReportResponse>.Fail(StatusCodes.Status404NotFound, InvoiceNotFoundMessage);
+        }
+
+        if (!invoice.CanReportPayment)
+        {
+            return ServiceResult<PaymentReportResponse>.Fail(
+                StatusCodes.Status409Conflict,
+                invoice.Status switch
+                {
+                    InvoiceStatus.ChoXacNhan => "Hóa đơn đang có lượt báo thanh toán chờ Chủ trọ xác nhận.",
+                    InvoiceStatus.DaThanhToan => "Hóa đơn đã thanh toán xong.",
+                    InvoiceStatus.DaChuyenThanhLy =>
+                        "Hóa đơn đã chuyển vào hóa đơn thanh lý. Báo thanh toán trên hóa đơn thanh lý.",
+                    _ => "Chỉ báo thanh toán được khi hóa đơn ở Chưa thanh toán, Thanh toán một phần hoặc Quá hạn."
+                });
+        }
+
+        var amount = request.ReportedAmount!.Value;
+
+        if (!invoice.IsValidPaymentAmount(amount))
+        {
+            return ServiceResult<PaymentReportResponse>.Fail(
+                StatusCodes.Status422UnprocessableEntity,
+                $"Số tiền báo đã trả phải lớn hơn 0 và không vượt phần còn phải trả ({Money(invoice.RemainingAmount)}).");
+        }
+
+        var proofImagePath = request.ProofImagePath!;
+
+        if (!await _fileStorage.IsOwnedByAsync(
+                proofImagePath, FilePurpose.MinhChungThanhToan, tenantUserId, cancellationToken))
+        {
+            return ServiceResult<PaymentReportResponse>.Fail(
+                StatusCodes.Status422UnprocessableEntity,
+                "Đường dẫn minh chứng không hợp lệ: chỉ nhận minh chứng thanh toán do chính bạn tải lên.");
+        }
+
+        var contract = invoice.Contract;
+        var report = invoice.ReportPayment(amount, proofImagePath, DateTimeOffset.UtcNow);
+
+        _notifier.Notify(
+            contract.Room.Property.LandlordUserId,
+            "BaoDaThanhToan",
+            "Người thuê báo đã thanh toán",
+            $"Người thuê phòng {ContractService.RoomLabel(contract)} báo đã thanh toán {Money(amount)} cho hóa đơn kỳ " +
+            $"{PeriodText(invoice)}. Đối soát minh chứng rồi xác nhận hoặc từ chối.",
+            nameof(Invoice),
+            invoice.Id);
+
+        // Chủ trọ lập bảng thanh lý kết chuyển chính hóa đơn này, hoặc một lượt báo khác, cùng lúc: xmin của hóa đơn
+        // chặn bên lưu sau, ConcurrencyConflictExceptionHandler trả 409.
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return ServiceResult<PaymentReportResponse>.Ok(
+            await _invoiceDetailBuilder.BuildPaymentReportAsync(report, cancellationToken));
+    }
+
+    /// <summary>
+    /// FR-46, FR-47, BR-06b: chỉ Chủ trọ sở hữu phòng xác nhận số tiền thực thu của một lượt báo đang chờ; số này cộng vào
+    /// số đã thu. Đủ tổng thì Đã thanh toán; còn thiếu thì Quá hạn nếu đã qua hạn, ngược lại Thanh toán một phần. Ghi nhật
+    /// ký (BR-23), người thuê nhận thông báo.
+    /// </summary>
+    public async Task<ServiceResult> ConfirmPaymentAsync(
+        long landlordUserId,
+        long id,
+        long reportId,
+        decimal confirmedAmount,
+        CancellationToken cancellationToken = default)
+    {
+        var found = await FindPendingPaymentReportAsync(landlordUserId, id, reportId, cancellationToken);
+
+        if (!found.Succeeded)
+        {
+            return ServiceResult.Fail(found.StatusCode, found.Error!);
+        }
+
+        var (invoice, report) = found.Value!;
+
+        if (!invoice.IsValidPaymentAmount(confirmedAmount))
+        {
+            return ServiceResult.Fail(
+                StatusCodes.Status422UnprocessableEntity,
+                $"Số tiền xác nhận phải lớn hơn 0 và không vượt phần còn phải trả ({Money(invoice.RemainingAmount)}).");
+        }
+
+        var contract = invoice.Contract;
+        var before = new { Status = invoice.Status.ToString(), invoice.PaidAmount };
+
+        invoice.ConfirmPayment(report, confirmedAmount, landlordUserId, DateTimeOffset.UtcNow);
+
+        _auditLogger.Write(
+            landlordUserId,
+            "XacNhanThanhToan",
+            nameof(Invoice),
+            invoice.Id,
+            before,
+            new
+            {
+                Status = invoice.Status.ToString(),
+                invoice.PaidAmount,
+                PaymentReportId = report.Id,
+                report.ReportedAmount,
+                report.ConfirmedAmount
+            });
+
+        _notifier.Notify(
+            contract.TenantUserId,
+            "ThanhToanDuocXacNhan",
+            "Thanh toán được xác nhận",
+            $"Chủ trọ đã xác nhận thu {Money(confirmedAmount)} cho hóa đơn kỳ {PeriodText(invoice)} phòng " +
+            $"{ContractService.RoomLabel(contract)}. {BalanceText(invoice)}",
+            nameof(Invoice),
+            invoice.Id);
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return ServiceResult.Ok();
+    }
+
+    /// <summary>
+    /// FR-48: Chủ trọ sở hữu phòng từ chối xác nhận một lượt báo đang chờ, lý do bắt buộc. Hóa đơn về Quá hạn nếu đã qua
+    /// hạn; ngược lại về Thanh toán một phần nếu đã thu được một phần, còn lại về Chưa thanh toán. Ghi nhật ký (BR-23),
+    /// người thuê nhận thông báo kèm lý do.
+    /// </summary>
+    public async Task<ServiceResult> RejectPaymentAsync(
+        long landlordUserId,
+        long id,
+        long reportId,
+        string reason,
+        CancellationToken cancellationToken = default)
+    {
+        var found = await FindPendingPaymentReportAsync(landlordUserId, id, reportId, cancellationToken);
+
+        if (!found.Succeeded)
+        {
+            return ServiceResult.Fail(found.StatusCode, found.Error!);
+        }
+
+        var (invoice, report) = found.Value!;
+        var contract = invoice.Contract;
+        var before = new { Status = invoice.Status.ToString() };
+        var trimmedReason = reason.Trim();
+
+        invoice.RejectPayment(report, trimmedReason, DateTimeOffset.UtcNow);
+
+        _auditLogger.Write(
+            landlordUserId,
+            "TuChoiThanhToan",
+            nameof(Invoice),
+            invoice.Id,
+            before,
+            new
+            {
+                Status = invoice.Status.ToString(),
+                PaymentReportId = report.Id,
+                report.ReportedAmount,
+                RejectReason = trimmedReason
+            });
+
+        _notifier.Notify(
+            contract.TenantUserId,
+            "ThanhToanBiTuChoi",
+            "Thanh toán bị từ chối xác nhận",
+            $"Chủ trọ chưa xác nhận khoản {Money(report.ReportedAmount)} bạn báo đã trả cho hóa đơn kỳ " +
+            $"{PeriodText(invoice)} phòng {ContractService.RoomLabel(contract)}. Lý do: {trimmedReason}. " +
+            BalanceText(invoice),
+            nameof(Invoice),
+            invoice.Id);
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return ServiceResult.Ok();
+    }
+
+    /// <summary>
     /// FR-44, FR-78: chi tiết hóa đơn cho người thuê đứng tên hoặc Chủ trọ sở hữu phòng; người khác, và người thuê với hóa
     /// đơn chưa phát hành, nhận 404. Mã VietQR chỉ dành cho người thuê, khi hóa đơn còn phải trả và Chủ trọ đã khai báo
     /// tài khoản nhận tiền; số tiền và nội dung chuyển khoản do server tính (mục 9.1).
@@ -587,6 +779,48 @@ public class InvoiceService
                 i => i.Id == id && i.Contract.Room.Property.LandlordUserId == landlordUserId,
                 cancellationToken);
 
+    /// <summary>
+    /// Lượt báo thanh toán Chủ trọ sắp xác nhận hoặc từ chối: hóa đơn thuộc phòng của Chủ trọ và lượt báo thuộc hóa đơn
+    /// đó, không thì 404; lượt báo đã được xử lý thì 409.
+    /// </summary>
+    private async Task<ServiceResult<PendingPaymentReport>> FindPendingPaymentReportAsync(
+        long landlordUserId,
+        long id,
+        long reportId,
+        CancellationToken cancellationToken)
+    {
+        var invoice = await _db.Invoices
+            .Include(i => i.Contract)
+            .ThenInclude(c => c.Room)
+            .ThenInclude(r => r.Property)
+            .Include(i => i.PaymentReports)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync(
+                i => i.Id == id && i.Contract.Room.Property.LandlordUserId == landlordUserId,
+                cancellationToken);
+
+        if (invoice is null)
+        {
+            return ServiceResult<PendingPaymentReport>.Fail(StatusCodes.Status404NotFound, InvoiceNotFoundMessage);
+        }
+
+        var report = invoice.PaymentReports.FirstOrDefault(p => p.Id == reportId);
+
+        if (report is null)
+        {
+            return ServiceResult<PendingPaymentReport>.Fail(
+                StatusCodes.Status404NotFound, "Không tìm thấy lượt báo thanh toán.");
+        }
+
+        return invoice.CanProcessPaymentReport(report)
+            ? ServiceResult<PendingPaymentReport>.Ok(new PendingPaymentReport(invoice, report))
+            : ServiceResult<PendingPaymentReport>.Fail(
+                StatusCodes.Status409Conflict,
+                report.Status == PaymentReportStatus.DaXacNhan
+                    ? "Lượt báo thanh toán này đã được xác nhận."
+                    : "Lượt báo thanh toán này đã bị từ chối.");
+    }
+
     /// <summary>Mọi hóa đơn của hợp đồng, chỉ đọc — tìm hóa đơn định kỳ mới nhất, tính chỉ số cũ.</summary>
     private Task<List<Invoice>> LoadContractInvoicesAsync(long contractId, CancellationToken cancellationToken)
         => _db.Invoices
@@ -787,9 +1021,26 @@ public class InvoiceService
             ? "Tổng 0 đồng, bạn không phải thanh toán."
             : $"Tổng {Money(invoice.TotalAmount)}, hạn thanh toán hết ngày {invoice.DueDate:dd/MM/yyyy}.";
 
+    /// <summary>
+    /// Phần còn phải trả sau khi Chủ trọ xác nhận hoặc từ chối, cho thông báo gửi người thuê. Hóa đơn quá hạn trong lúc chờ
+    /// xác nhận sang thẳng Quá hạn, không qua tác vụ gắn cờ quá hạn, nên câu này nói luôn hóa đơn đã quá hạn.
+    /// </summary>
+    private static string BalanceText(Invoice invoice)
+        => invoice.Status switch
+        {
+            InvoiceStatus.DaThanhToan => "Hóa đơn đã thanh toán xong.",
+            InvoiceStatus.QuaHan =>
+                $"Còn phải trả {Money(invoice.RemainingAmount)}, hóa đơn đã quá hạn thanh toán " +
+                $"(hạn ngày {invoice.DueDate:dd/MM/yyyy}).",
+            _ => $"Còn phải trả {Money(invoice.RemainingAmount)}, hạn thanh toán hết ngày {invoice.DueDate:dd/MM/yyyy}."
+        };
+
     /// <summary>Số tiền kiểu Việt Nam, dấu chấm ngăn hàng nghìn: 2.350.000 đồng — không phụ thuộc ngôn ngữ của máy chủ.</summary>
     private static string Money(decimal amount)
         => amount.ToString("#,0", CultureInfo.InvariantCulture).Replace(",", ".") + " đồng";
+
+    /// <summary>Lượt báo đang chờ xác nhận cùng hóa đơn của nó, đã kiểm tra quyền của Chủ trọ.</summary>
+    private sealed record PendingPaymentReport(Invoice Invoice, PaymentReport Report);
 
     /// <summary>Chỉ số, ảnh đồng hồ và các dòng điều chỉnh đã qua kiểm tra, dùng chung cho lập và sửa.</summary>
     private sealed record PeriodicInvoiceDraft(
