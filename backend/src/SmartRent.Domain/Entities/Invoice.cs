@@ -121,11 +121,14 @@ public class Invoice
     public bool IsAwaitingPayment => AwaitingPaymentStatuses.Contains(Status) && RemainingAmount > 0;
 
     /// <summary>
-    /// api-design mục 9: người thuê thấy hóa đơn định kỳ từ khi phát hành, hóa đơn thanh lý từ khi được gửi. Hóa đơn ở
-    /// Nháp, và hóa đơn định kỳ bị hủy khi còn Nháp — chưa từng phát hành — người thuê không thấy.
+    /// api-design mục 9, FR-103: người thuê thấy hóa đơn định kỳ từ khi phát hành — không thấy hóa đơn Nháp, và hóa đơn
+    /// bị hủy khi còn Nháp. Hóa đơn thanh lý thấy từ lần gửi đầu, kể cả khi bảng quay về Nháp sau khi người thuê yêu cầu
+    /// sửa; bảng chưa từng gửi thì không thấy.
     /// </summary>
     public bool IsVisibleToTenant
-        => Status != InvoiceStatus.Nhap && (Status != InvoiceStatus.DaHuy || IssuedAt is not null);
+        => Type == InvoiceType.ThanhLy
+            ? SentAt is not null
+            : Status != InvoiceStatus.Nhap && (Status != InvoiceStatus.DaHuy || IssuedAt is not null);
 
     /// <summary>Chỉ hóa đơn định kỳ ở Nháp mới phát hành; bảng thanh lý gửi cho người thuê theo BP-10.</summary>
     public bool CanIssue => Type == InvoiceType.DinhKy && Status == InvoiceStatus.Nhap;

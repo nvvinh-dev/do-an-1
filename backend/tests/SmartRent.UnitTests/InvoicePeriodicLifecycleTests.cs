@@ -243,17 +243,60 @@ public class InvoicePeriodicLifecycleTests
         Assert.True(cancelledIssued.IsVisibleToTenant);
     }
 
-    /// <summary>Bảng thanh lý ở Nháp — kể cả bị người thuê yêu cầu sửa rồi quay về Nháp — người thuê không thấy.</summary>
-    [Theory]
-    [InlineData(InvoiceStatus.Nhap, false)]
-    [InlineData(InvoiceStatus.ChoNguoiThueXacNhan, true)]
-    [InlineData(InvoiceStatus.ChoHoanCoc, true)]
-    public void IsVisibleToTenant_HoaDonThanhLy(InvoiceStatus status, bool expected)
+    /// <summary>Bảng thanh lý 01/12 – 15/12, số dư âm (Chủ trọ phải hoàn cọc), còn ở Nháp và chưa gửi.</summary>
+    private static Invoice Settlement() => new()
     {
-        var invoice = Periodic(status);
-        invoice.Type = InvoiceType.ThanhLy;
+        Id = 13,
+        ContractId = 4,
+        Type = InvoiceType.ThanhLy,
+        PeriodStart = D(2026, 12, 1),
+        PeriodEnd = D(2026, 12, 15),
+        TotalAmount = -500_000,
+        Status = InvoiceStatus.Nhap
+    };
 
-        Assert.Equal(expected, invoice.IsVisibleToTenant);
+    /// <summary>FR-103: bảng thanh lý Chủ trọ mới lập, chưa từng gửi thì người thuê không thấy.</summary>
+    [Fact]
+    public void IsVisibleToTenant_BangThanhLyChuaGui_Sai()
+    {
+        Assert.False(Settlement().IsVisibleToTenant);
+    }
+
+    /// <summary>Bảng đã gửi lúc 10 giờ sáng 16/12, đang chờ người thuê xác nhận.</summary>
+    [Fact]
+    public void IsVisibleToTenant_BangThanhLyDaGui_Dung()
+    {
+        var invoice = Settlement();
+        invoice.SendSettlement(Vn(2026, 12, 16, 10));
+
+        Assert.True(invoice.IsVisibleToTenant);
+    }
+
+    /// <summary>
+    /// FR-103: người thuê yêu cầu sửa → bảng về Nháp nhưng đã từng gửi, nên người thuê vẫn xem được (chỉ đọc, kèm lý do
+    /// mình vừa nhập).
+    /// </summary>
+    [Fact]
+    public void IsVisibleToTenant_BangThanhLyDaGuiRoiVeNhap_Dung()
+    {
+        var invoice = Settlement();
+        invoice.SendSettlement(Vn(2026, 12, 16, 10));
+        invoice.RequestSettlementChanges("Chưa trừ tiền điện đã trả trước");
+
+        Assert.Equal(InvoiceStatus.Nhap, invoice.Status);
+        Assert.True(invoice.IsVisibleToTenant);
+    }
+
+    /// <summary>Bảng đã khóa sau khi người thuê đồng ý — số dư âm nên Chờ hoàn cọc — người thuê vẫn thấy.</summary>
+    [Fact]
+    public void IsVisibleToTenant_BangThanhLyDaKhoa_Dung()
+    {
+        var invoice = Settlement();
+        invoice.SendSettlement(Vn(2026, 12, 16, 10));
+        invoice.ConfirmSettlementByTenant(Vn(2026, 12, 17, 9), PaymentDueDays);
+
+        Assert.Equal(InvoiceStatus.ChoHoanCoc, invoice.Status);
+        Assert.True(invoice.IsVisibleToTenant);
     }
 
     // ---------------------------------------------------------------- Mã VietQR
