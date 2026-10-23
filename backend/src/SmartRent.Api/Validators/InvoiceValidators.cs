@@ -37,6 +37,38 @@ public class CancelInvoiceRequestValidator : AbstractValidator<CancelInvoiceRequ
     }
 }
 
+/// <summary>
+/// Thiếu số tiền hoặc minh chứng, số tiền có phần lẻ trả 400 (api-design mục 1). Số tiền không dương hoặc vượt phần còn
+/// phải trả, đường dẫn minh chứng sai trả 422 ở InvoiceService (api-design mục 9).
+/// </summary>
+public class ReportPaymentRequestValidator : AbstractValidator<ReportPaymentRequest>
+{
+    public ReportPaymentRequestValidator()
+    {
+        // Số đồng nguyên, tối đa 12 chữ số như phần nguyên của cột tiền numeric(14,2).
+        RuleFor(x => x.ReportedAmount).NotNull().PrecisionScale(12, 0, true);
+        RuleFor(x => x.ProofImagePath).NotEmpty();
+    }
+}
+
+/// <summary>Thiếu số tiền hoặc số tiền có phần lẻ trả 400; không dương hoặc vượt phần còn phải trả trả 422.</summary>
+public class ConfirmPaymentRequestValidator : AbstractValidator<ConfirmPaymentRequest>
+{
+    public ConfirmPaymentRequestValidator()
+    {
+        RuleFor(x => x.ConfirmedAmount).NotNull().PrecisionScale(12, 0, true);
+    }
+}
+
+/// <summary>Lý do được lưu vào lượt báo và chép vào thông báo ThanhToanBiTuChoi gửi người thuê, nên giới hạn độ dài.</summary>
+public class RejectPaymentRequestValidator : AbstractValidator<RejectPaymentRequest>
+{
+    public RejectPaymentRequestValidator()
+    {
+        RuleFor(x => x.Reason).NotEmpty().MaximumLength(500);
+    }
+}
+
 /// <summary><c>month</c> sai dạng <c>YYYY-MM</c> trả 400 (api-design mục 9).</summary>
 public class InvoiceListFilterValidator : AbstractValidator<InvoiceListFilter>
 {

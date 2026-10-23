@@ -30,6 +30,19 @@ public record InvoiceAdjustmentLineRequest(
 public record CancelInvoiceRequest(string Reason);
 
 /// <summary>
+/// FR-45: người thuê báo đã thanh toán. <see cref="ProofImagePath"/> là <c>path</c> nhận từ POST /files với
+/// <c>purpose = MinhChungThanhToan</c> (BR-06b). Số tiền lớn hơn 0 và không vượt phần còn phải trả — kiểm ở
+/// InvoiceService, sai trả 422.
+/// </summary>
+public record ReportPaymentRequest(decimal? ReportedAmount, string? ProofImagePath);
+
+/// <summary>FR-46, FR-47: Chủ trọ xác nhận số tiền thực thu, có thể khác số người thuê khai.</summary>
+public record ConfirmPaymentRequest(decimal? ConfirmedAmount);
+
+/// <summary>FR-48: Chủ trọ từ chối xác nhận thanh toán, lý do bắt buộc.</summary>
+public record RejectPaymentRequest(string Reason);
+
+/// <summary>
 /// Bộ lọc của GET /invoices (api-design mục 9), mọi trường tùy chọn. <see cref="Status"/> lặp lại được
 /// (<c>?status=ChuaThanhToan&amp;status=QuaHan</c>). <see cref="Month"/> dạng <c>YYYY-MM</c>, so với tháng của ngày đầu kỳ.
 /// <see cref="PropertyId"/> và <see cref="RoomId"/> chỉ dành cho Chủ trọ; Người thuê gửi lên thì bị bỏ qua.

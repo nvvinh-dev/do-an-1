@@ -85,15 +85,7 @@ public class InvoiceDetailBuilder
                     l.Category, l.Description, l.Amount, evidenceTasks[index].Result, l.RelatedInvoiceId))
                 .ToList(),
             paymentReports
-                .Select((p, index) => new PaymentReportResponse(
-                    p.Id,
-                    p.ReportedAmount,
-                    proofTasks[index].Result!,
-                    p.ReportedAt,
-                    p.Status,
-                    p.ConfirmedAmount,
-                    p.ConfirmedAt,
-                    p.RejectReason))
+                .Select((p, index) => PaymentReportResponseOf(p, proofTasks[index].Result!))
                 .ToList(),
             paymentQr,
             invoice.SentAt,
@@ -101,6 +93,23 @@ public class InvoiceDetailBuilder
             invoice.ChangeRequestReason,
             invoice.LandlordFinalizeNote);
     }
+
+    /// <summary>Một lượt báo thanh toán theo cấu trúc trong chi tiết hóa đơn; minh chứng là URL có chữ ký, có hạn.</summary>
+    public async Task<PaymentReportResponse> BuildPaymentReportAsync(
+        PaymentReport report,
+        CancellationToken cancellationToken = default)
+        => PaymentReportResponseOf(report, (await SignAsync(report.ProofImageUrl, cancellationToken))!);
+
+    private static PaymentReportResponse PaymentReportResponseOf(PaymentReport report, string proofImageUrl)
+        => new(
+            report.Id,
+            report.ReportedAmount,
+            proofImageUrl,
+            report.ReportedAt,
+            report.Status,
+            report.ConfirmedAmount,
+            report.ConfirmedAt,
+            report.RejectReason);
 
     private async Task<string?> SignAsync(string? path, CancellationToken cancellationToken)
         => path is null ? null : await _fileStorage.CreateSignedUrlAsync(path, PrivateFileUrlLifetime, cancellationToken);

@@ -482,6 +482,10 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
 
             // Quét hóa đơn quá hạn
             entity.HasIndex(i => new { i.Status, i.DueDate });
+
+            // Người thuê báo thanh toán đúng lúc Chủ trọ lập bảng thanh lý kết chuyển chính hóa đơn đó: một bên nhận
+            // 409, hóa đơn không vừa Chờ xác nhận vừa Đã chuyển thanh lý.
+            ConfigureRowVersion(entity);
         });
 
         builder.Entity<InvoiceLine>(entity =>

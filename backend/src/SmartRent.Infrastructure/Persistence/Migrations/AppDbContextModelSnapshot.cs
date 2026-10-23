@@ -536,6 +536,12 @@ namespace SmartRent.Infrastructure.Persistence.Migrations
                         .HasColumnType("numeric(14,2)")
                         .HasColumnName("rent_amount");
 
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.Property<DateTimeOffset?>("SentAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("sent_at");

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using SmartRent.Api.Contracts;
 using SmartRent.Api.Services;
 using SmartRent.Infrastructure.Identity;
@@ -131,6 +132,47 @@ public class InvoicesController : ControllerBase
         CancelInvoiceRequest request,
         CancellationToken cancellationToken)
         => ToResponse(await _service.CancelAsync(this.CurrentUserId(), id, request.Reason, cancellationToken));
+
+    /// <summary>
+    /// Người thuê đứng tên báo đã thanh toán kèm minh chứng; trả 201 kèm lượt báo, Location trỏ về chi tiết hóa đơn chứa
+    /// lượt báo đó.
+    /// </summary>
+    [HttpPost("invoices/{id:long}/payment-reports")]
+    [Authorize(Roles = AppRoles.Tenant)]
+    [EnableRateLimiting(RateLimitPolicies.BusinessWrite)]
+    public async Task<IActionResult> ReportPayment(
+        long id,
+        ReportPaymentRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _service.ReportPaymentAsync(this.CurrentUserId(), id, request, cancellationToken);
+
+        return result.Succeeded
+            ? Created($"/api/v1/invoices/{id}", result.Value)
+            : Problem(detail: result.Error, statusCode: result.StatusCode);
+    }
+
+    /// <summary>Chỉ Chủ trọ sở hữu xác nhận số tiền thực thu; mọi vai trò khác, kể cả Admin, nhận 403 (BR-06b).</summary>
+    [HttpPost("invoices/{id:long}/payment-reports/{reportId:long}/confirm")]
+    [Authorize(Roles = AppRoles.Landlord)]
+    public async Task<IActionResult> ConfirmPayment(
+        long id,
+        long reportId,
+        ConfirmPaymentRequest request,
+        CancellationToken cancellationToken)
+        => ToResponse(await _service.ConfirmPaymentAsync(
+            this.CurrentUserId(), id, reportId, request.ConfirmedAmount!.Value, cancellationToken));
+
+    /// <summary>Chủ trọ sở hữu từ chối xác nhận thanh toán, lý do bắt buộc.</summary>
+    [HttpPost("invoices/{id:long}/payment-reports/{reportId:long}/reject")]
+    [Authorize(Roles = AppRoles.Landlord)]
+    public async Task<IActionResult> RejectPayment(
+        long id,
+        long reportId,
+        RejectPaymentRequest request,
+        CancellationToken cancellationToken)
+        => ToResponse(await _service.RejectPaymentAsync(
+            this.CurrentUserId(), id, reportId, request.Reason, cancellationToken));
 
     /// <summary>Thao tác đổi trạng thái trả 204 khi thành công.</summary>
     private IActionResult ToResponse(ServiceResult result)
