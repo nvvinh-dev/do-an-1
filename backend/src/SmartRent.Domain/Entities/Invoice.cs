@@ -181,6 +181,96 @@ public class Invoice
         CancelReason = reason;
     }
 
+    /// <summary>
+    /// FR-45: người thuê báo đã thanh toán khi hóa đơn chờ trả tiền — Chưa thanh toán, Thanh toán một phần hoặc Quá hạn.
+    /// Đang có lượt báo chờ xác nhận thì hóa đơn ở Chờ xác nhận, nên mỗi lúc chỉ có một lượt chờ.
+    /// </summary>
+    public bool CanReportPayment => AwaitingPaymentStatuses.Contains(Status);
+
+    /// <summary>api-design mục 9: số tiền báo hoặc xác nhận lớn hơn 0 và không vượt <see cref="RemainingAmount"/>.</summary>
+    public bool IsValidPaymentAmount(decimal amount) => amount > 0 && amount <= RemainingAmount;
+
+    /// <summary>Quá hạn từ 0 giờ ngày sau hạn thanh toán, theo giờ Việt Nam (architecture mục 7.1).</summary>
+    public bool IsPastDue(DateTimeOffset now) => DueDate is { } dueDate && VietnamTime.DateOf(now) > dueDate;
+
+    /// <summary>
+    /// FR-45: hóa đơn sang Chờ xác nhận kèm một lượt báo mới. Minh chứng bắt buộc (BR-06b); service đã kiểm tra đường dẫn
+    /// thuộc người thuê. Báo không ghi nhận tiền — chỉ Chủ trọ xác nhận mới cộng vào số đã thu (FR-81).
+    /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// Gọi khi <see cref="CanReportPayment"/> hoặc <see cref="IsValidPaymentAmount"/> sai — lỗi lập trình.
+    /// </exception>
+    public PaymentReport ReportPayment(decimal amount, string proofImagePath, DateTimeOffset now)
+    {
+        EnsureAllowed(CanReportPayment && IsValidPaymentAmount(amount), nameof(ReportPayment));
+
+        var report = new PaymentReport
+        {
+            InvoiceId = Id,
+            ReportedAmount = amount,
+            ProofImageUrl = proofImagePath,
+            ReportedAt = now,
+            Status = PaymentReportStatus.ChoXacNhan
+        };
+
+        PaymentReports.Add(report);
+        Status = InvoiceStatus.ChoXacNhan;
+
+        return report;
+    }
+
+    /// <summary>Lượt báo của hóa đơn này, đang chờ Chủ trọ xác nhận hoặc từ chối.</summary>
+    public bool CanProcessPaymentReport(PaymentReport report)
+        => Status == InvoiceStatus.ChoXacNhan
+           && report.Status == PaymentReportStatus.ChoXacNhan
+           && PaymentReports.Contains(report);
+
+    /// <summary>
+    /// FR-46, FR-47: Chủ trọ xác nhận số tiền thực thu — có thể khác số người thuê khai. Đủ tổng thì Đã thanh toán; còn
+    /// thiếu thì Quá hạn nếu đã qua hạn, ngược lại Thanh toán một phần, phần còn lại vẫn là công nợ.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// Gọi khi <see cref="CanProcessPaymentReport"/> hoặc <see cref="IsValidPaymentAmount"/> sai — lỗi lập trình.
+    /// </exception>
+    public void ConfirmPayment(PaymentReport report, decimal amount, long landlordUserId, DateTimeOffset now)
+    {
+        EnsureAllowed(CanProcessPaymentReport(report) && IsValidPaymentAmount(amount), nameof(ConfirmPayment));
+
+        report.Status = PaymentReportStatus.DaXacNhan;
+        report.ConfirmedAmount = amount;
+        report.ConfirmedAt = now;
+        report.ConfirmedByUserId = landlordUserId;
+
+        PaidAmount += amount;
+
+        if (RemainingAmount == 0)
+        {
+            Status = InvoiceStatus.DaThanhToan;
+            SettledAt = now;
+        }
+        else
+        {
+            Status = IsPastDue(now) ? InvoiceStatus.QuaHan : InvoiceStatus.ThanhToanMotPhan;
+        }
+    }
+
+    /// <summary>
+    /// FR-48: Chủ trọ từ chối xác nhận kèm lý do bắt buộc. Hóa đơn về Quá hạn nếu đã qua hạn; ngược lại về Thanh toán một
+    /// phần nếu đã thu được một phần, còn lại về Chưa thanh toán. Người thuê báo lại được.
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanProcessPaymentReport"/> sai — lỗi lập trình.</exception>
+    public void RejectPayment(PaymentReport report, string reason, DateTimeOffset now)
+    {
+        EnsureAllowed(CanProcessPaymentReport(report), nameof(RejectPayment));
+
+        report.Status = PaymentReportStatus.TuChoiXacNhan;
+        report.RejectReason = reason;
+
+        Status = IsPastDue(now)
+            ? InvoiceStatus.QuaHan
+            : PaidAmount > 0 ? InvoiceStatus.ThanhToanMotPhan : InvoiceStatus.ChuaThanhToan;
+    }
+
     /// <summary>Hóa đơn còn nợ, được kết chuyển khi lập hóa đơn thanh lý (FR-92).</summary>
     public bool CanCarryOverToSettlement => CarryOverStatuses.Contains(Status);
 
