@@ -28,11 +28,12 @@ public class PeriodicInvoiceRequestValidator : AbstractValidator<PeriodicInvoice
     }
 }
 
+/// <summary>Lý do được lưu vào hóa đơn và chép vào thông báo HoaDonBiHuy gửi người thuê, nên giới hạn độ dài.</summary>
 public class CancelInvoiceRequestValidator : AbstractValidator<CancelInvoiceRequest>
 {
     public CancelInvoiceRequestValidator()
     {
-        RuleFor(x => x.Reason).NotEmpty();
+        RuleFor(x => x.Reason).NotEmpty().MaximumLength(500);
     }
 }
 
