@@ -610,6 +610,10 @@ public class InvoiceService
                 : invoice.Status switch
                 {
                     InvoiceStatus.DaHuy => "Hóa đơn đã hủy.",
+                    // Hóa đơn tổng 0 sang Đã thanh toán ngay khi phát hành (FR-41) mà chưa ai trả đồng nào.
+                    InvoiceStatus.DaThanhToan when invoice.PaidAmount == 0 =>
+                        $"Hóa đơn tổng 0 đồng đã ở Đã thanh toán nên không {action} được. Cần thu thêm thì thêm một dòng " +
+                        "điều chỉnh ở hóa đơn kỳ kế tiếp.",
                     InvoiceStatus.DaChuyenThanhLy => $"Hóa đơn đã chuyển vào hóa đơn thanh lý nên không {action} được.",
                     InvoiceStatus.ChoXacNhan =>
                         $"Hóa đơn có lượt báo thanh toán chờ xác nhận. Xác nhận hoặc từ chối trước khi {action}.",
