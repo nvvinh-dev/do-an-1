@@ -1,3 +1,4 @@
+using System.Globalization;
 using SmartRent.Domain.Enums;
 
 namespace SmartRent.Api.Contracts;
@@ -24,6 +25,54 @@ public record InvoiceAdjustmentLineRequest(
     string? Description,
     decimal? Amount,
     long? RelatedInvoiceId);
+
+/// <summary>FR-52: hủy hóa đơn định kỳ mới nhất chưa thu đồng nào, lý do bắt buộc.</summary>
+public record CancelInvoiceRequest(string Reason);
+
+/// <summary>
+/// Bộ lọc của GET /invoices (api-design mục 9), mọi trường tùy chọn. <see cref="Status"/> lặp lại được
+/// (<c>?status=ChuaThanhToan&amp;status=QuaHan</c>). <see cref="Month"/> dạng <c>YYYY-MM</c>, so với tháng của ngày đầu kỳ.
+/// <see cref="PropertyId"/> và <see cref="RoomId"/> chỉ dành cho Chủ trọ; Người thuê gửi lên thì bị bỏ qua.
+/// </summary>
+public record InvoiceListFilter(
+    InvoiceStatus[]? Status,
+    string? Month,
+    long? PropertyId,
+    long? RoomId,
+    InvoiceType? Type)
+{
+    /// <summary>Ngày đầu của tháng <c>YYYY-MM</c>; sai dạng thì trả false (validator đã chặn bằng 400).</summary>
+    public static bool TryParseMonth(string month, out DateOnly firstDay)
+        => DateOnly.TryParseExact(month, "yyyy-MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out firstDay);
+}
+
+/// <summary>Một dòng của GET /contracts/{contractId}/invoices — kỳ mới trước, không phân trang.</summary>
+public record ContractInvoiceListItemResponse(
+    long Id,
+    InvoiceType Type,
+    DateOnly PeriodStart,
+    DateOnly PeriodEnd,
+    decimal TotalAmount,
+    decimal PaidAmount,
+    InvoiceStatus Status,
+    DateTimeOffset? IssuedAt,
+    DateOnly? DueDate);
+
+/// <summary>Một dòng của GET /invoices: các trường của danh sách theo hợp đồng, cộng hợp đồng, phòng và người thuê.</summary>
+public record InvoiceListItemResponse(
+    long Id,
+    long ContractId,
+    string RoomCode,
+    string PropertyName,
+    string TenantName,
+    InvoiceType Type,
+    DateOnly PeriodStart,
+    DateOnly PeriodEnd,
+    decimal TotalAmount,
+    decimal PaidAmount,
+    InvoiceStatus Status,
+    DateTimeOffset? IssuedAt,
+    DateOnly? DueDate);
 
 /// <summary>
 /// Chi tiết hóa đơn — cấu trúc của GET /invoices/{id} (api-design mục 9), dùng chung cho hóa đơn định kỳ và hóa đơn

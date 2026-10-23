@@ -25,6 +25,17 @@ public class Invoice
         [InvoiceStatus.ChuaThanhToan, InvoiceStatus.ThanhToanMotPhan, InvoiceStatus.QuaHan];
 
     /// <summary>
+    /// FR-49, FR-52: hóa đơn định kỳ ở các trạng thái này mà chưa thu đồng nào thì Chủ trọ sửa hoặc hủy được — điều kiện
+    /// "mới nhất của hợp đồng" kiểm tra riêng bằng <see cref="Contract.LatestPeriodicInvoice"/>.
+    /// </summary>
+    public static readonly InvoiceStatus[] EditableStatuses =
+        [InvoiceStatus.Nhap, InvoiceStatus.ChuaThanhToan, InvoiceStatus.QuaHan];
+
+    /// <summary>Mục 9.1: hóa đơn chờ người thuê trả tiền — hiện mã VietQR khi còn phải trả lớn hơn 0.</summary>
+    public static readonly InvoiceStatus[] AwaitingPaymentStatuses =
+        [InvoiceStatus.ChuaThanhToan, InvoiceStatus.ThanhToanMotPhan, InvoiceStatus.QuaHan];
+
+    /// <summary>
     /// FR-95: bảng thanh lý đã gửi quá chừng này mà người thuê không phản hồi thì Chủ trọ được tự chốt. Hạn bắt đầu từ
     /// một thời điểm nên tính đủ 168 giờ kể từ lần gửi gần nhất (architecture mục 7.1).
     /// </summary>
@@ -102,6 +113,73 @@ public class Invoice
     public ICollection<InvoiceLine> Lines { get; set; } = [];
 
     public ICollection<PaymentReport> PaymentReports { get; set; } = [];
+
+    /// <summary>Phần còn phải trả: tổng tiền trừ số đã được Chủ trọ xác nhận thu.</summary>
+    public decimal RemainingAmount => TotalAmount - PaidAmount;
+
+    /// <summary>Mục 9.1, FR-78: người thuê đứng tên thấy mã VietQR với số tiền bằng <see cref="RemainingAmount"/>.</summary>
+    public bool IsAwaitingPayment => AwaitingPaymentStatuses.Contains(Status) && RemainingAmount > 0;
+
+    /// <summary>
+    /// api-design mục 9, FR-103: người thuê thấy hóa đơn định kỳ từ khi phát hành — không thấy hóa đơn Nháp, và hóa đơn
+    /// bị hủy khi còn Nháp. Hóa đơn thanh lý thấy từ lần gửi đầu, kể cả khi bảng quay về Nháp sau khi người thuê yêu cầu
+    /// sửa; bảng chưa từng gửi thì không thấy.
+    /// </summary>
+    public bool IsVisibleToTenant
+        => Type == InvoiceType.ThanhLy
+            ? SentAt is not null
+            : Status != InvoiceStatus.Nhap && (Status != InvoiceStatus.DaHuy || IssuedAt is not null);
+
+    /// <summary>Chỉ hóa đơn định kỳ ở Nháp mới phát hành; bảng thanh lý gửi cho người thuê theo BP-10.</summary>
+    public bool CanIssue => Type == InvoiceType.DinhKy && Status == InvoiceStatus.Nhap;
+
+    /// <summary>
+    /// FR-49, FR-52: hóa đơn định kỳ chưa thu đồng nào, ở Nháp, Chưa thanh toán hoặc Quá hạn. Service kiểm tra thêm hóa
+    /// đơn là hóa đơn định kỳ mới nhất của hợp đồng — sửa hóa đơn cũ hơn làm gãy chuỗi chỉ số (BR-14, BR-16).
+    /// </summary>
+    public bool CanBeEditedOrCancelled
+        => Type == InvoiceType.DinhKy && EditableStatuses.Contains(Status) && PaidAmount == 0;
+
+    /// <summary>
+    /// api-design mục 9: Nháp → Chưa thanh toán, hạn thanh toán là ngày phát hành theo giờ Việt Nam cộng số ngày ghi
+    /// trong hợp đồng. Tổng bằng 0 thì không còn gì phải trả, hóa đơn sang Đã thanh toán ngay (FR-41).
+    /// </summary>
+    /// <param name="paymentDueDays">Số ngày được phép thanh toán ghi trong hợp đồng.</param>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanIssue"/> sai — lỗi lập trình.</exception>
+    public void Issue(DateTimeOffset now, int paymentDueDays)
+    {
+        EnsureAllowed(CanIssue, nameof(Issue));
+
+        IssuedAt = now;
+        StartPaymentPeriod(now, paymentDueDays);
+    }
+
+    /// <summary>
+    /// FR-50: Chủ trọ vừa sửa số tiền của hóa đơn. Hóa đơn đã phát hành có lại trọn hạn thanh toán tính từ ngày sửa —
+    /// Quá hạn về Chưa thanh toán — hoặc sang Đã thanh toán nếu tổng mới bằng 0; ngày phát hành giữ lần đầu. Hóa đơn
+    /// Nháp chưa có hạn nên giữ nguyên.
+    /// </summary>
+    /// <param name="paymentDueDays">Số ngày được phép thanh toán ghi trong hợp đồng.</param>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanBeEditedOrCancelled"/> sai — lỗi lập trình.</exception>
+    public void ResetPaymentAfterEdit(DateTimeOffset now, int paymentDueDays)
+    {
+        EnsureAllowed(CanBeEditedOrCancelled, nameof(ResetPaymentAfterEdit));
+
+        if (Status != InvoiceStatus.Nhap)
+        {
+            StartPaymentPeriod(now, paymentDueDays);
+        }
+    }
+
+    /// <summary>FR-52: hóa đơn sang Đã hủy kèm lý do bắt buộc.</summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanBeEditedOrCancelled"/> sai — lỗi lập trình.</exception>
+    public void Cancel(string reason)
+    {
+        EnsureAllowed(CanBeEditedOrCancelled, nameof(Cancel));
+
+        Status = InvoiceStatus.DaHuy;
+        CancelReason = reason;
+    }
 
     /// <summary>Hóa đơn còn nợ, được kết chuyển khi lập hóa đơn thanh lý (FR-92).</summary>
     public bool CanCarryOverToSettlement => CarryOverStatuses.Contains(Status);
@@ -241,6 +319,25 @@ public class Invoice
         {
             Status = InvoiceStatus.DaThanhToan;
             SettledAt = now;
+        }
+    }
+
+    /// <summary>
+    /// Hóa đơn định kỳ vừa phát hành hoặc vừa sửa sau khi phát hành: còn phải trả thì Chưa thanh toán với hạn tính từ
+    /// hôm nay (giờ Việt Nam); tổng bằng 0 thì Đã thanh toán ngay và không có hạn, như hóa đơn thanh lý số dư 0.
+    /// </summary>
+    private void StartPaymentPeriod(DateTimeOffset now, int paymentDueDays)
+    {
+        if (TotalAmount == 0)
+        {
+            Status = InvoiceStatus.DaThanhToan;
+            SettledAt = now;
+            DueDate = null;
+        }
+        else
+        {
+            Status = InvoiceStatus.ChuaThanhToan;
+            DueDate = VietnamTime.DateOf(now).AddDays(paymentDueDays);
         }
     }
 
