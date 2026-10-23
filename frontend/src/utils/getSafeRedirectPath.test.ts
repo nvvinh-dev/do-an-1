@@ -20,8 +20,16 @@ describe('getSafeRedirectPath', () => {
     expect(getSafeRedirectPath('tenant')).toBeNull()
   })
 
+  it('bỏ đường dẫn có tab hoặc xuống dòng mà trình duyệt hiểu thành địa chỉ ngoài', () => {
+    expect(getSafeRedirectPath('/\t/evil.example.com')).toBeNull()
+    expect(getSafeRedirectPath('/\n/evil.example.com')).toBeNull()
+    expect(getSafeRedirectPath('/\t\\evil.example.com')).toBeNull()
+    expect(getSafeRedirectPath('//[')).toBeNull()
+  })
+
   it('bỏ đường dẫn quay lại chính màn đăng nhập', () => {
     expect(getSafeRedirectPath('/login')).toBeNull()
     expect(getSafeRedirectPath('/login?redirect=%2Ftenant')).toBeNull()
+    expect(getSafeRedirectPath('/login#x')).toBeNull()
   })
 })

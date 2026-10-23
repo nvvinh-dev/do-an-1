@@ -16,8 +16,9 @@ export interface LoginRequest {
   password: string
 }
 
-/** Response của `POST /auth/login`. Chỉ cần `accessToken`; thông tin tài khoản lấy lại từ `GET /auth/me`. */
+/** Response của `POST /auth/login` (docs/api-design.md mục 2). `user` cùng kiểu với `GET /auth/me`. */
 export interface LoginResponse {
   accessToken: string
   expiresAt: string
+  user: CurrentUser
 }

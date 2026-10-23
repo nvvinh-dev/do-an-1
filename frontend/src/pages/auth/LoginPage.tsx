@@ -1,10 +1,10 @@
-import { useForm } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { Link, Navigate, useSearchParams } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import PageHeader from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
+import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Spinner } from '@/components/ui/spinner'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useLogin } from '@/hooks/useLogin'
@@ -21,13 +21,21 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
  */
 export default function LoginPage() {
   const [searchParams] = useSearchParams()
-  const { data: user } = useCurrentUser()
+  const { data: user, isPending } = useCurrentUser()
   const loginMutation = useLogin()
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginRequest>({ mode: 'onTouched', defaultValues: { email: '', password: '' } })
+  const { control, handleSubmit } = useForm<LoginRequest>({
+    mode: 'onTouched',
+    defaultValues: { email: '', password: '' },
+  })
+
+  // Có token thì chờ `GET /auth/me` để chuyển trang ngay, không hiện form rồi mới đi.
+  if (isPending) {
+    return (
+      <div className="flex min-h-svh items-center justify-center">
+        <Spinner className="size-6 text-muted-foreground" />
+      </div>
+    )
+  }
 
   if (user) {
     const destination = getSafeRedirectPath(searchParams.get('redirect')) ?? getRoleHomePath(user.roles)
@@ -49,47 +57,53 @@ export default function LoginPage() {
       >
         <ApiErrorAlert error={loginMutation.error} />
 
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="email">
-            Email <span aria-hidden="true">*</span>
-          </Label>
-          <Input
-            id="email"
-            type="email"
-            autoComplete="email"
-            inputMode="email"
-            aria-invalid={errors.email ? true : undefined}
-            aria-describedby={errors.email ? 'email-error' : undefined}
-            {...register('email', {
+        <FieldGroup>
+          <Controller
+            name="email"
+            control={control}
+            rules={{
               required: 'Vui lòng nhập email.',
               pattern: { value: EMAIL_PATTERN, message: 'Email chưa đúng định dạng.' },
-            })}
+            }}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="email">
+                  Email <span aria-hidden="true">*</span>
+                </FieldLabel>
+                <Input
+                  {...field}
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  inputMode="email"
+                  aria-invalid={fieldState.invalid}
+                />
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
+            )}
           />
-          {errors.email && (
-            <p id="email-error" className="text-sm text-destructive">
-              {errors.email.message}
-            </p>
-          )}
-        </div>
 
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="password">
-            Mật khẩu <span aria-hidden="true">*</span>
-          </Label>
-          <Input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            aria-invalid={errors.password ? true : undefined}
-            aria-describedby={errors.password ? 'password-error' : undefined}
-            {...register('password', { required: 'Vui lòng nhập mật khẩu.' })}
+          <Controller
+            name="password"
+            control={control}
+            rules={{ required: 'Vui lòng nhập mật khẩu.' }}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="password">
+                  Mật khẩu <span aria-hidden="true">*</span>
+                </FieldLabel>
+                <Input
+                  {...field}
+                  id="password"
+                  type="password"
+                  autoComplete="current-password"
+                  aria-invalid={fieldState.invalid}
+                />
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
+            )}
           />
-          {errors.password && (
-            <p id="password-error" className="text-sm text-destructive">
-              {errors.password.message}
-            </p>
-          )}
-        </div>
+        </FieldGroup>
 
         <Button type="submit" size="page" className="md:w-full" disabled={loginMutation.isPending}>
           {loginMutation.isPending && <Spinner />}
