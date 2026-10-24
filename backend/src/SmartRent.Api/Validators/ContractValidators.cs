@@ -11,11 +11,12 @@ public class ContractTermsRequestValidator : AbstractValidator<ContractTermsRequ
 {
     public ContractTermsRequestValidator()
     {
-        // Vượt numeric(14,2) của tiền hoặc numeric(12,2) của chỉ số thì PostgreSQL báo tràn số, nên chặn ở đây (400).
-        RuleFor(x => x.RentPrice).NotNull().GreaterThan(0).PrecisionScale(14, 2, true);
-        RuleFor(x => x.ElectricityUnitPrice).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(14, 2, true);
-        RuleFor(x => x.WaterUnitPrice).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(14, 2, true);
-        RuleFor(x => x.DepositAmount).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(14, 2, true);
+        // Tiền là số đồng nguyên, tối đa 12 chữ số như phần nguyên của cột tiền numeric(14,2) (api-design mục 1). Chỉ số
+        // vượt numeric(12,2) thì PostgreSQL báo tràn số, nên chặn ở đây (400).
+        RuleFor(x => x.RentPrice).NotNull().GreaterThan(0).PrecisionScale(12, 0, true);
+        RuleFor(x => x.ElectricityUnitPrice).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(12, 0, true);
+        RuleFor(x => x.WaterUnitPrice).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(12, 0, true);
+        RuleFor(x => x.DepositAmount).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(12, 0, true);
         RuleFor(x => x.InitialElectricityIndex).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(12, 2, true);
         RuleFor(x => x.InitialWaterIndex).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(12, 2, true);
         RuleFor(x => x.StartDate).NotNull();
@@ -26,7 +27,7 @@ public class ContractTermsRequestValidator : AbstractValidator<ContractTermsRequ
         RuleForEach(x => x.ServiceFees).NotNull().ChildRules(fee =>
         {
             fee.RuleFor(f => f.Name).NotEmpty();
-            fee.RuleFor(f => f.Amount).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(14, 2, true);
+            fee.RuleFor(f => f.Amount).NotNull().GreaterThanOrEqualTo(0).PrecisionScale(12, 0, true);
         });
 
         // Số điện thoại người ở cùng theo cùng định dạng với số điện thoại tài khoản.
@@ -88,7 +89,9 @@ public class RefundDepositRequestValidator : AbstractValidator<RefundDepositRequ
     {
         RuleFor(x => x.RefundedAt).NotNull();
         RuleFor(x => x.RefundMethod).NotNull().IsInEnum();
-        RuleFor(x => x.Amount).PrecisionScale(14, 2, true);
+
+        // Số đồng nguyên, như mọi số tiền client gửi lên (api-design mục 1).
+        RuleFor(x => x.Amount).PrecisionScale(12, 0, true);
     }
 }
 

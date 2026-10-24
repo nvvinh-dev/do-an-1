@@ -23,6 +23,14 @@ export interface LoginResponse {
   user: CurrentUser
 }
 
+/** Body của `POST /auth/register` (docs/api-design.md mục 2). Tài khoản mới luôn nhận vai trò Tenant. */
+export interface RegisterRequest {
+  email: string
+  password: string
+  fullName: string
+  phoneNumber?: string
+}
+
 /** Body của `POST /auth/forgot-password` (docs/api-design.md mục 2). Luôn trả `200`. */
 export interface ForgotPasswordRequest {
   email: string

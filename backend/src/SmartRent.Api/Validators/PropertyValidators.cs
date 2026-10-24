@@ -22,7 +22,8 @@ public class PropertyRequestValidator : AbstractValidator<PropertyRequest>
 }
 
 /// <summary>
-/// Chỉ kiểm tra định dạng: trường bắt buộc và giới hạn của cột numeric (vượt thì PostgreSQL báo tràn số).
+/// Chỉ kiểm tra định dạng: trường bắt buộc và giới hạn của cột numeric (vượt thì PostgreSQL báo tràn số). Giá và phí
+/// là số đồng nguyên, tối đa 12 chữ số như phần nguyên của cột tiền numeric(14,2) (api-design mục 1).
 /// Diện tích, số người, giá, số khoản phí, tên phí trùng, tiện ích đúng phạm vi phòng và ảnh
 /// là quy tắc nghiệp vụ, trả 422 ở PropertyService (api-design mục 5.2).
 /// </summary>
@@ -33,16 +34,16 @@ public class RoomRequestValidator : AbstractValidator<RoomRequest>
         RuleFor(x => x.Code).NotEmpty().MaximumLength(50);
         RuleFor(x => x.Area).NotNull().PrecisionScale(8, 2, true);
         RuleFor(x => x.MaxOccupants).NotNull();
-        RuleFor(x => x.RentPrice).NotNull().PrecisionScale(14, 2, true);
-        RuleFor(x => x.ElectricityUnitPrice).NotNull().PrecisionScale(14, 2, true);
-        RuleFor(x => x.WaterUnitPrice).NotNull().PrecisionScale(14, 2, true);
+        RuleFor(x => x.RentPrice).NotNull().PrecisionScale(12, 0, true);
+        RuleFor(x => x.ElectricityUnitPrice).NotNull().PrecisionScale(12, 0, true);
+        RuleFor(x => x.WaterUnitPrice).NotNull().PrecisionScale(12, 0, true);
         RuleFor(x => x.Description).MaximumLength(2000);
 
         // ChildRules bỏ qua phần tử null, nên phải chặn null riêng.
         RuleForEach(x => x.ServiceFees).NotNull().ChildRules(fee =>
         {
             fee.RuleFor(f => f.Name).NotEmpty().MaximumLength(100);
-            fee.RuleFor(f => f.Amount).NotNull().PrecisionScale(14, 2, true);
+            fee.RuleFor(f => f.Amount).NotNull().PrecisionScale(12, 0, true);
         });
 
         RuleForEach(x => x.ImagePaths).NotEmpty();
