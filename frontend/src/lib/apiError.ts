@@ -20,8 +20,13 @@ const OTHER_MESSAGE = 'Không thực hiện được thao tác. Vui lòng thử 
  * Đọc lỗi của một lời gọi API thành câu hiển thị cho người dùng, theo bảng "Hiển thị lỗi từ API"
  * ở docs/frontend-screens.md mục 1. Có `detail` thì dùng `detail`: 409, 422, 429 và 401/403 của
  * màn đăng nhập đều mang câu tiếng Việt do server viết.
+ *
+ * `trust400Detail`: một số endpoint (`POST /auth/reset-password`) trả `400` với `detail` là câu
+ * tiếng Việt cố định do service viết (`AuthService.ResetPasswordAsync`), không phải lỗi kiểm tra
+ * dữ liệu của Identity hay FluentValidation — các lỗi đó luôn viết bằng tiếng Anh nên mặc định
+ * vẫn bỏ qua `detail` ở `400`. Chỉ bật khi biết chắc endpoint đang gọi thuộc trường hợp này.
  */
-export function getApiErrorInfo(error: unknown): ApiErrorInfo {
+export function getApiErrorInfo(error: unknown, options?: { trust400Detail?: boolean }): ApiErrorInfo {
   if (!isAxiosError(error) || !error.response) {
     return { status: null, message: NETWORK_MESSAGE, retryAfterSeconds: null, canRetry: true }
   }
@@ -32,7 +37,8 @@ export function getApiErrorInfo(error: unknown): ApiErrorInfo {
   }
 
   const detail = (data as ProblemDetails | undefined)?.detail?.trim()
-  const message = (status !== 400 && detail) || FALLBACK_MESSAGES[status] || OTHER_MESSAGE
+  const trust400 = status !== 400 || options?.trust400Detail === true
+  const message = (trust400 && detail) || FALLBACK_MESSAGES[status] || OTHER_MESSAGE
   const retryAfterSeconds = status === 429 ? parseRetryAfter(headers['retry-after']) : null
 
   return { status, message, retryAfterSeconds, canRetry: false }

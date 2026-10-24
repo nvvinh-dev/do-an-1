@@ -10,18 +10,20 @@ interface ApiErrorAlertProps {
   /** Có truyền thì hiện nút "Thử lại" cho lỗi mạng và lỗi 5xx. */
   onRetry?: () => void
   className?: string
+  /** Xem `getApiErrorInfo` ở `lib/apiError.ts`: chỉ bật cho endpoint biết chắc `detail` của `400` là câu tiếng Việt cố định. */
+  trust400Detail?: boolean
 }
 
 /**
  * Hiện lỗi trả về từ API, đặt ở đầu form hoặc ngay trên nút vừa bấm (docs/design-system.md
  * mục 6.2). Component chỉ hiển thị, không đụng tới form, nên dữ liệu người dùng đã nhập vẫn còn.
  */
-export default function ApiErrorAlert({ error, onRetry, className }: ApiErrorAlertProps) {
+export default function ApiErrorAlert({ error, onRetry, className, trust400Detail }: ApiErrorAlertProps) {
   if (error == null) {
     return null
   }
 
-  const { message, retryAfterSeconds, canRetry } = getApiErrorInfo(error)
+  const { message, retryAfterSeconds, canRetry } = getApiErrorInfo(error, { trust400Detail })
 
   return (
     <Alert variant="destructive" className={cn('border-destructive/40', className)}>
