@@ -30,3 +30,15 @@ export interface RegisterRequest {
   fullName: string
   phoneNumber?: string
 }
+
+/** Body của `PUT /auth/me` (docs/api-design.md mục 2). Đổi `phoneNumber` thì mất trạng thái đã xác thực (BR-01). */
+export interface UpdateProfileRequest {
+  fullName: string
+  phoneNumber?: string
+}
+
+/** Body của `POST /auth/change-password` (docs/api-design.md mục 2). */
+export interface ChangePasswordRequest {
+  currentPassword: string
+  newPassword: string
+}
