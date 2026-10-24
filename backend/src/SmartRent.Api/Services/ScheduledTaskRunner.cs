@@ -55,6 +55,9 @@ public class ScheduledTaskRunner : BackgroundService
 
         await RunAsync("Danh dau hop dong sap het han", cancellationToken,
             sp => sp.GetRequiredService<ContractService>().MarkExpiringSoonAsync(now, cancellationToken));
+
+        await RunAsync("Gan co hoa don qua han", cancellationToken,
+            sp => sp.GetRequiredService<InvoiceService>().MarkOverdueAsync(now, cancellationToken));
     }
 
     /// <summary>Mỗi tác vụ một scope và một DbContext riêng; tác vụ lỗi chỉ ghi log, không chặn các tác vụ sau.</summary>

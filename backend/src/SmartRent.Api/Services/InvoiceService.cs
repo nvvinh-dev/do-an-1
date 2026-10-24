@@ -559,6 +559,68 @@ public class InvoiceService
     }
 
     /// <summary>
+    /// Tác vụ định kỳ — FR-51, FR-96: hóa đơn Chưa thanh toán hoặc Thanh toán một phần đã sang ngày sau hạn thanh toán (giờ
+    /// Việt Nam) chuyển Quá hạn, hai bên nhận thông báo mức Cao — gồm cả hóa đơn thanh lý còn nợ sau khi hợp đồng hoàn tất
+    /// thanh lý. Chỉ chọn hóa đơn chưa ở Quá hạn nên chạy lại không gửi trùng. Không ghi nhật ký: gắn cờ không thuộc BR-23
+    /// (database-design mục 7.2).
+    /// </summary>
+    /// <returns>Số hóa đơn đã gắn cờ.</returns>
+    public async Task<int> MarkOverdueAsync(DateTimeOffset now, CancellationToken cancellationToken = default)
+    {
+        var today = VietnamTime.DateOf(now);
+
+        var ids = await _db.Invoices
+            .Where(i => Invoice.OverdueMarkableStatuses.Contains(i.Status) && i.DueDate < today)
+            .Select(i => i.Id)
+            .ToListAsync(cancellationToken);
+
+        var marked = 0;
+
+        foreach (var id in ids)
+        {
+            _db.ChangeTracker.Clear();
+
+            var invoice = await _db.Invoices
+                .Include(i => i.Contract)
+                .ThenInclude(c => c.Room)
+                .ThenInclude(r => r.Property)
+                .FirstOrDefaultAsync(i => i.Id == id, cancellationToken);
+
+            if (invoice is null || !invoice.ShouldMarkOverdue(now))
+            {
+                continue;
+            }
+
+            var contract = invoice.Contract;
+            invoice.MarkOverdue(now);
+
+            foreach (var recipient in new[] { contract.TenantUserId, contract.Room.Property.LandlordUserId })
+            {
+                _notifier.Notify(
+                    recipient,
+                    "HoaDonQuaHan",
+                    "Hóa đơn quá hạn",
+                    $"{InvoiceLabel(invoice)} phòng {ContractService.RoomLabel(contract)} đã quá hạn thanh toán (hạn ngày " +
+                    $"{invoice.DueDate:dd/MM/yyyy}). Còn phải trả {Money(invoice.RemainingAmount)}.",
+                    nameof(Invoice),
+                    invoice.Id);
+            }
+
+            try
+            {
+                await _db.SaveChangesAsync(cancellationToken);
+                marked++;
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Hóa đơn vừa được báo thanh toán, sửa hoặc kết chuyển cùng lúc (xmin): lượt chạy sau xét lại.
+            }
+        }
+
+        return marked;
+    }
+
+    /// <summary>
     /// FR-44, FR-78: chi tiết hóa đơn cho người thuê đứng tên hoặc Chủ trọ sở hữu phòng; người khác, và người thuê với hóa
     /// đơn chưa phát hành, nhận 404. Mã VietQR chỉ dành cho người thuê, khi hóa đơn còn phải trả và Chủ trọ đã khai báo
     /// tài khoản nhận tiền; số tiền và nội dung chuyển khoản do server tính (mục 9.1).
@@ -1014,6 +1076,10 @@ public class InvoiceService
         => _db.Entry(contract).Property(c => c.Status).IsModified = true;
 
     private static string PeriodText(Invoice invoice) => $"{invoice.PeriodStart:dd/MM/yyyy} – {invoice.PeriodEnd:dd/MM/yyyy}";
+
+    /// <summary>Tên hóa đơn ở đầu câu thông báo: hóa đơn thanh lý không gọi theo kỳ.</summary>
+    private static string InvoiceLabel(Invoice invoice)
+        => invoice.Type == InvoiceType.ThanhLy ? "Hóa đơn thanh lý" : $"Hóa đơn kỳ {PeriodText(invoice)}";
 
     /// <summary>Số tiền phải trả và hạn của hóa đơn vừa phát hành hoặc vừa sửa, cho thông báo gửi người thuê.</summary>
     private static string AmountDueText(Invoice invoice)
