@@ -2,9 +2,11 @@ import { api } from '@/lib/api'
 import type {
   ChangePasswordRequest,
   CurrentUser,
+  ForgotPasswordRequest,
   LoginRequest,
   LoginResponse,
   RegisterRequest,
+  ResetPasswordRequest,
   UpdateProfileRequest,
 } from '@/types/authTypes'
 
@@ -31,4 +33,13 @@ export async function login(request: LoginRequest): Promise<LoginResponse> {
 export async function register(request: RegisterRequest): Promise<CurrentUser> {
   const response = await api.post<CurrentUser>('/auth/register', request)
   return response.data
+}
+
+// Luôn trả 200 với cùng một thông báo, dù email có tồn tại hay không (security-design mục 6, 8).
+export async function forgotPassword(request: ForgotPasswordRequest): Promise<void> {
+  await api.post('/auth/forgot-password', request)
+}
+
+export async function resetPassword(request: ResetPasswordRequest): Promise<void> {
+  await api.post('/auth/reset-password', request)
 }
