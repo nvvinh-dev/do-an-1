@@ -22,3 +22,11 @@ export interface LoginResponse {
   expiresAt: string
   user: CurrentUser
 }
+
+/** Body của `POST /auth/register` (docs/api-design.md mục 2). Tài khoản mới luôn nhận vai trò Tenant. */
+export interface RegisterRequest {
+  email: string
+  password: string
+  fullName: string
+  phoneNumber?: string
+}
