@@ -1,16 +1,27 @@
 import { api } from '@/lib/api'
 import type {
+  ChangePasswordRequest,
   CurrentUser,
   ForgotPasswordRequest,
   LoginRequest,
   LoginResponse,
   RegisterRequest,
   ResetPasswordRequest,
+  UpdateProfileRequest,
 } from '@/types/authTypes'
 
 export async function getCurrentUser(): Promise<CurrentUser> {
   const response = await api.get<CurrentUser>('/auth/me')
   return response.data
+}
+
+export async function updateProfile(request: UpdateProfileRequest): Promise<CurrentUser> {
+  const response = await api.put<CurrentUser>('/auth/me', request)
+  return response.data
+}
+
+export async function changePassword(request: ChangePasswordRequest): Promise<void> {
+  await api.post('/auth/change-password', request)
 }
 
 export async function login(request: LoginRequest): Promise<LoginResponse> {
