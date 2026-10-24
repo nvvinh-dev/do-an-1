@@ -31,7 +31,9 @@ public class SettlementInvoiceRequestValidator : AbstractValidator<SettlementInv
         RuleForEach(x => x.Lines).NotNull().ChildRules(line =>
         {
             line.RuleFor(l => l.Category).NotNull();
-            line.RuleFor(l => l.Amount).NotNull().PrecisionScale(14, 2, true);
+
+            // Số đồng nguyên, tối đa 12 chữ số như phần nguyên của cột tiền numeric(14,2) (api-design mục 1).
+            line.RuleFor(l => l.Amount).NotNull().PrecisionScale(12, 0, true);
             line.RuleFor(l => l.Description).MaximumLength(500);
         });
     }
