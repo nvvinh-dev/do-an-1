@@ -189,9 +189,17 @@ public class AuthService
 
         var changed = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
 
-        return changed.Succeeded
-            ? ServiceResult.Ok()
-            : ServiceResult.Fail(StatusCodes.Status400BadRequest, Describe(changed));
+        if (changed.Succeeded)
+        {
+            return ServiceResult.Ok();
+        }
+
+        // Câu tiếng Việt cố định để frontend hiện nguyên văn; mô tả lỗi của Identity viết bằng tiếng Anh.
+        var message = changed.Errors.Any(e => e.Code == nameof(IdentityErrorDescriber.PasswordMismatch))
+            ? "Mật khẩu hiện tại không đúng."
+            : "Mật khẩu mới chưa đúng quy tắc: 8–128 ký tự, có chữ hoa, chữ thường, chữ số và ký tự đặc biệt.";
+
+        return ServiceResult.Fail(StatusCodes.Status400BadRequest, message);
     }
 
     /// <summary>
