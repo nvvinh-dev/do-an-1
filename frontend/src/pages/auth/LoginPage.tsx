@@ -18,23 +18,27 @@ import { getSafeRedirectPath } from '@/utils/getSafeRedirectPath'
 interface LoginLocationState {
   /** A2 chuyển sang đây sau khi đăng ký thành công (docs/frontend-screens.md mục 8). */
   registeredEmail?: string
+  /** A4 chuyển sang đây sau khi đặt lại mật khẩu thành công (docs/frontend-screens.md mục 8). */
+  passwordResetEmail?: string
 }
 
 /**
  * A1 — Đăng nhập (docs/frontend-screens.md mục 3). 401, 403, 429 của `POST /auth/login` hiện
  * ngay trên form, không chuyển trang (mục 1). Đăng nhập xong, hoặc mở /login khi đã đăng nhập,
- * thì về `redirect` nếu có, không thì về trang chủ của vai trò. Đăng ký (A2) xong cũng về đây
- * (mục 8): hiện thông báo thành công và điền sẵn email vừa đăng ký.
+ * thì về `redirect` nếu có, không thì về trang chủ của vai trò. Đăng ký (A2) và đặt lại mật khẩu
+ * (A4) xong cũng về đây (mục 8): hiện thông báo thành công và điền sẵn email của tài khoản.
  */
 export default function LoginPage() {
   const [searchParams] = useSearchParams()
   const location = useLocation()
-  const registeredEmail = (location.state as LoginLocationState | null)?.registeredEmail ?? null
+  const locationState = location.state as LoginLocationState | null
+  const registeredEmail = locationState?.registeredEmail ?? null
+  const passwordResetEmail = locationState?.passwordResetEmail ?? null
   const { data: user, isPending } = useCurrentUser()
   const loginMutation = useLogin()
   const { control, handleSubmit } = useForm<LoginRequest>({
     mode: 'onTouched',
-    defaultValues: { email: registeredEmail ?? '', password: '' },
+    defaultValues: { email: registeredEmail ?? passwordResetEmail ?? '', password: '' },
   })
 
   const safeRedirect = getSafeRedirectPath(searchParams.get('redirect'))
@@ -71,6 +75,14 @@ export default function LoginPage() {
             <CircleCheck />
             <AlertTitle>Đăng ký thành công</AlertTitle>
             <AlertDescription className="text-success/90">Vui lòng đăng nhập để tiếp tục.</AlertDescription>
+          </Alert>
+        )}
+
+        {passwordResetEmail && (
+          <Alert className="border-success/40 text-success">
+            <CircleCheck />
+            <AlertTitle>Đặt lại mật khẩu thành công</AlertTitle>
+            <AlertDescription className="text-success/90">Vui lòng đăng nhập bằng mật khẩu mới.</AlertDescription>
           </Alert>
         )}
 

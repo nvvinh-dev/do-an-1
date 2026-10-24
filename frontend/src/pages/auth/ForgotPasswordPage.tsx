@@ -12,9 +12,8 @@ import { Spinner } from '@/components/ui/spinner'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useForgotPassword } from '@/hooks/useForgotPassword'
 import type { ForgotPasswordRequest } from '@/types/authTypes'
+import { EMAIL_PATTERN } from '@/utils/emailPattern'
 import { getRoleHomePath } from '@/utils/getRoleHomePath'
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 /**
  * A3 — Quên mật khẩu (docs/frontend-screens.md mục 3). `POST /auth/forgot-password` luôn trả
@@ -52,7 +51,7 @@ export default function ForgotPasswordPage() {
           <Alert className="border-success/40 text-success">
             <MailCheck />
             <AlertTitle>Đã gửi yêu cầu</AlertTitle>
-            <AlertDescription className="text-success/90">
+            <AlertDescription className="text-success/90 wrap-anywhere">
               Nếu email {submittedEmail} tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu đã được gửi tới email đó.
             </AlertDescription>
           </Alert>
