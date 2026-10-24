@@ -1,4 +1,238 @@
-/** A2 — Đăng ký (docs/frontend-screens.md mục 3). Chưa dựng màn hình. */
+import { useState } from 'react'
+import { CircleCheck } from 'lucide-react'
+import { Controller, useForm } from 'react-hook-form'
+import { Link, Navigate, useSearchParams } from 'react-router'
+import ApiErrorAlert from '@/components/ApiErrorAlert'
+import PageHeader from '@/components/PageHeader'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
+import { Input } from '@/components/ui/input'
+import { Spinner } from '@/components/ui/spinner'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
+import { useRegister } from '@/hooks/useRegister'
+import type { RegisterRequest } from '@/types/authTypes'
+import { getRoleHomePath } from '@/utils/getRoleHomePath'
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const PHONE_PATTERN = /^0\d{9,10}$/
+
+interface RegisterFormValues extends RegisterRequest {
+  confirmPassword: string
+}
+
+/**
+ * A2 — Đăng ký (docs/frontend-screens.md mục 3). `POST /auth/register` không trả token
+ * (api-design mục 2): tài khoản mới nhận vai trò Tenant nhưng chưa đăng nhập, nên đăng ký xong
+ * chỉ hiện thông báo và dẫn sang `/login`, không tự chuyển trang. Email trùng trả `409`, hiện
+ * ngay trên form qua `ApiErrorAlert`, giữ nguyên dữ liệu đã nhập (mục 1).
+ */
 export default function RegisterPage() {
-  return <h1 className="text-2xl font-semibold">Đăng ký</h1>
+  const [searchParams] = useSearchParams()
+  const { data: user, isPending } = useCurrentUser()
+  const registerMutation = useRegister()
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null)
+
+  const { control, handleSubmit, getValues } = useForm<RegisterFormValues>({
+    mode: 'onTouched',
+    defaultValues: { email: '', password: '', confirmPassword: '', fullName: '', phoneNumber: '' },
+  })
+
+  if (isPending) {
+    return (
+      <div className="flex min-h-svh items-center justify-center">
+        <Spinner className="size-6 text-muted-foreground" />
+      </div>
+    )
+  }
+
+  if (user) {
+    return <Navigate to={getRoleHomePath(user.roles)} replace />
+  }
+
+  if (registeredEmail) {
+    const redirect = searchParams.get('redirect')
+    const loginPath = redirect ? `/login?redirect=${encodeURIComponent(redirect)}` : '/login'
+
+    return (
+      <section className="mx-auto flex w-full max-w-md flex-col gap-6 py-4 md:py-10">
+        <PageHeader title="Đăng ký" description="Đăng ký để quản lý phòng trọ, hợp đồng và hóa đơn." />
+
+        <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground md:p-6">
+          <Alert className="border-success/40 text-success">
+            <CircleCheck />
+            <AlertTitle>Đăng ký thành công</AlertTitle>
+            <AlertDescription className="text-success/90">
+              Tài khoản {registeredEmail} đã được tạo. Vui lòng đăng nhập để tiếp tục.
+            </AlertDescription>
+          </Alert>
+
+          <Button asChild size="page" className="md:w-full">
+            <Link to={loginPath}>Đến trang đăng nhập</Link>
+          </Button>
+        </div>
+      </section>
+    )
+  }
+
+  const onSubmit = handleSubmit((values) => {
+    const phoneNumber = values.phoneNumber?.trim()
+
+    registerMutation.mutate(
+      {
+        email: values.email.trim(),
+        password: values.password,
+        fullName: values.fullName.trim(),
+        phoneNumber: phoneNumber ? phoneNumber : undefined,
+      },
+      { onSuccess: (createdUser) => setRegisteredEmail(createdUser.email) },
+    )
+  })
+
+  return (
+    <section className="mx-auto flex w-full max-w-md flex-col gap-6 py-4 md:py-10">
+      <PageHeader title="Đăng ký" description="Đăng ký để quản lý phòng trọ, hợp đồng và hóa đơn." />
+
+      <form
+        noValidate
+        onSubmit={onSubmit}
+        className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground md:p-6"
+      >
+        <ApiErrorAlert error={registerMutation.error} />
+
+        <FieldGroup>
+          <Controller
+            name="fullName"
+            control={control}
+            rules={{
+              required: 'Vui lòng nhập họ tên.',
+              maxLength: { value: 100, message: 'Họ tên tối đa 100 ký tự.' },
+            }}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="fullName">
+                  Họ tên <span aria-hidden="true">*</span>
+                </FieldLabel>
+                <Input {...field} id="fullName" autoComplete="name" aria-invalid={fieldState.invalid} />
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
+            )}
+          />
+
+          <Controller
+            name="email"
+            control={control}
+            rules={{
+              required: 'Vui lòng nhập email.',
+              pattern: { value: EMAIL_PATTERN, message: 'Email chưa đúng định dạng.' },
+              maxLength: { value: 256, message: 'Email tối đa 256 ký tự.' },
+            }}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="email">
+                  Email <span aria-hidden="true">*</span>
+                </FieldLabel>
+                <Input
+                  {...field}
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  inputMode="email"
+                  aria-invalid={fieldState.invalid}
+                />
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
+            )}
+          />
+
+          <Controller
+            name="phoneNumber"
+            control={control}
+            rules={{
+              pattern: { value: PHONE_PATTERN, message: 'Số điện thoại chưa đúng định dạng.' },
+            }}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="phoneNumber">Số điện thoại</FieldLabel>
+                <Input
+                  {...field}
+                  id="phoneNumber"
+                  type="tel"
+                  autoComplete="tel"
+                  inputMode="tel"
+                  aria-invalid={fieldState.invalid}
+                />
+                {fieldState.invalid ? (
+                  <FieldError errors={[fieldState.error]} />
+                ) : (
+                  <FieldDescription>Không bắt buộc, dùng để xác thực khi đăng ký làm Chủ trọ.</FieldDescription>
+                )}
+              </Field>
+            )}
+          />
+
+          <Controller
+            name="password"
+            control={control}
+            rules={{
+              required: 'Vui lòng nhập mật khẩu.',
+              minLength: { value: 8, message: 'Mật khẩu tối thiểu 8 ký tự.' },
+              maxLength: { value: 128, message: 'Mật khẩu tối đa 128 ký tự.' },
+            }}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="password">
+                  Mật khẩu <span aria-hidden="true">*</span>
+                </FieldLabel>
+                <Input
+                  {...field}
+                  id="password"
+                  type="password"
+                  autoComplete="new-password"
+                  aria-invalid={fieldState.invalid}
+                />
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
+            )}
+          />
+
+          <Controller
+            name="confirmPassword"
+            control={control}
+            rules={{
+              required: 'Vui lòng nhập lại mật khẩu.',
+              validate: (value) => value === getValues('password') || 'Mật khẩu nhập lại không khớp.',
+            }}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel htmlFor="confirmPassword">
+                  Nhập lại mật khẩu <span aria-hidden="true">*</span>
+                </FieldLabel>
+                <Input
+                  {...field}
+                  id="confirmPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  aria-invalid={fieldState.invalid}
+                />
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
+            )}
+          />
+        </FieldGroup>
+
+        <Button type="submit" size="page" className="md:w-full" disabled={registerMutation.isPending}>
+          {registerMutation.isPending && <Spinner />}
+          Đăng ký
+        </Button>
+
+        <p className="text-center text-sm text-muted-foreground">
+          Đã có tài khoản?{' '}
+          <Link to="/login" className="text-primary underline-offset-4 hover:underline">
+            Đăng nhập
+          </Link>
+        </p>
+      </form>
+    </section>
+  )
 }
