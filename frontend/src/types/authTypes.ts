@@ -22,3 +22,18 @@ export interface LoginResponse {
   expiresAt: string
   user: CurrentUser
 }
+
+/** Body của `POST /auth/forgot-password` (docs/api-design.md mục 2). Luôn trả `200`. */
+export interface ForgotPasswordRequest {
+  email: string
+}
+
+/**
+ * Body của `POST /auth/reset-password` (docs/api-design.md mục 2). `email` và `token` đọc từ
+ * đường dẫn trong email (`/reset-password?email=...&token=...`); trả `204 No Content`.
+ */
+export interface ResetPasswordRequest {
+  email: string
+  token: string
+  newPassword: string
+}
