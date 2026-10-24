@@ -407,7 +407,11 @@ Kiểm thử đầu-cuối cần backend và frontend đang chạy, cùng biến
 
 **Nhật ký hệ thống đã hiện thực ở backend:** Admin tra cứu nhật ký, lọc theo đối tượng, người thực hiện, loại thao tác và khoảng thời gian, phân trang, mới nhất trước; nhật ký khai báo và sửa tài khoản nhận tiền chỉ hiện 4 chữ số cuối của số tài khoản (BR-26). Không có endpoint sửa hay xóa nhật ký.
 
-**Dashboard Chủ trọ đã hiện thực ở backend:** số phòng theo trạng thái, số hóa đơn chưa thu và phần còn phải trả, doanh thu đã xác nhận của 6 tháng gần nhất gom theo tháng giờ Việt Nam, và việc cần xử lý — yêu cầu thuê chờ duyệt, lượt báo thanh toán chờ xác nhận, hợp đồng chờ nhận cọc, không đếm việc đã quá hạn. Dashboard Người thuê và Admin chưa có.
+**Dashboard Chủ trọ đã hiện thực ở backend:** số phòng theo trạng thái, số hóa đơn chưa thu và phần còn phải trả, doanh thu đã xác nhận của 6 tháng gần nhất gom theo tháng giờ Việt Nam, và việc cần xử lý — yêu cầu thuê chờ duyệt, lượt báo thanh toán chờ xác nhận, hợp đồng chờ nhận cọc, không đếm việc đã quá hạn.
+
+**Dashboard Người thuê đã hiện thực ở backend:** danh sách hợp đồng chưa kết thúc, số hóa đơn chưa thu và phần còn phải trả, tổng tiền đã được Chủ trọ xác nhận thu (không tính tiền cọc), và việc cần xử lý — hợp đồng chờ mình xác nhận, bảng thanh lý chờ mình đồng ý, không đếm việc đã quá hạn giữ chỗ.
+
+**Dashboard Admin đã hiện thực ở backend:** số tài khoản theo vai trò (tính cả tài khoản bị khóa), số khu trọ và số phòng chưa lưu trữ, số hồ sơ Chủ trọ chờ duyệt.
 
 **Frontend:** khung Vite + React + TypeScript + Tailwind, lớp gọi API và nền shadcn/ui theo hệ thống giao diện; định tuyến theo vai trò với route bảo vệ và file trang khung cho mọi màn hình, bốn layout (menu theo vai trò, chuông thông báo, đăng xuất), xử lý phiên hết hạn khi gặp `401` và hiển thị lỗi API theo mã trạng thái; thành phần dùng chung `StatusBadge`, `MoneyText`, `CountdownText`, `ConfirmDialog`, `ApiErrorAlert`, `PageHeader`, `ImageUploader` cùng các hàm định dạng tiền, ngày và nhãn trạng thái trong `utils/` có unit test bằng Vitest. Chưa có màn hình chức năng: các trang mới chỉ là trang khung.
 
