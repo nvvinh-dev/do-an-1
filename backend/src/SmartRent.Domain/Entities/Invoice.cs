@@ -36,6 +36,13 @@ public class Invoice
         [InvoiceStatus.ChuaThanhToan, InvoiceStatus.ThanhToanMotPhan, InvoiceStatus.QuaHan];
 
     /// <summary>
+    /// FR-51: hóa đơn chưa trả đủ mà tác vụ định kỳ gắn cờ quá hạn khi đã qua hạn. Không gồm Chờ xác nhận — Chủ trọ xác
+    /// nhận hoặc từ chối sau hạn thì hóa đơn sang thẳng Quá hạn.
+    /// </summary>
+    public static readonly InvoiceStatus[] OverdueMarkableStatuses =
+        [InvoiceStatus.ChuaThanhToan, InvoiceStatus.ThanhToanMotPhan];
+
+    /// <summary>
     /// FR-95: bảng thanh lý đã gửi quá chừng này mà người thuê không phản hồi thì Chủ trọ được tự chốt. Hạn bắt đầu từ
     /// một thời điểm nên tính đủ 168 giờ kể từ lần gửi gần nhất (architecture mục 7.1).
     /// </summary>
@@ -192,6 +199,21 @@ public class Invoice
 
     /// <summary>Quá hạn từ 0 giờ ngày sau hạn thanh toán, theo giờ Việt Nam (architecture mục 7.1).</summary>
     public bool IsPastDue(DateTimeOffset now) => DueDate is { } dueDate && VietnamTime.DateOf(now) > dueDate;
+
+    /// <summary>
+    /// FR-51, FR-96: hóa đơn Chưa thanh toán hoặc Thanh toán một phần đã qua hạn — gồm cả hóa đơn thanh lý còn nợ sau khi
+    /// hợp đồng hoàn tất thanh lý. Hóa đơn đã Quá hạn không được chọn lại, nên tác vụ chạy lại không nhắc trùng.
+    /// </summary>
+    public bool ShouldMarkOverdue(DateTimeOffset now) => OverdueMarkableStatuses.Contains(Status) && IsPastDue(now);
+
+    /// <summary>FR-51: tác vụ định kỳ gắn cờ Quá hạn; số đã thu và hạn thanh toán giữ nguyên.</summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="ShouldMarkOverdue"/> sai — lỗi lập trình.</exception>
+    public void MarkOverdue(DateTimeOffset now)
+    {
+        EnsureAllowed(ShouldMarkOverdue(now), nameof(MarkOverdue));
+
+        Status = InvoiceStatus.QuaHan;
+    }
 
     /// <summary>
     /// FR-45: hóa đơn sang Chờ xác nhận kèm một lượt báo mới. Minh chứng bắt buộc (BR-06b); service đã kiểm tra đường dẫn
