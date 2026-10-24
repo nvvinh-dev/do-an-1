@@ -1,10 +1,7 @@
-import { useState } from 'react'
-import { CircleCheck } from 'lucide-react'
 import { Controller, useForm } from 'react-hook-form'
-import { Link, Navigate, useSearchParams } from 'react-router'
+import { Link, Navigate, useNavigate, useSearchParams } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import PageHeader from '@/components/PageHeader'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -12,10 +9,11 @@ import { Spinner } from '@/components/ui/spinner'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useRegister } from '@/hooks/useRegister'
 import type { RegisterRequest } from '@/types/authTypes'
+import { EMAIL_PATTERN } from '@/utils/emailPattern'
 import { getRoleHomePath } from '@/utils/getRoleHomePath'
-
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const PHONE_PATTERN = /^0\d{9,10}$/
+import { getSafeRedirectPath } from '@/utils/getSafeRedirectPath'
+import { PHONE_PATTERN } from '@/utils/phonePattern'
+import { validatePassword } from '@/utils/validatePassword'
 
 interface RegisterFormValues extends RegisterRequest {
   confirmPassword: string
@@ -24,19 +22,23 @@ interface RegisterFormValues extends RegisterRequest {
 /**
  * A2 — Đăng ký (docs/frontend-screens.md mục 3). `POST /auth/register` không trả token
  * (api-design mục 2): tài khoản mới nhận vai trò Tenant nhưng chưa đăng nhập, nên đăng ký xong
- * chỉ hiện thông báo và dẫn sang `/login`, không tự chuyển trang. Email trùng trả `409`, hiện
- * ngay trên form qua `ApiErrorAlert`, giữ nguyên dữ liệu đã nhập (mục 1).
+ * chuyển về `/login` kèm thông báo thành công và điền sẵn email (mục 8, giống đặt lại mật khẩu),
+ * giữ `redirect` nếu có. Email trùng trả `409`, hiện ngay trên form qua `ApiErrorAlert`, giữ
+ * nguyên dữ liệu đã nhập (mục 1).
  */
 export default function RegisterPage() {
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
   const { data: user, isPending } = useCurrentUser()
   const registerMutation = useRegister()
-  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null)
 
-  const { control, handleSubmit, getValues } = useForm<RegisterFormValues>({
+  const { control, handleSubmit, getValues, trigger } = useForm<RegisterFormValues>({
     mode: 'onTouched',
     defaultValues: { email: '', password: '', confirmPassword: '', fullName: '', phoneNumber: '' },
   })
+
+  const safeRedirect = getSafeRedirectPath(searchParams.get('redirect'))
+  const loginPath = safeRedirect ? `/login?redirect=${encodeURIComponent(safeRedirect)}` : '/login'
 
   if (isPending) {
     return (
@@ -50,31 +52,6 @@ export default function RegisterPage() {
     return <Navigate to={getRoleHomePath(user.roles)} replace />
   }
 
-  if (registeredEmail) {
-    const redirect = searchParams.get('redirect')
-    const loginPath = redirect ? `/login?redirect=${encodeURIComponent(redirect)}` : '/login'
-
-    return (
-      <section className="mx-auto flex w-full max-w-md flex-col gap-6 py-4 md:py-10">
-        <PageHeader title="Đăng ký" description="Đăng ký để quản lý phòng trọ, hợp đồng và hóa đơn." />
-
-        <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground md:p-6">
-          <Alert className="border-success/40 text-success">
-            <CircleCheck />
-            <AlertTitle>Đăng ký thành công</AlertTitle>
-            <AlertDescription className="text-success/90">
-              Tài khoản {registeredEmail} đã được tạo. Vui lòng đăng nhập để tiếp tục.
-            </AlertDescription>
-          </Alert>
-
-          <Button asChild size="page" className="md:w-full">
-            <Link to={loginPath}>Đến trang đăng nhập</Link>
-          </Button>
-        </div>
-      </section>
-    )
-  }
-
   const onSubmit = handleSubmit((values) => {
     const phoneNumber = values.phoneNumber?.trim()
 
@@ -85,7 +62,10 @@ export default function RegisterPage() {
         fullName: values.fullName.trim(),
         phoneNumber: phoneNumber ? phoneNumber : undefined,
       },
-      { onSuccess: (createdUser) => setRegisteredEmail(createdUser.email) },
+      {
+        onSuccess: (createdUser) =>
+          navigate(loginPath, { replace: true, state: { registeredEmail: createdUser.email } }),
+      },
     )
   })
 
@@ -149,7 +129,12 @@ export default function RegisterPage() {
             name="phoneNumber"
             control={control}
             rules={{
-              pattern: { value: PHONE_PATTERN, message: 'Số điện thoại chưa đúng định dạng.' },
+              validate: (value) => {
+                const trimmed = value?.trim() ?? ''
+                return (
+                  trimmed === '' || PHONE_PATTERN.test(trimmed) || 'Số điện thoại gồm 10–11 chữ số, bắt đầu bằng 0.'
+                )
+              },
             }}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
@@ -176,8 +161,8 @@ export default function RegisterPage() {
             control={control}
             rules={{
               required: 'Vui lòng nhập mật khẩu.',
-              minLength: { value: 8, message: 'Mật khẩu tối thiểu 8 ký tự.' },
               maxLength: { value: 128, message: 'Mật khẩu tối đa 128 ký tự.' },
+              validate: (value) => validatePassword(value) ?? true,
             }}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
@@ -190,8 +175,22 @@ export default function RegisterPage() {
                   type="password"
                   autoComplete="new-password"
                   aria-invalid={fieldState.invalid}
+                  onChange={(event) => {
+                    field.onChange(event)
+                    // Mật khẩu đổi thì kiểm lại ô nhập lại, nếu ô đó đã có chữ — tránh báo lỗi
+                    // "không khớp" bị kẹt lại sau khi đã sửa đúng, và báo lại khi đổi thành sai.
+                    if (getValues('confirmPassword')) {
+                      void trigger('confirmPassword')
+                    }
+                  }}
                 />
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                {fieldState.invalid ? (
+                  <FieldError errors={[fieldState.error]} />
+                ) : (
+                  <FieldDescription>
+                    Tối thiểu 8 ký tự, gồm chữ hoa, chữ thường, chữ số và ký tự đặc biệt.
+                  </FieldDescription>
+                )}
               </Field>
             )}
           />
@@ -228,7 +227,7 @@ export default function RegisterPage() {
 
         <p className="text-center text-sm text-muted-foreground">
           Đã có tài khoản?{' '}
-          <Link to="/login" className="text-primary underline-offset-4 hover:underline">
+          <Link to={loginPath} className="text-primary underline-offset-4 hover:underline">
             Đăng nhập
           </Link>
         </p>
