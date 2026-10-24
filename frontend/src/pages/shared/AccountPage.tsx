@@ -24,9 +24,9 @@ interface ChangePasswordFormValues {
 
 /**
  * S1 — Tài khoản (docs/frontend-screens.md mục 4). Hai form độc lập: sửa họ tên, số điện thoại
- * (FR-83) và đổi mật khẩu (FR-05). Đổi số điện thoại thì số bị bỏ trạng thái đã xác thực (BR-01)
- * — hỏi xác nhận trước khi lưu, vì frontend không biết số hiện tại đã xác thực hay chưa
- * (`CurrentUser` không có trường này) nên hỏi mỗi khi số nhập khác số đang lưu.
+ * (FR-83) và đổi mật khẩu (FR-05). Đổi hoặc xóa số đang có thì hỏi xác nhận trước khi lưu, vì số
+ * đó mất trạng thái đã xác thực (BR-01). Thêm số lần đầu thì lưu luôn: tài khoản chưa có số không
+ * thể đang ở trạng thái đã xác thực (chỉ bước duyệt hồ sơ Chủ trọ đặt cờ này, và bước đó cần có số).
  */
 export default function AccountPage() {
   const { data: user } = useCurrentUser()
@@ -52,7 +52,12 @@ function ProfileForm({ email, fullName, phoneNumber }: ProfileFormProps) {
   const [pendingValues, setPendingValues] = useState<UpdateProfileRequest | null>(null)
   const [saved, setSaved] = useState(false)
 
-  const { control, handleSubmit } = useForm<{ fullName: string; phoneNumber: string }>({
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { isDirty },
+  } = useForm<{ fullName: string; phoneNumber: string }>({
     mode: 'onTouched',
     defaultValues: { fullName, phoneNumber: phoneNumber ?? '' },
   })
@@ -60,7 +65,9 @@ function ProfileForm({ email, fullName, phoneNumber }: ProfileFormProps) {
   const save = (values: UpdateProfileRequest) => {
     setSaved(false)
     updateProfileMutation.mutate(values, {
-      onSuccess: () => {
+      onSuccess: (user) => {
+        // Đưa form về đúng giá trị server đã lưu, để câu "Đã lưu" ẩn ngay khi sửa tiếp.
+        reset({ fullName: user.fullName, phoneNumber: user.phoneNumber ?? '' })
         setConfirmOpen(false)
         setSaved(true)
       },
@@ -72,10 +79,10 @@ function ProfileForm({ email, fullName, phoneNumber }: ProfileFormProps) {
     const normalizedPhone = trimmedPhone === '' ? null : trimmedPhone
     const request: UpdateProfileRequest = {
       fullName: values.fullName.trim(),
-      phoneNumber: trimmedPhone === '' ? undefined : trimmedPhone,
+      phoneNumber: normalizedPhone ?? undefined,
     }
 
-    if (normalizedPhone !== phoneNumber) {
+    if (phoneNumber !== null && normalizedPhone !== phoneNumber) {
       setPendingValues(request)
       setConfirmOpen(true)
       return
@@ -83,6 +90,8 @@ function ProfileForm({ email, fullName, phoneNumber }: ProfileFormProps) {
 
     save(request)
   })
+
+  const isRemovingPhone = pendingValues?.phoneNumber === undefined
 
   return (
     <form
@@ -92,7 +101,7 @@ function ProfileForm({ email, fullName, phoneNumber }: ProfileFormProps) {
     >
       <h2 className="text-lg font-medium">Thông tin cá nhân</h2>
 
-      {saved && (
+      {saved && !isDirty && (
         <Alert className="border-success/40 text-success">
           <CircleCheck />
           <AlertTitle>Đã lưu thông tin</AlertTitle>
@@ -111,7 +120,7 @@ function ProfileForm({ email, fullName, phoneNumber }: ProfileFormProps) {
           name="fullName"
           control={control}
           rules={{
-            required: 'Vui lòng nhập họ tên.',
+            validate: (value) => value.trim() !== '' || 'Vui lòng nhập họ tên.',
             maxLength: { value: 100, message: 'Họ tên tối đa 100 ký tự.' },
           }}
           render={({ field, fieldState }) => (
@@ -137,7 +146,14 @@ function ProfileForm({ email, fullName, phoneNumber }: ProfileFormProps) {
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor="phoneNumber">Số điện thoại</FieldLabel>
-              <Input {...field} id="phoneNumber" type="tel" autoComplete="tel" aria-invalid={fieldState.invalid} />
+              <Input
+                {...field}
+                id="phoneNumber"
+                type="tel"
+                autoComplete="tel"
+                inputMode="tel"
+                aria-invalid={fieldState.invalid}
+              />
               {fieldState.invalid ? (
                 <FieldError errors={[fieldState.error]} />
               ) : (
@@ -156,8 +172,12 @@ function ProfileForm({ email, fullName, phoneNumber }: ProfileFormProps) {
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        title="Đổi số điện thoại"
-        description="Số điện thoại mới sẽ mất trạng thái đã xác thực và cần xác thực lại, ví dụ khi dùng để nộp hồ sơ đăng ký làm Chủ trọ. Bạn có muốn lưu thay đổi này không?"
+        title={isRemovingPhone ? 'Xóa số điện thoại' : 'Đổi số điện thoại'}
+        description={
+          isRemovingPhone
+            ? 'Xóa số điện thoại thì tài khoản mất trạng thái đã xác thực của số này; muốn dùng lại phải nhập số và xác thực lại. Bạn có muốn lưu thay đổi này không?'
+            : 'Số điện thoại mới chưa được xác thực: trạng thái đã xác thực của số đang lưu sẽ bị bỏ. Bạn có muốn lưu thay đổi này không?'
+        }
         confirmLabel="Lưu thay đổi"
         isPending={updateProfileMutation.isPending}
         error={updateProfileMutation.error}
@@ -171,7 +191,14 @@ function ChangePasswordForm() {
   const changePasswordMutation = useChangePassword()
   const [saved, setSaved] = useState(false)
 
-  const { control, handleSubmit, getValues, trigger, reset } = useForm<ChangePasswordFormValues>({
+  const {
+    control,
+    handleSubmit,
+    getValues,
+    trigger,
+    reset,
+    formState: { isDirty },
+  } = useForm<ChangePasswordFormValues>({
     mode: 'onTouched',
     defaultValues: { currentPassword: '', newPassword: '', confirmNewPassword: '' },
   })
@@ -197,14 +224,15 @@ function ChangePasswordForm() {
     >
       <h2 className="text-lg font-medium">Đổi mật khẩu</h2>
 
-      {saved && (
+      {saved && !isDirty && (
         <Alert className="border-success/40 text-success">
           <CircleCheck />
           <AlertTitle>Đã đổi mật khẩu</AlertTitle>
         </Alert>
       )}
 
-      <ApiErrorAlert error={changePasswordMutation.error} />
+      {/* `400` của endpoint này mang câu tiếng Việt cố định (AuthService.ChangePasswordAsync). */}
+      <ApiErrorAlert error={changePasswordMutation.error} trust400Detail />
 
       <FieldGroup>
         <Controller
