@@ -85,7 +85,7 @@ export default function RegisterPage() {
             name="fullName"
             control={control}
             rules={{
-              required: 'Vui lòng nhập họ tên.',
+              validate: (value) => value.trim() !== '' || 'Vui lòng nhập họ tên.',
               maxLength: { value: 100, message: 'Họ tên tối đa 100 ký tự.' },
             }}
             render={({ field, fieldState }) => (
