@@ -37,21 +37,26 @@ import { ID_CARD_PATTERN } from '@/utils/idCardPattern'
  */
 export default function LandlordApplicationPage() {
   const { data: application, isPending, error, refetch } = useMyLandlordApplication()
-  const [isResubmitting, setIsResubmitting] = useState(false)
+  // Id của hồ sơ bị từ chối đang được nộp lại. Gắn với id chứ không dùng cờ đúng/sai: hồ sơ đổi
+  // (nộp ở tab khác rồi lại bị từ chối) thì trang hiện lý do của hồ sơ mới trước, không vào thẳng form.
+  const [resubmittingId, setResubmittingId] = useState<number | null>(null)
   const [justSubmitted, setJustSubmitted] = useState(false)
 
   let content
   if (isPending) {
     content = <ApplicationSkeleton />
-  } else if (error) {
+  } else if (application === undefined) {
+    // Chỉ lần tải đầu lỗi mới thay trang bằng khung lỗi. Lần tải lại lỗi (quay lại tab sau khi mở
+    // camera chụp giấy tờ...) thì TanStack Query vẫn giữ dữ liệu cũ: bỏ qua lỗi đó để form không
+    // bị gỡ ra làm mất số CCCD và ảnh đã tải (docs/frontend-screens.md mục 1).
     content = <ApiErrorAlert error={error} onRetry={() => void refetch()} />
-  } else if (application === null || (application.status === 'TuChoi' && isResubmitting)) {
+  } else if (application === null || (application.status === 'TuChoi' && resubmittingId === application.id)) {
     content = (
       <ApplicationForm
         previousRejectReason={application?.rejectReason ?? null}
-        onCancel={application ? () => setIsResubmitting(false) : undefined}
+        onCancel={application ? () => setResubmittingId(null) : undefined}
         onSubmitted={() => {
-          setIsResubmitting(false)
+          setResubmittingId(null)
           setJustSubmitted(true)
         }}
       />
@@ -63,7 +68,7 @@ export default function LandlordApplicationPage() {
         justSubmitted={justSubmitted}
         onResubmit={() => {
           setJustSubmitted(false)
-          setIsResubmitting(true)
+          setResubmittingId(application.id)
         }}
       />
     )
