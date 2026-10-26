@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import ProtectedRoute from '@/components/ProtectedRoute'
+import { Toaster } from '@/components/ui/sonner'
 import AdminLayout from '@/layouts/AdminLayout'
 import CurrentRoleLayout from '@/layouts/CurrentRoleLayout'
 import LandlordLayout from '@/layouts/LandlordLayout'
@@ -154,5 +155,11 @@ const router = createBrowserRouter([
 ])
 
 export default function App() {
-  return <RouterProvider router={router} />
+  return (
+    <>
+      <RouterProvider router={router} />
+      {/* `toast` báo thành công sau khi lưu hoặc đổi trạng thái (docs/design-system.md mục 8). */}
+      <Toaster position="top-center" />
+    </>
+  )
 }
