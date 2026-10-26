@@ -22,7 +22,7 @@ public class AuthController : ControllerBase
 
     [HttpPost("register")]
     [AllowAnonymous]
-    [EnableRateLimiting(RateLimitPolicies.AuthAccount)]
+    [EnableRateLimiting(RateLimitPolicies.Register)]
     public async Task<IActionResult> Register(RegisterRequest request)
     {
         var result = await _authService.RegisterAsync(request);
