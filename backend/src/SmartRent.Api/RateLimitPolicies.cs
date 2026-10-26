@@ -8,7 +8,13 @@ namespace SmartRent.Api;
 public static class RateLimitPolicies
 {
     /// <summary>
-    /// Đăng ký, quên mật khẩu, đặt lại mật khẩu — mỗi endpoint 3 lần mỗi giờ theo IP;
+    /// Đăng ký tài khoản — 10 lần mỗi giờ theo IP;
+    /// ngưỡng đặt ở cấu hình RateLimiting:RegisterPerHour.
+    /// </summary>
+    public const string Register = "register";
+
+    /// <summary>
+    /// Quên mật khẩu, đặt lại mật khẩu — mỗi endpoint 3 lần mỗi giờ theo IP;
     /// ngưỡng đặt ở cấu hình RateLimiting:AuthAccountPerHour.
     /// </summary>
     public const string AuthAccount = "auth-account";

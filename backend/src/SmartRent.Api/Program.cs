@@ -76,7 +76,8 @@ builder.Services.AddAuthorization();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<LoginAttemptLimiter>();
 
-// Ngưỡng nhóm đăng ký / quên / đặt lại mật khẩu đặt ở cấu hình, để nâng được khi demo dùng chung mạng.
+// Ngưỡng đăng ký và nhóm quên / đặt lại mật khẩu đặt ở cấu hình, để nâng được khi demo dùng chung mạng.
+var registerPerHour = builder.Configuration.GetValue("RateLimiting:RegisterPerHour", 10);
 var authAccountPerHour = builder.Configuration.GetValue("RateLimiting:AuthAccountPerHour", 3);
 
 // Ngưỡng nhóm gửi yêu cầu thuê, báo đã thanh toán, nộp hồ sơ Chủ trọ (security-design.md mục 6).
@@ -102,7 +103,18 @@ builder.Services.AddRateLimiter(options =>
             .ExecuteAsync(context.HttpContext);
     };
 
-    // Mỗi endpoint một bộ đếm riêng: đăng ký, quên mật khẩu và đặt lại mật khẩu không dùng chung lượt.
+    // Đăng ký có ngưỡng riêng, cao hơn nhóm dưới: không gửi email, không kiểm tra mật khẩu,
+    // còn nhiều người chung một mạng phải đăng ký được (security-design.md mục 6).
+    options.AddPolicy(RateLimitPolicies.Register, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: GetClientIp(context),
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = registerPerHour,
+                Window = TimeSpan.FromHours(1)
+            }));
+
+    // Mỗi endpoint một bộ đếm riêng: quên mật khẩu và đặt lại mật khẩu không dùng chung lượt.
     options.AddPolicy(RateLimitPolicies.AuthAccount, context =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: $"{context.Request.Path.Value?.ToLowerInvariant()}|{GetClientIp(context)}",
