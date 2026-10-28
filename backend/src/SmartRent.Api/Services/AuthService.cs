@@ -155,6 +155,16 @@ public class AuthService
             return ServiceResult<CurrentUserResponse>.Fail(StatusCodes.Status404NotFound, "Không tìm thấy tài khoản.");
         }
 
+        var roles = await _userManager.GetRolesAsync(user);
+
+        // BR-01: số của Chủ trọ là kênh liên hệ duy nhất Người thuê thấy ở hợp đồng (QR-07),
+        // nên Chủ trọ được đổi số nhưng không được xóa. Người thuê và Admin vẫn xóa được.
+        if (roles.Contains(AppRoles.Landlord) && string.IsNullOrWhiteSpace(request.PhoneNumber))
+        {
+            return ServiceResult<CurrentUserResponse>.Fail(
+                StatusCodes.Status422UnprocessableEntity, "Chủ trọ phải có số điện thoại liên hệ.");
+        }
+
         user.FullName = request.FullName;
 
         // BR-01: số điện thoại đã được Admin xác minh; đổi số thì phải xác minh lại.
@@ -170,8 +180,6 @@ public class AuthService
         {
             return ServiceResult<CurrentUserResponse>.Fail(StatusCodes.Status400BadRequest, Describe(updated));
         }
-
-        var roles = await _userManager.GetRolesAsync(user);
 
         return ServiceResult<CurrentUserResponse>.Ok(
             new CurrentUserResponse(user.Id, user.Email!, user.FullName, user.PhoneNumber, [.. roles]));
