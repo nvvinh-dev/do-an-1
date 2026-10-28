@@ -22,7 +22,10 @@ public static class RateLimitPolicies
     /// <summary>Gửi yêu cầu thuê, báo đã thanh toán, nộp hồ sơ Chủ trọ — 10 lần mỗi giờ.</summary>
     public const string BusinessWrite = "business-write";
 
-    /// <summary>Tải file — 20 lần mỗi giờ.</summary>
+    /// <summary>
+    /// Tải file — 100 lần mỗi giờ theo tài khoản;
+    /// ngưỡng đặt ở cấu hình RateLimiting:FileUploadPerHour.
+    /// </summary>
     public const string FileUpload = "file-upload";
 
     /// <summary>Tìm kiếm và xem chi tiết phòng công khai — mỗi endpoint 60 lần mỗi phút theo IP.</summary>
