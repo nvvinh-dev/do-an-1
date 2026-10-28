@@ -79,6 +79,7 @@ public class AuthController : ControllerBase
 
     [HttpPost("change-password")]
     [Authorize]
+    [EnableRateLimiting(RateLimitPolicies.BusinessWrite)]
     public async Task<IActionResult> ChangePassword(ChangePasswordRequest request)
     {
         var result = await _authService.ChangePasswordAsync(this.CurrentUserId(), request);

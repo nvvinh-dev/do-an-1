@@ -80,7 +80,7 @@ builder.Services.AddSingleton<LoginAttemptLimiter>();
 var registerPerHour = builder.Configuration.GetValue("RateLimiting:RegisterPerHour", 10);
 var authAccountPerHour = builder.Configuration.GetValue("RateLimiting:AuthAccountPerHour", 3);
 
-// Ngưỡng nhóm gửi yêu cầu thuê, báo đã thanh toán, nộp hồ sơ Chủ trọ (security-design.md mục 6).
+// Ngưỡng nhóm gửi yêu cầu thuê, báo đã thanh toán, nộp hồ sơ Chủ trọ, đổi mật khẩu (security-design.md mục 6).
 var businessWritePerHour = builder.Configuration.GetValue("RateLimiting:BusinessWritePerHour", 10);
 
 // Ngưỡng tải file tính theo tài khoản, đủ cho nhập ảnh khu trọ, phòng và chốt số đồng hồ.
