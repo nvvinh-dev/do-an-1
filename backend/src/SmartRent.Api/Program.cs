@@ -83,6 +83,9 @@ var authAccountPerHour = builder.Configuration.GetValue("RateLimiting:AuthAccoun
 // Ngưỡng nhóm gửi yêu cầu thuê, báo đã thanh toán, nộp hồ sơ Chủ trọ (security-design.md mục 6).
 var businessWritePerHour = builder.Configuration.GetValue("RateLimiting:BusinessWritePerHour", 10);
 
+// Ngưỡng tải file tính theo tài khoản, đủ cho nhập ảnh khu trọ, phòng và chốt số đồng hồ.
+var fileUploadPerHour = builder.Configuration.GetValue("RateLimiting:FileUploadPerHour", 100);
+
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
@@ -145,7 +148,7 @@ builder.Services.AddRateLimiter(options =>
                 : $"ip:{GetClientIp(context)}",
             factory: _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = 20,
+                PermitLimit = fileUploadPerHour,
                 Window = TimeSpan.FromHours(1)
             }));
 
