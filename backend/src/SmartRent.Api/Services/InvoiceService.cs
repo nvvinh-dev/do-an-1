@@ -817,9 +817,10 @@ public class InvoiceService
     /// <summary>
     /// Người thuê thấy hóa đơn định kỳ từ khi phát hành, hóa đơn thanh lý từ lần gửi đầu — kể cả khi bảng quay về Nháp
     /// sau khi người thuê yêu cầu sửa (api-design mục 9, FR-103). Cùng điều kiện với
-    /// <see cref="Invoice.IsVisibleToTenant"/> (dùng ở chi tiết hóa đơn) — đổi quy tắc thì sửa cả hai.
+    /// <see cref="Invoice.IsVisibleToTenant"/> (dùng ở chi tiết hóa đơn) — đổi quy tắc thì sửa cả hai. Chi tiết hợp
+    /// đồng dùng lại hàm này cho <c>settlementInvoiceId</c>.
     /// </summary>
-    private static IQueryable<Invoice> WhereVisibleToTenant(IQueryable<Invoice> invoices)
+    internal static IQueryable<Invoice> WhereVisibleToTenant(IQueryable<Invoice> invoices)
         => invoices.Where(i => i.Type == InvoiceType.ThanhLy
             ? i.SentAt != null
             : i.Status != InvoiceStatus.Nhap && (i.Status != InvoiceStatus.DaHuy || i.IssuedAt != null));
