@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { propertiesQueryKey } from '@/hooks/usePropertyList'
+import { roomsQueryKey } from '@/hooks/useRoomList'
 import { archiveProperty } from '@/services/propertyService'
 
 /**
@@ -11,6 +12,10 @@ export function useArchiveProperty(id: number) {
 
   return useMutation({
     mutationFn: () => archiveProperty(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: propertiesQueryKey }),
+    onSuccess: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: propertiesQueryKey }),
+        queryClient.invalidateQueries({ queryKey: roomsQueryKey }),
+      ]),
   })
 }
