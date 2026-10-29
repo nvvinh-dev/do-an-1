@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import PageHeader from '@/components/PageHeader'
+import PropertyRoomList from '@/components/PropertyRoomList'
 import RoomCountsSummary from '@/components/RoomCountsSummary'
 import StatusBadge from '@/components/StatusBadge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -68,7 +69,9 @@ function PropertyDetailContent({ property }: { property: PropertyDetail }) {
         <Alert>
           <Archive />
           <AlertTitle>Khu trọ đã lưu trữ</AlertTitle>
-          <AlertDescription>Khu trọ và các phòng của khu chỉ còn xem được, không sửa hay thêm phòng mới.</AlertDescription>
+          <AlertDescription>
+            Khu trọ và các phòng của khu chỉ còn xem được, không sửa hay thêm phòng mới.
+          </AlertDescription>
         </Alert>
       )}
 
@@ -108,6 +111,7 @@ function PropertyDetailContent({ property }: { property: PropertyDetail }) {
       </div>
 
       {property.images.length > 0 && <PropertyImages property={property} />}
+      <PropertyRoomList propertyId={property.id} isArchived={isArchived} />
     </>
   )
 }
