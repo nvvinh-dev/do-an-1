@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { Link } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
+import ImageUploader from '@/components/ImageUploader'
 import RoomNumberField from '@/components/RoomNumberField'
 import RoomServiceFeeFields from '@/components/RoomServiceFeeFields'
 import { Button } from '@/components/ui/button'
@@ -27,9 +29,10 @@ import {
   validateRoomOccupants,
 } from '@/utils/validateRoomInput'
 
+const MAX_ROOM_IMAGES = 10
+
 interface RoomFormProps {
   defaultValues: RoomFormValues
-  imagePaths: string[]
   amenities: Amenity[]
   submitLabel: string
   cancelTo: string
@@ -40,7 +43,6 @@ interface RoomFormProps {
 
 export default function RoomForm({
   defaultValues,
-  imagePaths,
   amenities,
   submitLabel,
   cancelTo,
@@ -50,8 +52,10 @@ export default function RoomForm({
 }: RoomFormProps) {
   const form = useForm<RoomFormValues>({ mode: 'onTouched', defaultValues })
   const { control, handleSubmit } = form
+  // Gửi khi ảnh chưa tải xong thì `imagePaths` thiếu ảnh đó.
+  const [isUploading, setIsUploading] = useState(false)
   const submit = handleSubmit((values) => {
-    if (isPending) return
+    if (isPending || isUploading) return
     // Bấm Enter ngay trong ô thì ô chưa rời, chuỗi chưa được chuẩn hóa: chuẩn hóa lại ở đây.
     const money = (value: string) => Number(normalizeRoomMoney(value))
     onSubmit({
@@ -64,8 +68,9 @@ export default function RoomForm({
       description: values.description.trim() || null,
       serviceFees: values.serviceFees.map((fee) => ({ name: fee.name.trim(), amount: money(fee.amount) })),
       amenityIds: values.amenityIds,
-      // PUT thay toàn bộ ảnh; thẻ này chỉ sửa thông tin, gửi lại ảnh đúng thứ tự đang có.
-      imagePaths,
+      // PUT thay toàn bộ danh sách ảnh: ảnh bị bỏ khỏi danh sách là bỏ khỏi phòng. Phòng đang hiển thị
+      // mà bỏ hết ảnh thì server trả 422 kèm `detail` (API mục 5.2).
+      imagePaths: values.images.map((image) => image.path),
     })
   })
 
@@ -189,6 +194,29 @@ export default function RoomForm({
               </FieldSet>
             )}
           />
+
+          <Controller
+            name="images"
+            control={control}
+            render={({ field }) => (
+              <FieldSet>
+                <FieldLegend>Ảnh phòng</FieldLegend>
+                <FieldDescription>
+                  Ảnh đầu tiên là ảnh đại diện của tin đăng. Dùng mũi tên để đổi thứ tự.
+                </FieldDescription>
+                <ImageUploader
+                  purpose="AnhPhong"
+                  value={field.value}
+                  onChange={field.onChange}
+                  maxFiles={MAX_ROOM_IMAGES}
+                  reorderable
+                  disabled={isPending}
+                  onUploadingChange={setIsUploading}
+                  imageLabel={defaultValues.code ? `Ảnh phòng ${defaultValues.code}` : undefined}
+                />
+              </FieldSet>
+            )}
+          />
         </FieldGroup>
       </fieldset>
       <ApiErrorAlert
@@ -201,7 +229,7 @@ export default function RoomForm({
         <Button asChild variant="outline" size="page">
           <Link to={cancelTo}>Hủy</Link>
         </Button>
-        <Button type="submit" size="page" disabled={isPending}>
+        <Button type="submit" size="page" disabled={isPending || isUploading}>
           {isPending && <Spinner />}
           {submitLabel}
         </Button>

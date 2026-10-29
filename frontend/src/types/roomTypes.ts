@@ -1,3 +1,4 @@
+import type { UploadedImage } from '@/types/fileTypes'
 import type { AmenityReference, PropertyImage } from '@/types/propertyTypes'
 
 export type RoomOccupancyStatus = 'Trong' | 'DangGiuCho' | 'DangThue' | 'BaoTri' | 'LuuTru'
@@ -57,4 +58,6 @@ export interface RoomFormValues {
   description: string
   serviceFees: { name: string; amount: string }[]
   amenityIds: number[]
+  /** Theo thứ tự hiển thị; ảnh đầu tiên là ảnh đại diện (FR-100). */
+  images: UploadedImage[]
 }

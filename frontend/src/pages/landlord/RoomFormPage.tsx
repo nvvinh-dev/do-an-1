@@ -29,6 +29,7 @@ const EMPTY_VALUES: RoomFormValues = {
   description: '',
   serviceFees: [],
   amenityIds: [],
+  images: [],
 }
 
 /** L3 — tạo/sửa thông tin phòng. Lưu xong mở chi tiết (frontend-screens mục 6, 8). */
@@ -65,7 +66,6 @@ function CreateRoomForm({ propertyId }: { propertyId: number }) {
             {(amenities) => (
               <RoomForm
                 defaultValues={EMPTY_VALUES}
-                imagePaths={[]}
                 amenities={amenities}
                 submitLabel="Thêm phòng"
                 cancelTo={cancelTo}
@@ -119,7 +119,6 @@ function EditRoomForm({ roomId }: { roomId: number }) {
               {(amenities) => (
                 <RoomForm
                   defaultValues={toFormValues(room)}
-                  imagePaths={room.images.map((image) => image.path)}
                   amenities={amenities}
                   submitLabel="Lưu thay đổi"
                   cancelTo={cancelTo}
@@ -154,6 +153,7 @@ function toFormValues(room: RoomDetail): RoomFormValues {
     description: room.description ?? '',
     serviceFees: room.serviceFees.map((fee) => ({ name: fee.name, amount: String(fee.amount) })),
     amenityIds: room.amenities.map((amenity) => amenity.id),
+    images: room.images,
   }
 }
 
