@@ -12,6 +12,10 @@ namespace SmartRent.Api.Services;
 /// <summary>Đăng ký, đăng nhập và các thao tác về mật khẩu — BP-01.</summary>
 public class AuthService
 {
+    // Câu báo mật khẩu mới sai quy tắc, dùng chung cho đổi và đặt lại mật khẩu (api-design mục 2).
+    private const string PasswordRuleMessage =
+        "Mật khẩu mới chưa đúng quy tắc: 8–128 ký tự, có chữ hoa, chữ thường, chữ số và ký tự đặc biệt.";
+
     private readonly AppDbContext _db;
     private readonly UserManager<AppUser> _userManager;
     private readonly TokenService _tokenService;
@@ -205,7 +209,7 @@ public class AuthService
         // Câu tiếng Việt cố định để frontend hiện nguyên văn; mô tả lỗi của Identity viết bằng tiếng Anh.
         var message = changed.Errors.Any(e => e.Code == nameof(IdentityErrorDescriber.PasswordMismatch))
             ? "Mật khẩu hiện tại không đúng."
-            : "Mật khẩu mới chưa đúng quy tắc: 8–128 ký tự, có chữ hoa, chữ thường, chữ số và ký tự đặc biệt.";
+            : PasswordRuleMessage;
 
         return ServiceResult.Fail(StatusCodes.Status400BadRequest, message);
     }
@@ -263,7 +267,8 @@ public class AuthService
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
 
-        // Thông báo giống nhau cho mọi trường hợp thất bại, không tiết lộ email có tồn tại không.
+        // Email không tồn tại và token sai, hết hạn hay đã dùng nhận cùng một câu, không tiết lộ
+        // email có tồn tại không.
         const string invalid = "Yêu cầu đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.";
 
         if (user is null)
@@ -273,9 +278,20 @@ public class AuthService
 
         var reset = await _userManager.ResetPasswordAsync(user, request.Token, request.NewPassword);
 
-        return reset.Succeeded
-            ? ServiceResult.Ok()
-            : ServiceResult.Fail(StatusCodes.Status400BadRequest, invalid);
+        if (reset.Succeeded)
+        {
+            return ServiceResult.Ok();
+        }
+
+        // Identity kiểm token trước và chỉ kiểm quy tắc mật khẩu khi token đúng, nên báo riêng lỗi
+        // quy tắc không tiết lộ email nào tồn tại (security-design mục 8 quy tắc 18). Token chưa bị
+        // dùng, người dùng sửa mật khẩu rồi gửi lại được. Mã lỗi của PasswordValidator đều bắt đầu
+        // bằng "Password"; mọi lỗi khác (InvalidToken, ConcurrencyFailure...) giữ câu chung.
+        var message = reset.Errors.Any(e => e.Code.StartsWith("Password", StringComparison.Ordinal))
+            ? PasswordRuleMessage
+            : invalid;
+
+        return ServiceResult.Fail(StatusCodes.Status400BadRequest, message);
     }
 
     private static string Describe(IdentityResult result)
