@@ -19,7 +19,7 @@ public static class RateLimitPolicies
     /// </summary>
     public const string AuthAccount = "auth-account";
 
-    /// <summary>Gửi yêu cầu thuê, báo đã thanh toán, nộp hồ sơ Chủ trọ — 10 lần mỗi giờ.</summary>
+    /// <summary>Gửi yêu cầu thuê, báo đã thanh toán, nộp hồ sơ Chủ trọ, đổi mật khẩu — 10 lần mỗi giờ.</summary>
     public const string BusinessWrite = "business-write";
 
     /// <summary>
