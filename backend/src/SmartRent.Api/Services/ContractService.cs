@@ -497,7 +497,8 @@ public class ContractService
 
     /// <summary>
     /// FR-90: chỉ số cuối đã ghi nhận của phòng, để điền sẵn chỉ số đầu khi lập hợp đồng — chỉ số mới của
-    /// hóa đơn chưa hủy gần nhất của hợp đồng gần nhất, hoặc chỉ số đầu của hợp đồng đó nếu chưa có hóa đơn.
+    /// hóa đơn chưa hủy gần nhất của hợp đồng gần nhất (hóa đơn thanh lý nếu có), hoặc chỉ số đầu của hợp đồng đó
+    /// nếu chưa có hóa đơn. Cùng quy tắc với chỉ số cũ của kỳ kế tiếp (<see cref="Contract.LatestMeterIndexes"/>).
     /// Phòng chưa từng có hợp đồng thì trả về null.
     /// </summary>
     public async Task<ServiceResult<MeterReadingsResponse?>> GetLatestMeterReadingsAsync(
@@ -516,19 +517,9 @@ public class ContractService
 
         var latest = await _db.Contracts
             .AsNoTracking()
+            .Include(c => c.Invoices.Where(i => i.Status != InvoiceStatus.DaHuy))
             .Where(c => c.RoomId == roomId)
             .OrderByDescending(c => c.Id)
-            .Select(c => new
-            {
-                c.InitialElectricityIndex,
-                c.InitialWaterIndex,
-                LatestInvoice = c.Invoices
-                    .Where(i => i.Status != InvoiceStatus.DaHuy)
-                    .OrderByDescending(i => i.PeriodEnd)
-                    .ThenByDescending(i => i.Id)
-                    .Select(i => new { i.CurrentElectricityIndex, i.CurrentWaterIndex })
-                    .FirstOrDefault()
-            })
             .FirstOrDefaultAsync(cancellationToken);
 
         if (latest is null)
@@ -536,9 +527,9 @@ public class ContractService
             return ServiceResult<MeterReadingsResponse?>.Ok(null);
         }
 
-        return ServiceResult<MeterReadingsResponse?>.Ok(latest.LatestInvoice is { } invoice
-            ? new MeterReadingsResponse(invoice.CurrentElectricityIndex, invoice.CurrentWaterIndex)
-            : new MeterReadingsResponse(latest.InitialElectricityIndex, latest.InitialWaterIndex));
+        var (electricity, water) = latest.LatestMeterIndexes(latest.Invoices);
+
+        return ServiceResult<MeterReadingsResponse?>.Ok(new MeterReadingsResponse(electricity, water));
     }
 
     /// <summary>
