@@ -96,7 +96,8 @@ public record DepositRefundResponse(
 /// Chi tiết hợp đồng cho hai bên. <see cref="CancelledBy"/> là <c>Landlord</c>, <c>Tenant</c> hoặc
 /// <c>System</c>; <see cref="PaymentQr"/> chỉ có với Người thuê đứng tên khi hợp đồng chờ nhận cọc.
 /// Ba trường cuối thuộc BP-10: <see cref="MoveOutNotice"/> null khi chưa có thông báo trả phòng,
-/// <see cref="SettlementInvoiceId"/> null khi chưa lập hóa đơn thanh lý.
+/// <see cref="SettlementInvoiceId"/> null khi chưa lập hóa đơn thanh lý — với Người thuê, null cả khi bảng chưa từng
+/// được gửi; bảng đã gửi rồi quay về Nháp thì vẫn có.
 /// </summary>
 public record ContractDetailResponse(
     long Id,

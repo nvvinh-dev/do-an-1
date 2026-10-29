@@ -742,11 +742,12 @@ public class ContractService
             ? new DepositRefundResponse(refundedAmount, refundedAt, refundMethod, contract.DepositRefundNote)
             : null;
 
-        // Người thuê không thấy hóa đơn thanh lý khi nó còn ở Nháp (api-design mục 10).
-        var settlementInvoiceId = await _db.Invoices
-            .Where(i => i.ContractId == id
-                        && i.Type == InvoiceType.ThanhLy
-                        && (!viewerIsTenant || i.Status != InvoiceStatus.Nhap))
+        // Người thuê thấy hóa đơn thanh lý từ lần gửi đầu, kể cả khi bảng quay về Nháp sau khi họ yêu cầu sửa; bảng chưa
+        // từng gửi thì như chưa có (api-design mục 9, 10; FR-103) — cùng quy tắc với GET /invoices.
+        var settlementInvoices = _db.Invoices.Where(i => i.ContractId == id && i.Type == InvoiceType.ThanhLy);
+        var settlementInvoiceId = await (viewerIsTenant
+                ? InvoiceService.WhereVisibleToTenant(settlementInvoices)
+                : settlementInvoices)
             .Select(i => (long?)i.Id)
             .FirstOrDefaultAsync(cancellationToken);
 
