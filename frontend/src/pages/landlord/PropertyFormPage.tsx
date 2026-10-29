@@ -1,9 +1,10 @@
 import { Archive } from 'lucide-react'
-import { useMemo, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
+import ImageUploader from '@/components/ImageUploader'
 import PageHeader from '@/components/PageHeader'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -38,6 +39,7 @@ import { useUpdateProperty } from '@/hooks/useUpdateProperty'
 import { isNotFoundError } from '@/lib/apiError'
 import NotFoundPage from '@/pages/public/NotFoundPage'
 import type { Amenity } from '@/types/amenityTypes'
+import type { UploadedImage } from '@/types/fileTypes'
 import type { Location } from '@/types/locationTypes'
 import type { PropertyDetail, PropertyRequest } from '@/types/propertyTypes'
 import { normalizeSearchText } from '@/utils/normalizeSearchText'
@@ -49,6 +51,8 @@ interface PropertyFormValues {
   ward: string
   description: string
   amenityIds: number[]
+  /** Theo thứ tự hiển thị; ảnh đầu tiên là ảnh đại diện (FR-100). */
+  images: UploadedImage[]
 }
 
 const EMPTY_VALUES: PropertyFormValues = {
@@ -58,7 +62,10 @@ const EMPTY_VALUES: PropertyFormValues = {
   ward: '',
   description: '',
   amenityIds: [],
+  images: [],
 }
+
+const MAX_PROPERTY_IMAGES = 10
 
 /**
  * L2 — Thêm khu trọ (`/landlord/properties/new`) và sửa khu trọ (`/landlord/properties/:id/edit`),
@@ -81,8 +88,6 @@ function CreatePropertyForm() {
           <PropertyForm
             {...catalogs}
             defaultValues={EMPTY_VALUES}
-            // Form chưa có phần ảnh: khu trọ mới chưa có ảnh nào.
-            imagePaths={[]}
             submitLabel="Thêm khu trọ"
             cancelTo="/landlord/properties"
             isPending={createMutation.isPending}
@@ -130,9 +135,6 @@ function EditPropertyForm({ propertyId }: { propertyId: number }) {
               <PropertyForm
                 {...catalogs}
                 defaultValues={toFormValues(property)}
-                // Form chưa sửa ảnh, nhưng `PUT` thay toàn bộ danh sách ảnh: gửi lại nguyên các ảnh
-                // đang có, đúng thứ tự, để ảnh không bị mất.
-                imagePaths={property.images.map((image) => image.path)}
                 submitLabel="Lưu thay đổi"
                 cancelTo={detailPath}
                 isPending={updateMutation.isPending}
@@ -162,6 +164,7 @@ function toFormValues(property: PropertyDetail): PropertyFormValues {
     ward: property.ward,
     description: property.description ?? '',
     amenityIds: property.amenities.map((amenity) => amenity.id),
+    images: property.images,
   }
 }
 
@@ -249,7 +252,6 @@ function PropertyFormSkeleton() {
 
 interface PropertyFormProps extends Catalogs {
   defaultValues: PropertyFormValues
-  imagePaths: string[]
   submitLabel: string
   cancelTo: string
   isPending: boolean
@@ -261,7 +263,6 @@ function PropertyForm({
   locations,
   propertyAmenities,
   defaultValues,
-  imagePaths,
   submitLabel,
   cancelTo,
   isPending,
@@ -272,11 +273,14 @@ function PropertyForm({
     mode: 'onTouched',
     defaultValues,
   })
+  // Gửi khi ảnh chưa tải xong thì `imagePaths` thiếu ảnh đó.
+  const [isUploading, setIsUploading] = useState(false)
 
   const city = useWatch({ control, name: 'city' })
   const wards = useMemo(() => locations.find((location) => location.city === city)?.wards ?? [], [locations, city])
 
   const submit = handleSubmit((values) => {
+    if (isUploading) return
     onSubmit({
       name: values.name.trim(),
       address: values.address.trim(),
@@ -284,7 +288,8 @@ function PropertyForm({
       ward: values.ward,
       description: values.description.trim() === '' ? null : values.description.trim(),
       amenityIds: values.amenityIds,
-      imagePaths,
+      // PUT thay toàn bộ danh sách ảnh: ảnh bị bỏ khỏi danh sách là bỏ khỏi khu trọ (API mục 5.1).
+      imagePaths: values.images.map((image) => image.path),
     })
   })
 
@@ -468,6 +473,26 @@ function PropertyForm({
             )}
           />
         )}
+
+        <Controller
+          name="images"
+          control={control}
+          render={({ field }) => (
+            <FieldSet>
+              <FieldLegend variant="label">Ảnh khu trọ</FieldLegend>
+              <FieldDescription>Ảnh đầu tiên là ảnh đại diện của khu trọ. Dùng mũi tên để đổi thứ tự.</FieldDescription>
+              <ImageUploader
+                purpose="AnhKhuTro"
+                value={field.value}
+                onChange={field.onChange}
+                maxFiles={MAX_PROPERTY_IMAGES}
+                reorderable
+                disabled={isPending}
+                onUploadingChange={setIsUploading}
+              />
+            </FieldSet>
+          )}
+        />
       </FieldGroup>
 
       {/* 409, 422 hiện `detail` ngay trên nút vừa bấm, dữ liệu đã nhập giữ nguyên (docs/frontend-screens.md mục 1). */}
@@ -477,7 +502,7 @@ function PropertyForm({
         <Button asChild variant="outline" size="page">
           <Link to={cancelTo}>Hủy</Link>
         </Button>
-        <Button type="submit" size="page" disabled={isPending}>
+        <Button type="submit" size="page" disabled={isPending || isUploading}>
           {isPending && <Spinner />}
           {submitLabel}
         </Button>
