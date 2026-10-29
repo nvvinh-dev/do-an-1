@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   normalizeRoomArea,
   normalizeRoomMoney,
+  toRoomAreaInput,
   validateRoomArea,
   validateRoomMoney,
   validateRoomOccupants,
@@ -39,6 +40,14 @@ describe('dữ liệu số của phòng', () => {
     for (const value of ['', '0', '-20', '20.555', '1000000', 'abc']) {
       expect(validateRoomArea(value)).not.toBe(true)
     }
+  })
+
+  it('ô diện tích luôn giữ dấu phẩy thập phân', () => {
+    expect(toRoomAreaInput('20.5')).toBe('20,5')
+    expect(toRoomAreaInput(' 20,5 ')).toBe('20,5')
+    expect(toRoomAreaInput('20')).toBe('20')
+    expect(toRoomAreaInput('20.555')).toBe('20.555')
+    expect(toRoomAreaInput('abc')).toBe('abc')
   })
 
   it('diện tích nhận dấu phẩy thập phân', () => {

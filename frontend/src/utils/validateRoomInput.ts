@@ -13,6 +13,15 @@ export function normalizeRoomArea(value: string): string {
   return /^\d+,\d{1,2}$/.test(trimmed) ? trimmed.replace(',', '.') : trimmed
 }
 
+/**
+ * Chuỗi diện tích giữ trong ô nhập: luôn dùng dấu phẩy thập phân, như danh sách và chi tiết phòng
+ * hiện "20,5 m²", để dấu không đổi qua lại khi chọn hay rời ô. Chuỗi sai giữ nguyên để người dùng sửa.
+ */
+export function toRoomAreaInput(value: string): string {
+  const normalized = normalizeRoomArea(value)
+  return /^\d+(\.\d{1,2})?$/.test(normalized) ? normalized.replace('.', ',') : value.trim()
+}
+
 /** Kiểm tra đầu vào theo API mục 1, 5.2 và độ chính xác của RoomRequestValidator. */
 export function validateRoomMoney(input: string, positive = false): true | string {
   const value = normalizeRoomMoney(input)

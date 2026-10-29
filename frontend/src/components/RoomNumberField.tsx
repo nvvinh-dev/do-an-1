@@ -3,7 +3,7 @@ import { Controller, type Control, type FieldPathByValue } from 'react-hook-form
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import type { RoomFormValues } from '@/types/roomTypes'
-import { normalizeRoomArea, normalizeRoomMoney } from '@/utils/validateRoomInput'
+import { normalizeRoomMoney, toRoomAreaInput } from '@/utils/validateRoomInput'
 
 interface RoomNumberFieldProps {
   control: Control<RoomFormValues>
@@ -15,14 +15,15 @@ interface RoomNumberFieldProps {
 }
 
 /**
- * Ô nhập số của form phòng. Rời ô thì đưa chuỗi về dạng API nhận ("3.000.000" → "3000000",
- * "20,5" → "20.5") và với tiền thì hiện dấu chấm hàng nghìn (design-system mục 8); chuỗi sai giữ
- * nguyên để người dùng thấy và sửa.
+ * Ô nhập số của form phòng. Rời ô thì dọn chuỗi: tiền chỉ còn chữ số ("3.000.000" → "3000000") và
+ * hiện dấu chấm hàng nghìn khi không chọn (design-system mục 8); diện tích luôn dùng dấu phẩy thập
+ * phân ("20.5" → "20,5"). Chuỗi sai giữ nguyên để người dùng thấy và sửa. Form đổi sang dạng API
+ * nhận lúc gửi (RoomForm).
  */
 export default function RoomNumberField({ control, name, label, money, decimal, validate }: RoomNumberFieldProps) {
   const [focused, setFocused] = useState(false)
   const id = `room-${name}`
-  const normalize = money ? normalizeRoomMoney : decimal ? normalizeRoomArea : (value: string) => value.trim()
+  const normalize = money ? normalizeRoomMoney : decimal ? toRoomAreaInput : (value: string) => value.trim()
   return (
     <Controller
       name={name}

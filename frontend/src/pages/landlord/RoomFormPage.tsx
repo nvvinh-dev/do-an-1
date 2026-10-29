@@ -17,6 +17,7 @@ import { isNotFoundError } from '@/lib/apiError'
 import NotFoundPage from '@/pages/public/NotFoundPage'
 import type { Amenity } from '@/types/amenityTypes'
 import type { RoomDetail, RoomFormValues } from '@/types/roomTypes'
+import { toRoomAreaInput } from '@/utils/validateRoomInput'
 
 const EMPTY_VALUES: RoomFormValues = {
   code: '',
@@ -145,8 +146,7 @@ function EditRoomForm({ roomId }: { roomId: number }) {
 function toFormValues(room: RoomDetail): RoomFormValues {
   return {
     code: room.code,
-    // Hiện dấu phẩy thập phân như trang chi tiết; form đổi lại dấu chấm trước khi gửi.
-    area: String(room.area).replace('.', ','),
+    area: toRoomAreaInput(String(room.area)),
     maxOccupants: String(room.maxOccupants),
     rentPrice: String(room.rentPrice),
     electricityUnitPrice: String(room.electricityUnitPrice),
