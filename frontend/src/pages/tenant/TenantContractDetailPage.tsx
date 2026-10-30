@@ -64,10 +64,16 @@ export default function TenantContractDetailPage() {
 
       {contractQuery.isPending ? (
         <ContractDetailSkeleton />
-      ) : contractQuery.isError ? (
+      ) : contractQuery.isLoadingError ? (
         <ApiErrorAlert error={contractQuery.error} onRetry={() => void contractQuery.refetch()} />
       ) : (
-        <ContractDetailContent contract={contractQuery.data} />
+        <>
+          {/* Lần tải lại lỗi (quay lại tab, tải lại sau `409`) thì giữ nội dung cũ và hộp thoại đang mở, chỉ báo lỗi kèm nút thử lại. */}
+          {contractQuery.isRefetchError && (
+            <ApiErrorAlert error={contractQuery.error} onRetry={() => void contractQuery.refetch()} />
+          )}
+          <ContractDetailContent contract={contractQuery.data} />
+        </>
       )}
     </section>
   )

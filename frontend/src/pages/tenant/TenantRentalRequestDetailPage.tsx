@@ -44,10 +44,16 @@ export default function TenantRentalRequestDetailPage() {
 
       {rentalRequestQuery.isPending ? (
         <RentalRequestDetailSkeleton />
-      ) : rentalRequestQuery.isError ? (
+      ) : rentalRequestQuery.isLoadingError ? (
         <ApiErrorAlert error={rentalRequestQuery.error} onRetry={() => void rentalRequestQuery.refetch()} />
       ) : (
-        <RentalRequestDetailContent rentalRequest={rentalRequestQuery.data} />
+        <>
+          {/* Lần tải lại lỗi (quay lại tab, tải lại sau `409`) thì giữ nội dung cũ và hộp thoại đang mở, chỉ báo lỗi kèm nút thử lại. */}
+          {rentalRequestQuery.isRefetchError && (
+            <ApiErrorAlert error={rentalRequestQuery.error} onRetry={() => void rentalRequestQuery.refetch()} />
+          )}
+          <RentalRequestDetailContent rentalRequest={rentalRequestQuery.data} />
+        </>
       )}
     </section>
   )
