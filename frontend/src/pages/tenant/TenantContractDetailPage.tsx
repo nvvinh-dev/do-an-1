@@ -8,6 +8,7 @@ import CountdownText from '@/components/CountdownText'
 import MoneyText from '@/components/MoneyText'
 import PageHeader from '@/components/PageHeader'
 import StatusBadge from '@/components/StatusBadge'
+import VietQrBox from '@/components/VietQrBox'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -34,10 +35,10 @@ interface ContractDetailLocationState {
 /**
  * T4 — Chi tiết hợp đồng (docs/frontend-screens.md mục 5), phần trước khi trả phòng. Hiện theo
  * trạng thái: nháp → chỉ đọc, nút hủy; chờ người thuê xác nhận → đủ điều khoản, nút đồng ý, yêu cầu
- * sửa, hủy; chờ nhận cọc → đếm ngược hạn giữ chỗ, nút hủy; đang hiệu lực trước ngày bắt đầu → nút
- * hủy kèm cảnh báo mất cọc; đã hủy → lý do và hoàn cọc; đã thanh lý → chỉ xem. Chưa hiệu lực mà đã
- * quá hạn giữ chỗ (tác vụ định kỳ chưa kịp hủy) → chỉ còn nút hủy, không hướng dẫn đồng ý hay chuyển
- * cọc. Thao tác xong thì ở lại trang, hiện `toast` và tải lại dữ liệu (design-system mục 8).
+ * sửa, hủy; chờ nhận cọc → mã VietQR tiền cọc, đếm ngược hạn giữ chỗ, nút hủy; đang hiệu lực trước
+ * ngày bắt đầu → nút hủy kèm cảnh báo mất cọc; đã hủy → lý do và hoàn cọc; đã thanh lý → chỉ xem.
+ * Chưa hiệu lực mà đã quá hạn giữ chỗ (tác vụ định kỳ chưa kịp hủy) → chỉ còn nút hủy, không hướng
+ * dẫn đồng ý hay chuyển cọc, không hiện mã VietQR. Thao tác xong thì ở lại trang, hiện `toast` và tải lại dữ liệu (design-system mục 8).
  */
 export default function TenantContractDetailPage() {
   const { id } = useParams()
@@ -137,6 +138,11 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
       <CancelContractDialog {...dialogProps('cancel')} />
 
       <ContractStatusNotice contract={contract} today={today} now={now} />
+
+      {/* Server chỉ trả `paymentQr` cho hợp đồng chờ nhận cọc của người thuê đứng tên. Quá hạn giữ chỗ thì
+          không hiện mã kể cả khi dữ liệu còn `paymentQr` (tải trước mốc hạn, tác vụ định kỳ chưa chạy):
+          xác nhận cọc đã bị chặn, tiền chuyển lúc này không được ghi nhận là cọc. */}
+      <VietQrBox paymentQr={isHoldExpired(contract.holdExpiresAt, now) ? null : contract.paymentQr} />
 
       {contract.status === 'DaHuy' && <DepositRefundSection contract={contract} />}
 
@@ -355,8 +361,8 @@ function ContractStatusNotice({ contract, today, now }: ContractStatusNoticeProp
           <AlertTitle>Chờ Chủ trọ xác nhận đã nhận cọc</AlertTitle>
           <AlertDescription>
             <p>
-              Bạn đã đồng ý điều khoản. Chuyển tiền cọc {formatCurrency(contract.depositAmount)} cho Chủ trọ; hợp đồng có
-              hiệu lực khi Chủ trọ xác nhận đã nhận đủ cọc.
+              Bạn đã đồng ý điều khoản. Chuyển tiền cọc {formatCurrency(contract.depositAmount)} cho Chủ trọ
+              {contract.paymentQr && ' bằng mã VietQR bên dưới'}; hợp đồng có hiệu lực khi Chủ trọ xác nhận đã nhận đủ cọc.
             </p>
             <HoldDeadline holdExpiresAt={contract.holdExpiresAt} />
           </AlertDescription>
