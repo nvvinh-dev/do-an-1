@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { Link } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import ImageUploader from '@/components/ImageUploader'
@@ -54,6 +54,8 @@ export default function RoomForm({
   const { control, handleSubmit } = form
   // Gửi khi ảnh chưa tải xong thì `imagePaths` thiếu ảnh đó.
   const [isUploading, setIsUploading] = useState(false)
+  // Nhãn ảnh theo mã đang nhập, không theo mã lúc mở form.
+  const code = useWatch({ control, name: 'code' }).trim()
   const submit = handleSubmit((values) => {
     if (isPending || isUploading) return
     // Bấm Enter ngay trong ô thì ô chưa rời, chuỗi chưa được chuẩn hóa: chuẩn hóa lại ở đây.
@@ -212,7 +214,7 @@ export default function RoomForm({
                   reorderable
                   disabled={isPending}
                   onUploadingChange={setIsUploading}
-                  imageLabel={defaultValues.code ? `Ảnh phòng ${defaultValues.code}` : undefined}
+                  imageLabel={code ? `Ảnh phòng ${code}` : undefined}
                 />
               </FieldSet>
             )}
