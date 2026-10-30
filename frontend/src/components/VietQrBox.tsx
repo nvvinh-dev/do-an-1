@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import type { PaymentQr } from '@/types/paymentTypes'
 import { buildVietQrPayload } from '@/utils/buildVietQrPayload'
 import { formatCurrency } from '@/utils/formatCurrency'
+import { findVietQrBank } from '@/utils/vietQrBanks'
 
 /** Lề trắng quanh mã, tính bằng số ô; chuẩn QR yêu cầu tối thiểu 4 ô để máy quét nhận ra mã. */
 const QUIET_ZONE_MODULES = 4
@@ -17,8 +18,9 @@ interface VietQrBoxProps {
 
 /**
  * Mã VietQR để Người thuê chuyển khoản (BR-26), kèm số tiền, nội dung chuyển khoản và tài khoản nhận
- * để đối chiếu với ứng dụng ngân hàng. Mã vẽ ngay trong trình duyệt bằng `qrcode`, không gọi dịch vụ
- * tạo ảnh QR bên ngoài (security-design mục 5.4). Dùng ở T4 cho tiền cọc và T5 cho hóa đơn.
+ * (ngân hàng, số tài khoản, chủ tài khoản) để đối chiếu với ứng dụng ngân hàng. Mã vẽ ngay trong
+ * trình duyệt bằng `qrcode`, không gọi dịch vụ tạo ảnh QR bên ngoài (security-design mục 5.4). Dùng
+ * ở T4 cho tiền cọc và T5 cho hóa đơn.
  */
 export default function VietQrBox({ paymentQr, className }: VietQrBoxProps) {
   if (!paymentQr) {
@@ -65,6 +67,10 @@ function VietQrBoxContent({ paymentQr, className }: { paymentQr: PaymentQr; clas
 
             <dt className="text-muted-foreground">Nội dung chuyển khoản</dt>
             <dd className="font-medium wrap-anywhere">{paymentQr.transferContent}</dd>
+
+            <dt className="text-muted-foreground">Ngân hàng</dt>
+            {/* Backend chỉ nhận mã BIN có trong `utils/vietQrBanks.ts` nên luôn tra được tên; lỡ lệch thì hiện mã BIN. */}
+            <dd className="wrap-anywhere">{findVietQrBank(paymentQr.bankBin)?.shortName ?? paymentQr.bankBin}</dd>
 
             <dt className="text-muted-foreground">Số tài khoản</dt>
             <dd className="tabular-nums wrap-anywhere">{paymentQr.accountNumber}</dd>
