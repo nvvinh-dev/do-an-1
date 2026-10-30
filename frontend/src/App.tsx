@@ -1,6 +1,7 @@
 import { createBrowserRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import ProtectedRoute from '@/components/ProtectedRoute'
+import RouteErrorFallback from '@/components/RouteErrorFallback'
 import { Toaster } from '@/components/ui/sonner'
 import AdminLayout from '@/layouts/AdminLayout'
 import CurrentRoleLayout from '@/layouts/CurrentRoleLayout'
@@ -84,19 +85,27 @@ const router = createBrowserRouter([
   {
     path: '/tenant',
     element: <ProtectedRoute roles={['Tenant']} />,
+    // Lỗi ở chính khung (thanh trên, chuông thông báo) thì thay cả khung.
+    errorElement: <RouteErrorFallback />,
     children: [
       {
         element: <TenantLayout />,
         children: [
-          { index: true, element: <TenantDashboardPage /> },
-          { path: 'landlord-application', element: <LandlordApplicationPage /> },
-          { path: 'rental-requests', element: <TenantRentalRequestListPage /> },
-          { path: 'rental-requests/:id', element: <TenantRentalRequestDetailPage /> },
-          { path: 'contracts', element: <TenantContractListPage /> },
-          { path: 'contracts/:id', element: <TenantContractDetailPage /> },
-          { path: 'invoices', element: <TenantInvoiceListPage /> },
-          { path: 'invoices/:id', element: <TenantInvoiceDetailPage /> },
-          { path: '*', element: <NotFoundPage /> },
+          {
+            // Lỗi khi vẽ một trang chỉ thay phần nội dung, giữ menu để sang trang khác.
+            errorElement: <RouteErrorFallback />,
+            children: [
+              { index: true, element: <TenantDashboardPage /> },
+              { path: 'landlord-application', element: <LandlordApplicationPage /> },
+              { path: 'rental-requests', element: <TenantRentalRequestListPage /> },
+              { path: 'rental-requests/:id', element: <TenantRentalRequestDetailPage /> },
+              { path: 'contracts', element: <TenantContractListPage /> },
+              { path: 'contracts/:id', element: <TenantContractDetailPage /> },
+              { path: 'invoices', element: <TenantInvoiceListPage /> },
+              { path: 'invoices/:id', element: <TenantInvoiceDetailPage /> },
+              { path: '*', element: <NotFoundPage /> },
+            ],
+          },
         ],
       },
     ],
