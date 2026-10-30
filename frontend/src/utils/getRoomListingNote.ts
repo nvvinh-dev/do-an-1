@@ -28,7 +28,9 @@ export function getRoomListingNote({ occupancyStatus, visibilityStatus, isListed
       return 'Tin đang bật nhưng phòng đang có người thuê nên tạm rời khỏi tìm kiếm. Phòng hiện lại khi về Trống.'
     case 'BaoTri':
       return 'Tin đang bật nhưng phòng đang bảo trì nên tạm rời khỏi tìm kiếm. Phòng hiện lại khi về Trống.'
+    // Khu trọ lưu trữ thì mọi phòng của khu cũng sang Lưu trữ (API mục 5.1), đã rơi vào nhánh trên;
+    // phòng Trống, đang hiển thị mà vẫn không có trong tìm kiếm chỉ còn do tài khoản bị khóa.
     case 'Trong':
-      return 'Tin đang bật nhưng phòng chưa xuất hiện trong tìm kiếm vì khu trọ không còn khai thác hoặc tài khoản đang bị khóa.'
+      return 'Tin đang bật nhưng phòng chưa xuất hiện trong tìm kiếm vì tài khoản đang bị khóa.'
   }
 }

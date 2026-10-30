@@ -29,9 +29,9 @@ describe('getRoomListingNote', () => {
     )
   })
 
-  it('Trống, đang hiển thị mà vẫn không có trong tìm kiếm: do khu trọ hoặc tài khoản', () => {
-    expect(getRoomListingNote({ occupancyStatus: 'Trong', visibilityStatus: 'DangHienThi', isListed: false })).toContain(
-      'khu trọ không còn khai thác hoặc tài khoản đang bị khóa',
+  it('Trống, đang hiển thị mà vẫn không có trong tìm kiếm: chỉ còn do tài khoản bị khóa', () => {
+    expect(getRoomListingNote({ occupancyStatus: 'Trong', visibilityStatus: 'DangHienThi', isListed: false })).toBe(
+      'Tin đang bật nhưng phòng chưa xuất hiện trong tìm kiếm vì tài khoản đang bị khóa.',
     )
   })
 
