@@ -3,6 +3,12 @@ import type { AmenityReference, PropertyImage } from '@/types/propertyTypes'
 export type RoomOccupancyStatus = 'Trong' | 'DangGiuCho' | 'DangThue' | 'BaoTri' | 'LuuTru'
 export type RoomVisibilityStatus = 'DangHienThi' | 'DaAnBoiChuTro' | 'DaAnBoiAdmin'
 
+/** Chủ trọ chỉ tự đặt được hai trạng thái hiển thị này; `DaAnBoiAdmin` do Admin đặt (API mục 5.2). */
+export type LandlordRoomVisibilityStatus = Extract<RoomVisibilityStatus, 'DangHienThi' | 'DaAnBoiChuTro'>
+
+/** Chủ trọ chỉ tự chuyển phòng giữa Trống và Bảo trì; các trạng thái khác do hệ thống chuyển (FR-89). */
+export type LandlordRoomOccupancyStatus = Extract<RoomOccupancyStatus, 'Trong' | 'BaoTri'>
+
 export interface RoomServiceFee {
   name: string
   amount: number
