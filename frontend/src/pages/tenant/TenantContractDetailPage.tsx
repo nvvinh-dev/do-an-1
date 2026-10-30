@@ -1,6 +1,6 @@
-import { ChevronLeft, CircleCheck, CircleX, FilePen, PencilLine, TriangleAlert } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
-import { Link, useParams } from 'react-router'
+import { ChevronLeft, CircleCheck, CircleX, FilePen, PencilLine, TimerOff, TriangleAlert } from 'lucide-react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { Link, useLocation, useParams } from 'react-router'
 import { toast } from 'sonner'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import ConfirmDialog from '@/components/ConfirmDialog'
@@ -23,17 +23,27 @@ import { formatDate } from '@/utils/formatDate'
 import { formatMeterIndex } from '@/utils/formatMeterIndex'
 import { getTenantContractActions } from '@/utils/getTenantContractActions'
 import { getVietnamToday } from '@/utils/getVietnamToday'
+import { isHoldExpired } from '@/utils/isHoldExpired'
 import { getPaymentMethodLabel } from '@/utils/paymentMethodLabels'
+
+/** `state` mà liên kết ở trang danh sách gửi kèm: query lọc và trang đang xem, để nút quay lại giữ nguyên. */
+interface ContractDetailLocationState {
+  listSearch?: string
+}
 
 /**
  * T4 — Chi tiết hợp đồng (docs/frontend-screens.md mục 5), phần trước khi trả phòng. Hiện theo
  * trạng thái: nháp → chỉ đọc, nút hủy; chờ người thuê xác nhận → đủ điều khoản, nút đồng ý, yêu cầu
  * sửa, hủy; chờ nhận cọc → đếm ngược hạn giữ chỗ, nút hủy; đang hiệu lực trước ngày bắt đầu → nút
- * hủy kèm cảnh báo mất cọc; đã hủy → lý do và hoàn cọc; đã thanh lý → chỉ xem. Thao tác xong thì ở
- * lại trang, hiện `toast` và tải lại dữ liệu (design-system mục 8).
+ * hủy kèm cảnh báo mất cọc; đã hủy → lý do và hoàn cọc; đã thanh lý → chỉ xem. Chưa hiệu lực mà đã
+ * quá hạn giữ chỗ (tác vụ định kỳ chưa kịp hủy) → chỉ còn nút hủy, không hướng dẫn đồng ý hay chuyển
+ * cọc. Thao tác xong thì ở lại trang, hiện `toast` và tải lại dữ liệu (design-system mục 8).
  */
 export default function TenantContractDetailPage() {
   const { id } = useParams()
+  const location = useLocation()
+  // Mở thẳng từ thông báo, T1 hay T3 thì không có `state`: quay về danh sách không lọc.
+  const listSearch = (location.state as ContractDetailLocationState | null)?.listSearch ?? ''
   // Id không phải số thì server trả 404 như hợp đồng không thuộc mình.
   const contractId = Number(id)
   const contractQuery = useContract(contractId)
@@ -45,7 +55,7 @@ export default function TenantContractDetailPage() {
   return (
     <section className="flex flex-col gap-6">
       <Button asChild variant="ghost" size="sm" className="-ml-3 self-start">
-        <Link to="/tenant/contracts">
+        <Link to={{ pathname: '/tenant/contracts', search: listSearch }}>
           <ChevronLeft />
           Hợp đồng
         </Link>
@@ -67,7 +77,22 @@ type ContractDialog = 'confirm' | 'requestChanges' | 'cancel'
 function ContractDetailContent({ contract }: { contract: ContractDetail }) {
   const [openDialog, setOpenDialog] = useState<ContractDialog | null>(null)
   const today = getVietnamToday()
-  const actions = getTenantContractActions(contract, today)
+  // Chỉ dùng để so với hạn giữ chỗ. Trang đang mở qua mốc hạn thì vẽ lại đúng lúc đó để ẩn nút
+  // đồng ý, yêu cầu sửa và thôi hướng dẫn chuyển cọc, không chờ tải lại dữ liệu.
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    if (!contract.holdExpiresAt) {
+      return
+    }
+    const msUntilExpired = new Date(contract.holdExpiresAt).getTime() - Date.now()
+    if (msUntilExpired < 0) {
+      return
+    }
+    // Thêm 1 ms vì đúng mốc hạn thì chưa tính là quá hạn (`isHoldExpired`).
+    const timer = setTimeout(() => setNow(new Date()), msUntilExpired + 1)
+    return () => clearTimeout(timer)
+  }, [contract.holdExpiresAt])
+  const actions = getTenantContractActions(contract, today, now)
   const hasAction = actions.canConfirm || actions.canRequestChanges || actions.canCancel
 
   const dialogProps = (dialog: ContractDialog) => ({
@@ -111,7 +136,7 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
       <RequestContractChangesDialog {...dialogProps('requestChanges')} />
       <CancelContractDialog {...dialogProps('cancel')} />
 
-      <ContractStatusNotice contract={contract} today={today} />
+      <ContractStatusNotice contract={contract} today={today} now={now} />
 
       {contract.status === 'DaHuy' && <DepositRefundSection contract={contract} />}
 
@@ -284,8 +309,19 @@ function HoldDeadline({ holdExpiresAt }: { holdExpiresAt: string | null }) {
   )
 }
 
+interface ContractStatusNoticeProps {
+  contract: ContractDetail
+  today: string
+  now: Date
+}
+
 /** Khối đầu trang nói rõ hợp đồng đang ở đâu và người thuê cần làm gì tiếp, theo bảng T4. */
-function ContractStatusNotice({ contract, today }: { contract: ContractDetail; today: string }) {
+function ContractStatusNotice({ contract, today, now }: ContractStatusNoticeProps) {
+  // `holdExpiresAt` chỉ có ở `Nhap`, `ChoNguoiThueXacNhan`, `ChoNhanCoc`.
+  if (isHoldExpired(contract.holdExpiresAt, now)) {
+    return <HoldExpiredNotice contract={contract} />
+  }
+
   switch (contract.status) {
     case 'Nhap':
       return (
@@ -380,6 +416,23 @@ function ContractStatusNotice({ contract, today }: { contract: ContractDetail; t
   }
 }
 
+/**
+ * Hợp đồng chưa hiệu lực đã quá hạn giữ chỗ mà tác vụ định kỳ chưa kịp hủy. Thay hướng dẫn đồng ý
+ * hay chuyển cọc: server đã chặn đồng ý và xác nhận cọc, tiền cọc chuyển lúc này không được ghi nhận.
+ */
+function HoldExpiredNotice({ contract }: { contract: ContractDetail }) {
+  return (
+    <Alert variant="destructive">
+      <TimerOff />
+      <AlertTitle>Đã quá hạn giữ chỗ 72 giờ</AlertTitle>
+      <AlertDescription>
+        <p>Hợp đồng sẽ tự hủy và phòng mở lại cho người khác.</p>
+        {contract.depositAmount > 0 && <p>Không chuyển tiền cọc cho hợp đồng này.</p>}
+      </AlertDescription>
+    </Alert>
+  )
+}
+
 function cancelledSentence(contract: ContractDetail): string {
   const date = contract.cancelledAt ? ` ngày ${formatDate(contract.cancelledAt)}` : ''
   switch (contract.cancelledBy) {
@@ -395,8 +448,8 @@ function cancelledSentence(contract: ContractDetail): string {
 }
 
 /**
- * Hoàn cọc của hợp đồng đã hủy (FR-86): đã hoàn thì hiện số tiền, ngày, hình thức và lý do giữ lại;
- * đã nhận cọc mà chưa hoàn thì hiện "Chờ hoàn cọc". Hợp đồng chưa từng nhận cọc thì không hiện.
+ * Hoàn cọc của hợp đồng đã hủy (FR-86): đã hoàn thì hiện số tiền, ngày, hình thức và ghi chú của
+ * Chủ trọ; đã nhận cọc mà chưa hoàn thì hiện "Chờ hoàn cọc". Hợp đồng chưa từng nhận cọc thì không hiện.
  */
 function DepositRefundSection({ contract }: { contract: ContractDetail }) {
   const refund = contract.depositRefund
@@ -418,7 +471,10 @@ function DepositRefundSection({ contract }: { contract: ContractDetail }) {
 
         {refund.note && (
           <>
-            <dt className="text-muted-foreground">Lý do giữ lại</dt>
+            {/* Người thuê hủy thì Chủ trọ ghi được ghi chú cả khi hoàn đủ; chỉ hoàn thiếu mới là lý do giữ lại (BR-22). */}
+            <dt className="text-muted-foreground">
+              {refund.amount < contract.depositAmount ? 'Lý do giữ lại' : 'Ghi chú'}
+            </dt>
             <dd className="whitespace-pre-line wrap-anywhere">{refund.note}</dd>
           </>
         )}

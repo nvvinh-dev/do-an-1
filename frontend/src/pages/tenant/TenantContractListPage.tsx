@@ -72,8 +72,8 @@ export default function TenantContractListPage() {
         />
       ) : (
         <>
-          <ContractCards contracts={listQuery.data.items} />
-          <ContractTable contracts={listQuery.data.items} />
+          <ContractCards contracts={listQuery.data.items} listSearch={searchParams.toString()} />
+          <ContractTable contracts={listQuery.data.items} listSearch={searchParams.toString()} />
           <ContractPagination
             page={listQuery.data.page}
             totalPages={listQuery.data.totalPages}
@@ -119,14 +119,21 @@ function ContractHoldDeadline({ contract }: { contract: ContractListItem }) {
   )
 }
 
+interface ContractListViewProps {
+  contracts: ContractListItem[]
+  /** Query đang xem (`status`, `page`), gửi kèm sang trang chi tiết để nút quay lại giữ nguyên. */
+  listSearch: string
+}
+
 /** Dưới `md`: mỗi hợp đồng một thẻ, bấm cả thẻ để mở chi tiết (docs/design-system.md mục 5). */
-function ContractCards({ contracts }: { contracts: ContractListItem[] }) {
+function ContractCards({ contracts, listSearch }: ContractListViewProps) {
   return (
     <ul className="flex flex-col gap-3 md:hidden">
       {contracts.map((contract) => (
         <li key={contract.id}>
           <Link
             to={contractPath(contract.id)}
+            state={{ listSearch }}
             className="flex flex-col gap-2 rounded-xl border bg-card p-4 text-card-foreground shadow-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -149,7 +156,7 @@ function ContractCards({ contracts }: { contracts: ContractListItem[] }) {
 }
 
 /** Từ `md`: bảng; mã phòng là liên kết tới chi tiết. */
-function ContractTable({ contracts }: { contracts: ContractListItem[] }) {
+function ContractTable({ contracts, listSearch }: ContractListViewProps) {
   return (
     <div className="hidden rounded-xl border bg-card shadow-sm md:block">
       <Table>
@@ -170,6 +177,7 @@ function ContractTable({ contracts }: { contracts: ContractListItem[] }) {
                 <div className="flex min-w-0 flex-col gap-1">
                   <Link
                     to={contractPath(contract.id)}
+                    state={{ listSearch }}
                     className="font-medium wrap-anywhere underline-offset-4 hover:underline"
                   >
                     Phòng {contract.room.code}
