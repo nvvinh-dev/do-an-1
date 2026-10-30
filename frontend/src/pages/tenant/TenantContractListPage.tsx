@@ -62,23 +62,31 @@ export default function TenantContractListPage() {
 
       {listQuery.isPending ? (
         <ContractListSkeleton />
-      ) : listQuery.isError ? (
+      ) : listQuery.isLoadingError ? (
         <ApiErrorAlert error={listQuery.error} onRetry={() => void listQuery.refetch()} />
-      ) : listQuery.data.items.length === 0 ? (
-        <ContractListEmpty
-          status={status}
-          isPastLastPage={page > 1 && listQuery.data.totalItems > 0}
-          onClearStatus={() => setStatus(undefined)}
-        />
       ) : (
         <>
-          <ContractCards contracts={listQuery.data.items} listSearch={searchParams.toString()} />
-          <ContractTable contracts={listQuery.data.items} listSearch={searchParams.toString()} />
-          <ContractPagination
-            page={listQuery.data.page}
-            totalPages={listQuery.data.totalPages}
-            searchParams={searchParams}
-          />
+          {/* Lần tải lại lỗi (quay lại tab, tải lại sau khi đổi trạng thái) thì giữ danh sách cũ, chỉ báo lỗi kèm nút thử lại. */}
+          {listQuery.isRefetchError && (
+            <ApiErrorAlert error={listQuery.error} onRetry={() => void listQuery.refetch()} />
+          )}
+          {listQuery.data.items.length === 0 ? (
+            <ContractListEmpty
+              status={status}
+              isPastLastPage={page > 1 && listQuery.data.totalItems > 0}
+              onClearStatus={() => setStatus(undefined)}
+            />
+          ) : (
+            <>
+              <ContractCards contracts={listQuery.data.items} listSearch={searchParams.toString()} />
+              <ContractTable contracts={listQuery.data.items} listSearch={searchParams.toString()} />
+              <ContractPagination
+                page={listQuery.data.page}
+                totalPages={listQuery.data.totalPages}
+                searchParams={searchParams}
+              />
+            </>
+          )}
         </>
       )}
     </section>

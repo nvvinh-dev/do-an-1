@@ -36,7 +36,7 @@ import { ID_CARD_PATTERN } from '@/utils/idCardPattern'
  * lại, vì token cũ vẫn mang vai trò Tenant (api-design mục 3).
  */
 export default function LandlordApplicationPage() {
-  const { data: application, isPending, error, refetch } = useMyLandlordApplication()
+  const { data: application, isPending, isRefetchError, error, refetch } = useMyLandlordApplication()
   // Id của hồ sơ bị từ chối đang được nộp lại. Gắn với id chứ không dùng cờ đúng/sai: hồ sơ đổi
   // (nộp ở tab khác rồi lại bị từ chối) thì trang hiện lý do của hồ sơ mới trước, không vào thẳng form.
   const [resubmittingId, setResubmittingId] = useState<number | null>(null)
@@ -47,8 +47,8 @@ export default function LandlordApplicationPage() {
     content = <ApplicationSkeleton />
   } else if (application === undefined) {
     // Chỉ lần tải đầu lỗi mới thay trang bằng khung lỗi. Lần tải lại lỗi (quay lại tab sau khi mở
-    // camera chụp giấy tờ...) thì TanStack Query vẫn giữ dữ liệu cũ: bỏ qua lỗi đó để form không
-    // bị gỡ ra làm mất số CCCD và ảnh đã tải (docs/frontend-screens.md mục 1).
+    // camera chụp giấy tờ...) thì TanStack Query vẫn giữ dữ liệu cũ: lỗi đó hiện ở đầu trang, form
+    // không bị gỡ ra làm mất số CCCD và ảnh đã tải (docs/frontend-screens.md mục 1).
     content = <ApiErrorAlert error={error} onRetry={() => void refetch()} />
   } else if (application === null || (application.status === 'TuChoi' && resubmittingId === application.id)) {
     content = (
@@ -80,6 +80,7 @@ export default function LandlordApplicationPage() {
         title="Đăng ký làm Chủ trọ"
         description="Nộp số CCCD và ảnh giấy tờ để Admin xét cấp quyền Chủ trọ."
       />
+      {isRefetchError && <ApiErrorAlert error={error} onRetry={() => void refetch()} />}
       {content}
     </section>
   )
