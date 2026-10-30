@@ -41,8 +41,14 @@ export default function LandlordRoomDetailPage() {
   return <RoomDetailContent room={query.data} />
 }
 
+type RoomAction = 'visibility' | 'occupancy' | 'archive'
+
 function RoomDetailContent({ room }: { room: RoomDetail }) {
   const isArchived = room.occupancyStatus === 'LuuTru'
+  // Thao tác bấm gần nhất; chỉ thao tác này hiện lỗi. Gặp `409` thì phòng tải lại và nút vừa bấm có
+  // thể biến mất (phòng đã sang Đang giữ chỗ hay Lưu trữ), nên lỗi không ẩn theo nút; còn lỗi cũ của
+  // nút khác thì không nằm lại sau một thao tác mới.
+  const [lastAction, setLastAction] = useState<RoomAction | null>(null)
   return (
     <section className="flex flex-col gap-6">
       <Button asChild variant="ghost" size="sm" className="-ml-3 self-start">
@@ -54,7 +60,7 @@ function RoomDetailContent({ room }: { room: RoomDetail }) {
       <PageHeader
         title={`Phòng ${room.code}`}
         description={room.propertyName}
-        action={!isArchived && <RoomActions room={room} />}
+        action={!isArchived && <RoomActions room={room} onAction={() => setLastAction('archive')} />}
       />
       {isArchived && (
         <Alert>
@@ -65,9 +71,17 @@ function RoomDetailContent({ room }: { room: RoomDetail }) {
       )}
       <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 shadow-sm md:p-6">
         <h2 className="text-lg font-semibold">Đăng tin và khai thác</h2>
-        <VisibilityControl room={room} />
+        <VisibilityControl
+          room={room}
+          showError={lastAction === 'visibility'}
+          onAction={() => setLastAction('visibility')}
+        />
         <Separator />
-        <OccupancyControl room={room} />
+        <OccupancyControl
+          room={room}
+          showError={lastAction === 'occupancy'}
+          onAction={() => setLastAction('occupancy')}
+        />
       </section>
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 shadow-sm md:p-6">
@@ -173,7 +187,7 @@ function isLandlordManaged(status: RoomOccupancyStatus) {
   return status === 'Trong' || status === 'BaoTri'
 }
 
-function RoomActions({ room }: { room: RoomDetail }) {
+function RoomActions({ room, onAction }: { room: RoomDetail; onAction: () => void }) {
   const archiveMutation = useArchiveRoom(room.id)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
@@ -186,37 +200,45 @@ function RoomActions({ room }: { room: RoomDetail }) {
         </Link>
       </Button>
       {isLandlordManaged(room.occupancyStatus) && (
-        <>
-          <Button type="button" variant="destructive" size="page" onClick={() => setConfirmOpen(true)}>
-            <Archive />
-            Lưu trữ
-          </Button>
-          <ConfirmDialog
-            open={confirmOpen}
-            onOpenChange={setConfirmOpen}
-            title="Lưu trữ phòng"
-            description={`Phòng ${room.code} sẽ ngừng cho thuê và các yêu cầu thuê đang chờ duyệt của phòng bị từ chối. Phòng đã lưu trữ chỉ còn xem được, không bỏ lưu trữ được.`}
-            confirmLabel="Lưu trữ"
-            destructive
-            isPending={archiveMutation.isPending}
-            error={archiveMutation.error}
-            onConfirm={() =>
-              archiveMutation.mutate(undefined, {
-                onSuccess: () => {
-                  setConfirmOpen(false)
-                  toast.success('Đã lưu trữ phòng')
-                },
-              })
-            }
-          />
-        </>
+        <Button type="button" variant="destructive" size="page" onClick={() => setConfirmOpen(true)}>
+          <Archive />
+          Lưu trữ
+        </Button>
       )}
+      {/* Hộp thoại nằm ngoài điều kiện của nút: gặp `409` phòng tải lại sang Đang giữ chỗ thì nút ẩn,
+          còn hộp thoại vẫn mở và hiện `detail`. */}
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Lưu trữ phòng"
+        description={`Phòng ${room.code} sẽ ngừng cho thuê và các yêu cầu thuê đang chờ duyệt của phòng bị từ chối. Phòng đã lưu trữ chỉ còn xem được, không bỏ lưu trữ được.`}
+        confirmLabel="Lưu trữ"
+        destructive
+        isPending={archiveMutation.isPending}
+        error={archiveMutation.error}
+        onConfirm={() => {
+          onAction()
+          archiveMutation.mutate(undefined, {
+            onSuccess: () => {
+              setConfirmOpen(false)
+              toast.success('Đã lưu trữ phòng')
+            },
+          })
+        }}
+      />
     </div>
   )
 }
 
+interface RoomControlProps {
+  room: RoomDetail
+  /** Chỉ thao tác bấm gần nhất hiện lỗi (xem `RoomDetailContent`). */
+  showError: boolean
+  onAction: () => void
+}
+
 /** Bật hiển thị khi phòng chưa có ảnh nào thì server trả `422`; lỗi hiện ngay dưới nút. */
-function VisibilityControl({ room }: { room: RoomDetail }) {
+function VisibilityControl({ room, showError, onAction }: RoomControlProps) {
   const mutation = useChangeRoomVisibility(room.id)
   const canToggle = room.occupancyStatus !== 'LuuTru' && room.visibilityStatus !== 'DaAnBoiAdmin'
   const isShown = room.visibilityStatus === 'DangHienThi'
@@ -237,19 +259,19 @@ function VisibilityControl({ room }: { room: RoomDetail }) {
             variant={isShown ? 'outline' : 'default'}
             size="page"
             disabled={mutation.isPending}
-            onClick={() =>
+            onClick={() => {
+              onAction()
               mutation.mutate(isShown ? 'DaAnBoiChuTro' : 'DangHienThi', {
                 onSuccess: () => toast.success(isShown ? 'Đã ẩn tin' : 'Đã bật hiển thị'),
               })
-            }
+            }}
           >
             {mutation.isPending ? <Spinner /> : isShown ? <EyeOff /> : <Eye />}
             {isShown ? 'Ẩn tin' : 'Bật hiển thị'}
           </Button>
         )}
       </div>
-      {/* Lỗi ẩn theo nút: phòng vừa lưu trữ ở thao tác khác thì không còn hiện lỗi cũ. */}
-      {canToggle && <ApiErrorAlert error={mutation.error} />}
+      {showError && <ApiErrorAlert error={mutation.error} />}
     </div>
   )
 }
@@ -263,7 +285,7 @@ const OCCUPANCY_NOTES: Record<RoomOccupancyStatus, string> = {
 }
 
 /** Về Trống khi hợp đồng hiện tại chưa thanh lý hoặc chưa hủy thì server trả `409` (BR-08); lỗi hiện ngay dưới nút. */
-function OccupancyControl({ room }: { room: RoomDetail }) {
+function OccupancyControl({ room, showError, onAction }: RoomControlProps) {
   const mutation = useChangeRoomOccupancyStatus(room.id)
   const toMaintenance = room.occupancyStatus === 'Trong'
 
@@ -283,19 +305,20 @@ function OccupancyControl({ room }: { room: RoomDetail }) {
             variant="outline"
             size="page"
             disabled={mutation.isPending}
-            onClick={() =>
+            onClick={() => {
+              onAction()
               mutation.mutate(toMaintenance ? 'BaoTri' : 'Trong', {
                 onSuccess: () =>
                   toast.success(toMaintenance ? 'Đã chuyển phòng sang Bảo trì' : 'Đã chuyển phòng về Trống'),
               })
-            }
+            }}
           >
             {mutation.isPending ? <Spinner /> : toMaintenance ? <Wrench /> : <DoorOpen />}
             {toMaintenance ? 'Chuyển sang Bảo trì' : 'Chuyển về Trống'}
           </Button>
         )}
       </div>
-      {isLandlordManaged(room.occupancyStatus) && <ApiErrorAlert error={mutation.error} />}
+      {showError && <ApiErrorAlert error={mutation.error} />}
     </div>
   )
 }
