@@ -48,41 +48,42 @@ function CreateRoomForm({ propertyId }: { propertyId: number }) {
   const mutation = useCreateRoom(propertyId)
   const navigate = useNavigate()
   if (isNotFoundError(propertyQuery.error) || isNotFoundError(mutation.error)) return <NotFoundPage />
-  const property = propertyQuery.data
   const cancelTo = `/landlord/properties/${propertyId}`
 
   return (
     <section className="flex w-full max-w-2xl flex-col gap-6">
-      <PageHeader title="Thêm phòng" description={property?.name} />
+      <PageHeader title="Thêm phòng" description={propertyQuery.data?.name} />
+      {/* Lần tải lại lỗi (quay lại tab) thì giữ form và chữ đang nhập, chỉ báo lỗi kèm nút thử lại. */}
+      {propertyQuery.isRefetchError && (
+        <ApiErrorAlert error={propertyQuery.error} onRetry={() => void propertyQuery.refetch()} />
+      )}
       {propertyQuery.isPending ? (
         <RoomFormSkeleton />
-      ) : propertyQuery.isError ? (
+      ) : propertyQuery.isLoadingError ? (
         <ApiErrorAlert error={propertyQuery.error} onRetry={() => void propertyQuery.refetch()} />
-      ) : property?.status === 'LuuTru' ? (
+      ) : propertyQuery.data.status === 'LuuTru' ? (
         <ArchivedNotice title="Khu trọ đã lưu trữ" detailPath={cancelTo} />
       ) : (
-        property && (
-          <AmenityGate>
-            {(amenities) => (
-              <RoomForm
-                defaultValues={EMPTY_VALUES}
-                amenities={amenities}
-                submitLabel="Thêm phòng"
-                cancelTo={cancelTo}
-                isPending={mutation.isPending}
-                error={mutation.error}
-                onSubmit={(request) =>
-                  mutation.mutate(request, {
-                    onSuccess: (room) => {
-                      toast.success('Đã thêm phòng')
-                      navigate(`/landlord/rooms/${room.id}`, { replace: true })
-                    },
-                  })
-                }
-              />
-            )}
-          </AmenityGate>
-        )
+        <AmenityGate>
+          {(amenities) => (
+            <RoomForm
+              defaultValues={EMPTY_VALUES}
+              amenities={amenities}
+              submitLabel="Thêm phòng"
+              cancelTo={cancelTo}
+              isPending={mutation.isPending}
+              error={mutation.error}
+              onSubmit={(request) =>
+                mutation.mutate(request, {
+                  onSuccess: (room) => {
+                    toast.success('Đã thêm phòng')
+                    navigate(`/landlord/rooms/${room.id}`, { replace: true })
+                  },
+                })
+              }
+            />
+          )}
+        </AmenityGate>
       )}
     </section>
   )
@@ -99,44 +100,44 @@ function EditRoomForm({ roomId }: { roomId: number }) {
   return (
     <section className="flex w-full max-w-2xl flex-col gap-6">
       <PageHeader title="Sửa phòng" description={room && `${room.code} · ${room.propertyName}`} />
+      {/* Lần tải lại lỗi (quay lại tab) thì giữ form và chữ đang nhập, chỉ báo lỗi kèm nút thử lại. */}
+      {roomQuery.isRefetchError && <ApiErrorAlert error={roomQuery.error} onRetry={() => void roomQuery.refetch()} />}
       {roomQuery.isPending ? (
         <RoomFormSkeleton />
-      ) : roomQuery.isError ? (
+      ) : roomQuery.isLoadingError ? (
         <ApiErrorAlert error={roomQuery.error} onRetry={() => void roomQuery.refetch()} />
-      ) : room?.occupancyStatus === 'LuuTru' ? (
+      ) : roomQuery.data.occupancyStatus === 'LuuTru' ? (
         <ArchivedNotice title="Phòng đã lưu trữ" detailPath={cancelTo} />
       ) : (
-        room && (
-          <>
-            <Alert>
-              <Info />
-              <AlertDescription>
-                Giá và phí mới chỉ áp dụng cho hợp đồng lập sau đó. Hợp đồng hiện tại và hóa đơn đã phát hành giữ
-                nguyên.
-              </AlertDescription>
-            </Alert>
-            <AmenityGate>
-              {(amenities) => (
-                <RoomForm
-                  defaultValues={toFormValues(room)}
-                  amenities={amenities}
-                  submitLabel="Lưu thay đổi"
-                  cancelTo={cancelTo}
-                  isPending={mutation.isPending}
-                  error={mutation.error}
-                  onSubmit={(request) =>
-                    mutation.mutate(request, {
-                      onSuccess: () => {
-                        toast.success('Đã lưu thay đổi')
-                        navigate(cancelTo, { replace: true })
-                      },
-                    })
-                  }
-                />
-              )}
-            </AmenityGate>
-          </>
-        )
+        <>
+          <Alert>
+            <Info />
+            <AlertDescription>
+              Giá và phí mới chỉ áp dụng cho hợp đồng lập sau đó. Hợp đồng hiện tại và hóa đơn đã phát hành giữ
+              nguyên.
+            </AlertDescription>
+          </Alert>
+          <AmenityGate>
+            {(amenities) => (
+              <RoomForm
+                defaultValues={toFormValues(roomQuery.data)}
+                amenities={amenities}
+                submitLabel="Lưu thay đổi"
+                cancelTo={cancelTo}
+                isPending={mutation.isPending}
+                error={mutation.error}
+                onSubmit={(request) =>
+                  mutation.mutate(request, {
+                    onSuccess: () => {
+                      toast.success('Đã lưu thay đổi')
+                      navigate(cancelTo, { replace: true })
+                    },
+                  })
+                }
+              />
+            )}
+          </AmenityGate>
+        </>
       )}
     </section>
   )

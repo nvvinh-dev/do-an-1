@@ -15,8 +15,9 @@ export default function PageHeader({ title, description, action, className }: Pa
   return (
     <header className={cn('flex flex-col gap-4 md:flex-row md:items-start md:justify-between', className)}>
       <div className="flex min-w-0 flex-col gap-1">
-        <h1 className="text-2xl font-semibold">{title}</h1>
-        {/* `wrap-anywhere`: mô tả có thể chứa chuỗi dài không có chỗ ngắt (email ở A4), không để tràn ngang ở 360px. */}
+        {/* `wrap-anywhere`: tiêu đề và mô tả có thể chứa chuỗi dài không có chỗ ngắt (mã phòng tới 50 ký tự ở L3,
+            email ở A4), không để tràn ngang ở 360px. */}
+        <h1 className="text-2xl font-semibold wrap-anywhere">{title}</h1>
         {description && <p className="text-sm text-muted-foreground wrap-anywhere">{description}</p>}
       </div>
       {action && <div className="md:shrink-0">{action}</div>}
