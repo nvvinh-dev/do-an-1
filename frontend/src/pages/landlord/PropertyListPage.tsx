@@ -58,14 +58,22 @@ export default function PropertyListPage() {
 
       {propertiesQuery.isPending ? (
         <PropertyListSkeleton />
-      ) : propertiesQuery.isError ? (
+      ) : propertiesQuery.isLoadingError ? (
         <ApiErrorAlert error={propertiesQuery.error} onRetry={() => void propertiesQuery.refetch()} />
-      ) : propertiesQuery.data.length === 0 ? (
-        <PropertyListEmpty includeArchived={includeArchived} />
       ) : (
         <>
-          <PropertyCards properties={propertiesQuery.data} />
-          <PropertyTable properties={propertiesQuery.data} />
+          {/* Lần tải lại lỗi (quay lại tab, tải lại sau khi lưu trữ) thì giữ danh sách cũ, chỉ báo lỗi kèm nút thử lại. */}
+          {propertiesQuery.isRefetchError && (
+            <ApiErrorAlert error={propertiesQuery.error} onRetry={() => void propertiesQuery.refetch()} />
+          )}
+          {propertiesQuery.data.length === 0 ? (
+            <PropertyListEmpty includeArchived={includeArchived} />
+          ) : (
+            <>
+              <PropertyCards properties={propertiesQuery.data} />
+              <PropertyTable properties={propertiesQuery.data} />
+            </>
+          )}
         </>
       )}
     </section>

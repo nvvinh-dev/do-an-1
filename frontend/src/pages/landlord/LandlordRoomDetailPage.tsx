@@ -37,13 +37,26 @@ export default function LandlordRoomDetailPage() {
         <Skeleton className="h-64 w-full" />
       </div>
     )
-  if (query.isError) return <ApiErrorAlert error={query.error} onRetry={() => void query.refetch()} />
-  return <RoomDetailContent room={query.data} />
+  if (query.isLoadingError) return <ApiErrorAlert error={query.error} onRetry={() => void query.refetch()} />
+  return (
+    <RoomDetailContent
+      room={query.data}
+      refetchError={query.isRefetchError ? query.error : null}
+      onRetry={() => void query.refetch()}
+    />
+  )
 }
 
 type RoomAction = 'visibility' | 'occupancy' | 'archive'
 
-function RoomDetailContent({ room }: { room: RoomDetail }) {
+interface RoomDetailContentProps {
+  room: RoomDetail
+  /** Lỗi của lần tải lại gần nhất; `null` khi lần tải lại không lỗi. */
+  refetchError: unknown
+  onRetry: () => void
+}
+
+function RoomDetailContent({ room, refetchError, onRetry }: RoomDetailContentProps) {
   const isArchived = room.occupancyStatus === 'LuuTru'
   // Thao tác bấm gần nhất; chỉ thao tác này hiện lỗi. Gặp `409` thì phòng tải lại và nút vừa bấm có
   // thể biến mất (phòng đã sang Đang giữ chỗ hay Lưu trữ), nên lỗi không ẩn theo nút; còn lỗi cũ của
@@ -57,6 +70,8 @@ function RoomDetailContent({ room }: { room: RoomDetail }) {
           Về khu trọ
         </Link>
       </Button>
+      {/* Lần tải lại lỗi (quay lại tab, tải lại sau `409`) thì giữ nội dung cũ và hộp thoại đang mở, chỉ báo lỗi kèm nút thử lại. */}
+      <ApiErrorAlert error={refetchError} onRetry={onRetry} />
       <PageHeader
         title={`Phòng ${room.code}`}
         description={room.propertyName}

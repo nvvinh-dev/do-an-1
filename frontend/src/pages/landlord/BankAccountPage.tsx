@@ -49,9 +49,12 @@ export default function BankAccountPage() {
         description="Người thuê chuyển khoản tiền cọc và tiền hóa đơn vào tài khoản này bằng mã VietQR."
       />
       {/* `null` là chưa khai báo, vẫn là dữ liệu. Đã có dữ liệu thì giữ form kể cả khi lần tải lại ngầm bị lỗi,
-          để chữ đang gõ không mất. */}
+          để chữ đang gõ không mất; lỗi đó hiện ở đầu trang kèm nút thử lại. */}
       {bankAccountQuery.data !== undefined ? (
         <>
+          {bankAccountQuery.isRefetchError && (
+            <ApiErrorAlert error={bankAccountQuery.error} onRetry={() => void bankAccountQuery.refetch()} />
+          )}
           {bankAccountQuery.data === null && <MissingAccountNotice />}
           <BankAccountForm bankAccount={bankAccountQuery.data} />
         </>
