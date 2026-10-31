@@ -1,6 +1,6 @@
-import { ChevronLeft, CircleX, FileText, Phone } from 'lucide-react'
-import { useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { ChevronLeft, CircleX, FileText, Phone, TimerOff } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useParams } from 'react-router'
 import { toast } from 'sonner'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import ConfirmDialog from '@/components/ConfirmDialog'
@@ -16,15 +16,25 @@ import { isNotFoundError } from '@/lib/apiError'
 import NotFoundPage from '@/pages/public/NotFoundPage'
 import type { RentalRequestDetail } from '@/types/rentalRequestTypes'
 import { formatDate } from '@/utils/formatDate'
+import { isRentalRequestOverdue } from '@/utils/isRentalRequestOverdue'
+
+/** `state` mà liên kết ở trang danh sách gửi kèm: query lọc và trang đang xem, để nút quay lại giữ nguyên. */
+interface RentalRequestDetailLocationState {
+  listSearch?: string
+}
 
 /**
  * T3 — Chi tiết yêu cầu thuê (docs/frontend-screens.md mục 5). Hiện theo trạng thái: chờ duyệt →
  * đếm ngược hạn duyệt, nút rút; đã duyệt → số điện thoại Chủ trọ, đếm ngược hạn giữ chỗ, nút rút;
- * đã lập hợp đồng → liên kết tới hợp đồng; từ chối, đã hủy, hết hạn → chỉ xem. Rút xong thì ở lại
- * trang, hiện `toast` và tải lại dữ liệu (mục 8).
+ * đã lập hợp đồng → liên kết tới hợp đồng; từ chối, đã hủy, hết hạn → chỉ xem. Chờ duyệt hay đã
+ * duyệt mà đã quá hạn (tác vụ định kỳ chưa kịp chuyển sang hết hạn) → chỉ xem, báo yêu cầu sắp tự
+ * hết hạn. Rút xong thì ở lại trang, hiện `toast` và tải lại dữ liệu (mục 8).
  */
 export default function TenantRentalRequestDetailPage() {
   const { id } = useParams()
+  const location = useLocation()
+  // Mở thẳng từ thông báo hay T1 thì không có `state`: quay về danh sách không lọc.
+  const listSearch = (location.state as RentalRequestDetailLocationState | null)?.listSearch ?? ''
   // Id không phải số thì server trả 404 như yêu cầu không thuộc mình.
   const rentalRequestId = Number(id)
   const rentalRequestQuery = useRentalRequest(rentalRequestId)
@@ -36,7 +46,7 @@ export default function TenantRentalRequestDetailPage() {
   return (
     <section className="flex flex-col gap-6">
       <Button asChild variant="ghost" size="sm" className="-ml-3 self-start">
-        <Link to="/tenant/rental-requests">
+        <Link to={{ pathname: '/tenant/rental-requests', search: listSearch }}>
           <ChevronLeft />
           Yêu cầu thuê
         </Link>
@@ -61,7 +71,26 @@ export default function TenantRentalRequestDetailPage() {
 
 function RentalRequestDetailContent({ rentalRequest }: { rentalRequest: RentalRequestDetail }) {
   const [cancelOpen, setCancelOpen] = useState(false)
-  const canCancel = rentalRequest.status === 'ChoDuyet' || rentalRequest.status === 'DaDuyet'
+  // Hạn đang chạy: `expiresAt` khi chờ duyệt, `holdExpiresAt` khi đã duyệt; trạng thái khác không có.
+  const deadline = rentalRequest.expiresAt ?? rentalRequest.holdExpiresAt
+  // Chỉ dùng để so với hạn. Trang đang mở qua mốc hạn thì vẽ lại đúng lúc đó để ẩn nút rút và đổi
+  // khối thông báo, không chờ tải lại dữ liệu.
+  const [now, setNow] = useState(() => new Date())
+  useEffect(() => {
+    if (!deadline) {
+      return
+    }
+    const msUntilOverdue = new Date(deadline).getTime() - Date.now()
+    if (msUntilOverdue < 0) {
+      return
+    }
+    // Thêm 1 ms vì đúng mốc hạn thì chưa tính là quá hạn (`isRentalRequestOverdue`).
+    const timer = setTimeout(() => setNow(new Date()), msUntilOverdue + 1)
+    return () => clearTimeout(timer)
+  }, [deadline])
+  // Quá hạn mà tác vụ định kỳ chưa chạy thì server vẫn trả `ChoDuyet`/`DaDuyet` nhưng `/cancel` đã trả `409`.
+  const isOverdue = isRentalRequestOverdue(rentalRequest, now)
+  const canCancel = (rentalRequest.status === 'ChoDuyet' || rentalRequest.status === 'DaDuyet') && !isOverdue
 
   return (
     <>
@@ -80,7 +109,7 @@ function RentalRequestDetailContent({ rentalRequest }: { rentalRequest: RentalRe
 
       <CancelRentalRequestDialog rentalRequest={rentalRequest} open={cancelOpen} onOpenChange={setCancelOpen} />
 
-      <RentalRequestStatusNotice rentalRequest={rentalRequest} />
+      <RentalRequestStatusNotice rentalRequest={rentalRequest} isOverdue={isOverdue} />
 
       <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
         <h2 className="text-lg font-medium">Thông tin yêu cầu</h2>
@@ -121,8 +150,19 @@ function RentalRequestDetailContent({ rentalRequest }: { rentalRequest: RentalRe
   )
 }
 
+interface RentalRequestStatusNoticeProps {
+  rentalRequest: RentalRequestDetail
+  /** Đã qua `expiresAt` hoặc `holdExpiresAt` (`isRentalRequestOverdue`). */
+  isOverdue: boolean
+}
+
 /** Khối đầu trang nói rõ yêu cầu đang ở đâu và người thuê cần làm gì tiếp, theo bảng T3. */
-function RentalRequestStatusNotice({ rentalRequest }: { rentalRequest: RentalRequestDetail }) {
+function RentalRequestStatusNotice({ rentalRequest, isOverdue }: RentalRequestStatusNoticeProps) {
+  // Chỉ `ChoDuyet` và `DaDuyet` có hạn, nên chỉ hai trạng thái này quá hạn được.
+  if (isOverdue) {
+    return <OverdueNotice rentalRequest={rentalRequest} />
+  }
+
   switch (rentalRequest.status) {
     case 'ChoDuyet':
       return (
@@ -171,7 +211,7 @@ function RentalRequestStatusNotice({ rentalRequest }: { rentalRequest: RentalReq
           <FileText />
           <AlertTitle>Chủ trọ đã lập hợp đồng từ yêu cầu này</AlertTitle>
           <AlertDescription className="flex flex-col items-start gap-2">
-            <p>Xem hợp đồng để kiểm tra điều khoản và xác nhận.</p>
+            <p>Xem hợp đồng để theo dõi các bước tiếp theo.</p>
             {rentalRequest.contractId !== null && (
               <Button asChild variant="outline">
                 <Link to={`/tenant/contracts/${rentalRequest.contractId}`}>Xem hợp đồng</Link>
@@ -198,6 +238,33 @@ function RentalRequestStatusNotice({ rentalRequest }: { rentalRequest: RentalReq
     default:
       return null
   }
+}
+
+/**
+ * Yêu cầu chờ duyệt hay đã duyệt đã quá hạn mà tác vụ định kỳ chưa kịp chuyển sang hết hạn. Thay
+ * đếm ngược, câu giữ phòng và số điện thoại Chủ trọ: server đã chặn rút, phòng không còn được giữ.
+ */
+function OverdueNotice({ rentalRequest }: { rentalRequest: RentalRequestDetail }) {
+  return (
+    <Alert variant="destructive">
+      <TimerOff />
+      {rentalRequest.status === 'DaDuyet' ? (
+        <>
+          <AlertTitle>Đã quá hạn giữ chỗ 72 giờ</AlertTitle>
+          <AlertDescription>
+            <p>Chưa lập hợp đồng trong hạn nên yêu cầu sẽ tự hết hạn và phòng mở lại cho người khác.</p>
+          </AlertDescription>
+        </>
+      ) : (
+        <>
+          <AlertTitle>Đã quá hạn duyệt 168 giờ</AlertTitle>
+          <AlertDescription>
+            <p>Chủ trọ chưa xử lý trong hạn nên yêu cầu sẽ tự hết hạn.</p>
+          </AlertDescription>
+        </>
+      )}
+    </Alert>
+  )
 }
 
 interface CancelRentalRequestDialogProps {
