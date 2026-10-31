@@ -11,6 +11,8 @@ namespace SmartRent.Api.Services;
 /// <summary>
 /// Khu trọ và phòng — BP-02, BP-03. Chủ trọ chỉ thao tác được trên khu trọ và phòng của mình (BR-04, FR-13):
 /// quyền sở hữu phòng truy qua khu trọ tới Chủ trọ, tài nguyên không thuộc người gọi trả 404 như không tồn tại.
+/// Thao tác ghi mở transaction và khóa dòng phòng hoặc khu trọ (<see cref="PropertyRowLocks"/>) trước khi nạp và
+/// kiểm điều kiện: hai thao tác cùng lúc trên một phòng, một khu thì bên sau chờ bên trước xong rồi đọc trạng thái mới.
 /// </summary>
 public class PropertyService
 {
@@ -96,6 +98,9 @@ public class PropertyService
         PropertyRequest request,
         CancellationToken cancellationToken = default)
     {
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        await _db.LockPropertyAsync(propertyId, cancellationToken);
+
         var property = await _db.Properties
             .Include(p => p.Amenities)
             .Include(p => p.Images)
@@ -156,6 +161,7 @@ public class PropertyService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return await GetAsync(landlordUserId, property.Id, cancellationToken);
     }
@@ -244,13 +250,19 @@ public class PropertyService
 
     // ---------------------------------------------------------------- Phòng
 
-    /// <summary>FR-12, FR-15: phòng mới ở Trống và chưa hiển thị cho tới khi Chủ trọ bật.</summary>
+    /// <summary>
+    /// FR-12, FR-15: phòng mới ở Trống và chưa hiển thị cho tới khi Chủ trọ bật. Khóa chia sẻ dòng khu trọ:
+    /// khu không bị lưu trữ giữa lúc kiểm và lúc lưu phòng, còn nhiều lượt thêm phòng không chặn nhau.
+    /// </summary>
     public async Task<ServiceResult<RoomResponse>> CreateRoomAsync(
         long landlordUserId,
         long propertyId,
         RoomRequest request,
         CancellationToken cancellationToken = default)
     {
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        await _db.LockPropertyForShareAsync(propertyId, cancellationToken);
+
         var property = await _db.Properties
             .AsNoTracking()
             .FirstOrDefaultAsync(
@@ -293,6 +305,8 @@ public class PropertyService
             return RoomCodeTaken<RoomResponse>();
         }
 
+        await transaction.CommitAsync(cancellationToken);
+
         return await GetRoomAsync(landlordUserId, room.Id, cancellationToken);
     }
 
@@ -307,6 +321,9 @@ public class PropertyService
         RoomRequest request,
         CancellationToken cancellationToken = default)
     {
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        await _db.LockRoomAsync(roomId, cancellationToken);
+
         var room = await _db.Rooms
             .Include(r => r.ServiceFees)
             .Include(r => r.Amenities)
@@ -368,6 +385,8 @@ public class PropertyService
         {
             return RoomCodeTaken<RoomResponse>();
         }
+
+        await transaction.CommitAsync(cancellationToken);
 
         return await GetRoomAsync(landlordUserId, room.Id, cancellationToken);
     }
@@ -674,6 +693,9 @@ public class PropertyService
         RoomVisibilityStatus target,
         CancellationToken cancellationToken = default)
     {
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        await _db.LockRoomAsync(roomId, cancellationToken);
+
         var room = await _db.Rooms.FirstOrDefaultAsync(
             r => r.Id == roomId && r.Property.LandlordUserId == landlordUserId,
             cancellationToken);
@@ -701,6 +723,7 @@ public class PropertyService
 
         room.VisibilityStatus = target;
         await _db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return ServiceResult.Ok();
     }
@@ -712,6 +735,9 @@ public class PropertyService
         RoomOccupancyStatus target,
         CancellationToken cancellationToken = default)
     {
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        await _db.LockRoomAsync(roomId, cancellationToken);
+
         var room = await _db.Rooms.FirstOrDefaultAsync(
             r => r.Id == roomId && r.Property.LandlordUserId == landlordUserId,
             cancellationToken);
@@ -740,6 +766,7 @@ public class PropertyService
 
         room.OccupancyStatus = target;
         await _db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return ServiceResult.Ok();
     }
@@ -754,6 +781,7 @@ public class PropertyService
         CancellationToken cancellationToken = default)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        await _db.LockRoomAsync(roomId, cancellationToken);
 
         var room = await _db.Rooms
             .Include(r => r.Property)
@@ -797,6 +825,8 @@ public class PropertyService
         CancellationToken cancellationToken = default)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        await _db.LockPropertyAsync(propertyId, cancellationToken);
+        await _db.LockRoomsOfPropertyAsync(propertyId, cancellationToken);
 
         var property = await _db.Properties
             .Include(p => p.Rooms)
@@ -877,7 +907,8 @@ public class PropertyService
     }
 
     /// <summary>
-    /// Yêu cầu thuê vừa được duyệt hoặc rút cùng lúc với thao tác lưu trữ: xmin của rental_requests chặn bên lưu sau.
+    /// Yêu cầu thuê đang chờ vừa được rút hoặc từ chối cùng lúc với thao tác lưu trữ — hai thao tác này không khóa
+    /// dòng phòng: xmin của rental_requests chặn bên lưu sau.
     /// </summary>
     private async Task<bool> TrySaveArchiveAsync(CancellationToken cancellationToken)
     {
