@@ -1,6 +1,6 @@
 import { ChevronLeft, CircleX, FileText, Phone, TimerOff } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { Link, useLocation, useParams } from 'react-router'
 import { toast } from 'sonner'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import ConfirmDialog from '@/components/ConfirmDialog'
@@ -18,6 +18,11 @@ import type { RentalRequestDetail } from '@/types/rentalRequestTypes'
 import { formatDate } from '@/utils/formatDate'
 import { isRentalRequestOverdue } from '@/utils/isRentalRequestOverdue'
 
+/** `state` mà liên kết ở trang danh sách gửi kèm: query lọc và trang đang xem, để nút quay lại giữ nguyên. */
+interface RentalRequestDetailLocationState {
+  listSearch?: string
+}
+
 /**
  * T3 — Chi tiết yêu cầu thuê (docs/frontend-screens.md mục 5). Hiện theo trạng thái: chờ duyệt →
  * đếm ngược hạn duyệt, nút rút; đã duyệt → số điện thoại Chủ trọ, đếm ngược hạn giữ chỗ, nút rút;
@@ -27,6 +32,9 @@ import { isRentalRequestOverdue } from '@/utils/isRentalRequestOverdue'
  */
 export default function TenantRentalRequestDetailPage() {
   const { id } = useParams()
+  const location = useLocation()
+  // Mở thẳng từ thông báo hay T1 thì không có `state`: quay về danh sách không lọc.
+  const listSearch = (location.state as RentalRequestDetailLocationState | null)?.listSearch ?? ''
   // Id không phải số thì server trả 404 như yêu cầu không thuộc mình.
   const rentalRequestId = Number(id)
   const rentalRequestQuery = useRentalRequest(rentalRequestId)
@@ -38,7 +46,7 @@ export default function TenantRentalRequestDetailPage() {
   return (
     <section className="flex flex-col gap-6">
       <Button asChild variant="ghost" size="sm" className="-ml-3 self-start">
-        <Link to="/tenant/rental-requests">
+        <Link to={{ pathname: '/tenant/rental-requests', search: listSearch }}>
           <ChevronLeft />
           Yêu cầu thuê
         </Link>

@@ -81,8 +81,8 @@ export default function TenantRentalRequestListPage() {
             />
           ) : (
             <>
-              <RentalRequestCards rentalRequests={listQuery.data.items} />
-              <RentalRequestTable rentalRequests={listQuery.data.items} />
+              <RentalRequestCards rentalRequests={listQuery.data.items} listSearch={searchParams.toString()} />
+              <RentalRequestTable rentalRequests={listQuery.data.items} listSearch={searchParams.toString()} />
               <RentalRequestPagination
                 page={listQuery.data.page}
                 totalPages={listQuery.data.totalPages}
@@ -129,14 +129,21 @@ function RentalRequestDeadline({ rentalRequest }: { rentalRequest: RentalRequest
   return null
 }
 
+interface RentalRequestListViewProps {
+  rentalRequests: RentalRequestListItem[]
+  /** Query đang xem (`status`, `page`), gửi kèm sang trang chi tiết để nút quay lại giữ nguyên. */
+  listSearch: string
+}
+
 /** Dưới `md`: mỗi yêu cầu một thẻ, bấm cả thẻ để mở chi tiết (docs/design-system.md mục 5). */
-function RentalRequestCards({ rentalRequests }: { rentalRequests: RentalRequestListItem[] }) {
+function RentalRequestCards({ rentalRequests, listSearch }: RentalRequestListViewProps) {
   return (
     <ul className="flex flex-col gap-3 md:hidden">
       {rentalRequests.map((rentalRequest) => (
         <li key={rentalRequest.id}>
           <Link
             to={rentalRequestPath(rentalRequest.id)}
+            state={{ listSearch }}
             className="flex flex-col gap-2 rounded-xl border bg-card p-4 text-card-foreground shadow-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -159,7 +166,7 @@ function RentalRequestCards({ rentalRequests }: { rentalRequests: RentalRequestL
 }
 
 /** Từ `md`: bảng; mã phòng là liên kết tới chi tiết. */
-function RentalRequestTable({ rentalRequests }: { rentalRequests: RentalRequestListItem[] }) {
+function RentalRequestTable({ rentalRequests, listSearch }: RentalRequestListViewProps) {
   return (
     <div className="hidden rounded-xl border bg-card shadow-sm md:block">
       <Table>
@@ -180,6 +187,7 @@ function RentalRequestTable({ rentalRequests }: { rentalRequests: RentalRequestL
                 <div className="flex min-w-0 flex-col gap-1">
                   <Link
                     to={rentalRequestPath(rentalRequest.id)}
+                    state={{ listSearch }}
                     className="font-medium wrap-anywhere underline-offset-4 hover:underline"
                   >
                     Phòng {rentalRequest.room.code}
