@@ -203,7 +203,7 @@ function RentalRequestStatusNotice({ rentalRequest, isOverdue }: RentalRequestSt
           <FileText />
           <AlertTitle>Chủ trọ đã lập hợp đồng từ yêu cầu này</AlertTitle>
           <AlertDescription className="flex flex-col items-start gap-2">
-            <p>Xem hợp đồng để kiểm tra điều khoản và xác nhận.</p>
+            <p>Xem hợp đồng để theo dõi các bước tiếp theo.</p>
             {rentalRequest.contractId !== null && (
               <Button asChild variant="outline">
                 <Link to={`/tenant/contracts/${rentalRequest.contractId}`}>Xem hợp đồng</Link>
