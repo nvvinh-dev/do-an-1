@@ -13,6 +13,8 @@ namespace SmartRent.Api.Services;
 /// quyền sở hữu phòng truy qua khu trọ tới Chủ trọ, tài nguyên không thuộc người gọi trả 404 như không tồn tại.
 /// Thao tác ghi mở transaction và khóa dòng phòng hoặc khu trọ (<see cref="PropertyRowLocks"/>) trước khi nạp và
 /// kiểm điều kiện: hai thao tác cùng lúc trên một phòng, một khu thì bên sau chờ bên trước xong rồi đọc trạng thái mới.
+/// Đường dẫn ảnh kiểm trên Storage trước khi mở transaction, để không giữ khóa dòng trong lúc chờ Storage; kết quả
+/// giữ lại và lỗi ảnh vẫn trả ở vị trí cũ trong thứ tự kiểm (sau 404, 409).
 /// </summary>
 public class PropertyService
 {
@@ -98,6 +100,9 @@ public class PropertyService
         PropertyRequest request,
         CancellationToken cancellationToken = default)
     {
+        var imagePaths = request.ImagePaths ?? [];
+        var imageError = await CheckImagePathsAsync(imagePaths, FilePurpose.AnhKhuTro, landlordUserId, cancellationToken);
+
         await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
         await _db.LockPropertyAsync(propertyId, cancellationToken);
 
@@ -131,9 +136,6 @@ public class PropertyService
         {
             return AmenityScopeError<PropertyResponse>();
         }
-
-        var imagePaths = request.ImagePaths ?? [];
-        var imageError = await CheckImagePathsAsync(imagePaths, FilePurpose.AnhKhuTro, landlordUserId, cancellationToken);
 
         if (imageError is not null)
         {
@@ -260,6 +262,9 @@ public class PropertyService
         RoomRequest request,
         CancellationToken cancellationToken = default)
     {
+        var imageError = await CheckImagePathsAsync(
+            request.ImagePaths ?? [], FilePurpose.AnhPhong, landlordUserId, cancellationToken);
+
         await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
         await _db.LockPropertyForShareAsync(propertyId, cancellationToken);
 
@@ -282,7 +287,7 @@ public class PropertyService
 
         var amenityIds = (request.AmenityIds ?? []).Distinct().ToList();
         var error = await ValidateRoomAsync(
-            landlordUserId, propertyId, null, request, amenityIds, mustKeepImage: false, cancellationToken);
+            propertyId, null, request, amenityIds, mustKeepImage: false, imageError, cancellationToken);
 
         if (error is not null)
         {
@@ -321,6 +326,9 @@ public class PropertyService
         RoomRequest request,
         CancellationToken cancellationToken = default)
     {
+        var imageError = await CheckImagePathsAsync(
+            request.ImagePaths ?? [], FilePurpose.AnhPhong, landlordUserId, cancellationToken);
+
         await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
         await _db.LockRoomAsync(roomId, cancellationToken);
 
@@ -346,12 +354,12 @@ public class PropertyService
 
         var amenityIds = (request.AmenityIds ?? []).Distinct().ToList();
         var error = await ValidateRoomAsync(
-            landlordUserId,
             room.PropertyId,
             room.Id,
             request,
             amenityIds,
             mustKeepImage: room.VisibilityStatus == RoomVisibilityStatus.DangHienThi,
+            imageError,
             cancellationToken);
 
         if (error is not null)
@@ -513,14 +521,15 @@ public class PropertyService
     /// Quy tắc dữ liệu của phòng (api-design mục 5.2): giá trị số, phí dịch vụ, tiện ích và ảnh sai trả 422;
     /// mã phòng trùng với phòng khác trong cùng khu trọ trả 409. Trả null khi hợp lệ.
     /// <paramref name="mustKeepImage"/> khi phòng đang hiển thị: phòng hiển thị phải có ít nhất một ảnh (FR-15).
+    /// <paramref name="imageError"/> là kết quả <see cref="CheckImagePathsAsync"/>, kiểm trước khi mở transaction.
     /// </summary>
     private async Task<ServiceResult?> ValidateRoomAsync(
-        long landlordUserId,
         long propertyId,
         long? roomId,
         RoomRequest request,
         IReadOnlyCollection<long> amenityIds,
         bool mustKeepImage,
+        string? imageError,
         CancellationToken cancellationToken)
     {
         string? invalid = null;
@@ -565,7 +574,7 @@ public class PropertyService
         }
         else
         {
-            invalid = await CheckImagePathsAsync(imagePaths, FilePurpose.AnhPhong, landlordUserId, cancellationToken);
+            invalid = imageError;
         }
 
         if (invalid is not null)
