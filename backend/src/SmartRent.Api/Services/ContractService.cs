@@ -92,8 +92,7 @@ public class ContractService
         ApplyTerms(contract, request);
         _db.Contracts.Add(contract);
 
-        // Yêu cầu thuê giữ trạng thái này kể cả khi hợp đồng bị hủy sau đó.
-        rentalRequest.Status = RentalRequestStatus.DaLapHopDong;
+        rentalRequest.MarkContractCreated(now);
 
         try
         {
@@ -178,12 +177,12 @@ public class ContractService
             return ServiceResult.Fail(StatusCodes.Status409Conflict, "Chỉ gửi được hợp đồng ở trạng thái Nháp.");
         }
 
-        if (contract.IsHoldExpired(now))
+        if (!contract.CanSend(now))
         {
             return ServiceResult.Fail(StatusCodes.Status409Conflict, HoldExpiredMessage);
         }
 
-        contract.Status = ContractStatus.ChoNguoiThueXacNhan;
+        contract.Send(now);
 
         _notifier.Notify(
             contract.TenantUserId,
@@ -281,12 +280,12 @@ public class ContractService
             return ServiceResult.Fail(StatusCodes.Status409Conflict, "Hợp đồng không ở trạng thái chờ bạn xác nhận.");
         }
 
-        if (contract.IsHoldExpired(now))
+        if (!contract.CanRequestChanges(now))
         {
             return ServiceResult.Fail(StatusCodes.Status409Conflict, HoldExpiredMessage);
         }
 
-        contract.Status = ContractStatus.Nhap;
+        contract.RequestChanges(now);
 
         _notifier.Notify(
             contract.Room.Property.LandlordUserId,

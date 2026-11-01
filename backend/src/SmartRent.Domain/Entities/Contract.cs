@@ -213,9 +213,36 @@ public class Contract
 
     public bool WasCancelledByTenant => Status == ContractStatus.DaHuy && CancelledByUserId == TenantUserId;
 
-    /// <summary>Người thuê đồng ý được khi hợp đồng đang chờ mình xác nhận và chưa quá hạn giữ chỗ.</summary>
+    /// <summary>Chủ trọ gửi được hợp đồng cho người thuê khi hợp đồng còn Nháp và chưa quá hạn giữ chỗ.</summary>
+    public bool CanSend(DateTimeOffset now)
+        => Status == ContractStatus.Nhap && !IsHoldExpired(now);
+
+    /// <summary>
+    /// Người thuê đồng ý hoặc yêu cầu chỉnh sửa được khi hợp đồng đang chờ mình xác nhận và chưa quá hạn giữ chỗ.
+    /// </summary>
     public bool CanConfirmByTenant(DateTimeOffset now)
         => Status == ContractStatus.ChoNguoiThueXacNhan && !IsHoldExpired(now);
+
+    /// <summary>FR-84: cùng điều kiện với <see cref="CanConfirmByTenant"/>.</summary>
+    public bool CanRequestChanges(DateTimeOffset now) => CanConfirmByTenant(now);
+
+    /// <summary>BP-06: Nháp → Chờ người thuê xác nhận.</summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanSend"/> sai — lỗi lập trình.</exception>
+    public void Send(DateTimeOffset now)
+    {
+        EnsureAllowed(CanSend(now), nameof(Send));
+
+        Status = ContractStatus.ChoNguoiThueXacNhan;
+    }
+
+    /// <summary>FR-84: người thuê yêu cầu chỉnh sửa; hợp đồng về Nháp để Chủ trọ sửa rồi gửi lại.</summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanRequestChanges"/> sai — lỗi lập trình.</exception>
+    public void RequestChanges(DateTimeOffset now)
+    {
+        EnsureAllowed(CanRequestChanges(now), nameof(RequestChanges));
+
+        Status = ContractStatus.Nhap;
+    }
 
     /// <summary>
     /// BR-21: Chủ trọ xác nhận cọc chỉ sau khi người thuê đã đồng ý — hợp đồng ở Chờ nhận cọc,
