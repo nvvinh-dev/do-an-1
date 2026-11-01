@@ -81,11 +81,10 @@ function RentalRequestDetailContent({ rentalRequest }: { rentalRequest: RentalRe
       return
     }
     const msUntilOverdue = new Date(deadline).getTime() - Date.now()
-    if (msUntilOverdue < 0) {
-      return
-    }
-    // Thêm 1 ms vì đúng mốc hạn thì chưa tính là quá hạn (`isRentalRequestOverdue`).
-    const timer = setTimeout(() => setNow(new Date()), msUntilOverdue + 1)
+    // Thêm 1 ms vì đúng mốc hạn thì chưa tính là quá hạn (`isRentalRequestOverdue`). Hạn đã qua thì
+    // vẫn hẹn 1 ms để lấy lại giờ hiện tại: tải lại ra hạn mới đã qua (chờ duyệt → đã duyệt khi tab
+    // ở nền quá 72 giờ) mà giữ `now` lúc mở trang thì nút rút vẫn hiện.
+    const timer = setTimeout(() => setNow(new Date()), Math.max(msUntilOverdue, 0) + 1)
     return () => clearTimeout(timer)
   }, [deadline])
   // Quá hạn mà tác vụ định kỳ chưa chạy thì server vẫn trả `ChoDuyet`/`DaDuyet` nhưng `/cancel` đã trả `409`.
