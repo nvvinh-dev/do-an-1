@@ -1,22 +1,15 @@
 import { Archive } from 'lucide-react'
-import { useMemo, useRef, useState, type ReactNode } from 'react'
-import { Controller, useForm, useWatch, type RefCallBack } from 'react-hook-form'
+import { useCallback, useMemo, useState, type ReactNode } from 'react'
+import { Controller, useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import ImageUploader from '@/components/ImageUploader'
 import PageHeader from '@/components/PageHeader'
+import SearchCombobox from '@/components/SearchCombobox'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from '@/components/ui/combobox'
 import {
   Field,
   FieldDescription,
@@ -278,6 +271,7 @@ function PropertyForm({
 
   const city = useWatch({ control, name: 'city' })
   const wards = useMemo(() => locations.find((location) => location.city === city)?.wards ?? [], [locations, city])
+  const searchWardsOfCity = useCallback((query: string) => searchWards(wards, query), [wards])
 
   const submit = handleSubmit((values) => {
     if (isUploading) return
@@ -359,13 +353,17 @@ function PropertyForm({
               <FieldLabel htmlFor="ward">
                 Phường/xã <span aria-hidden="true">*</span>
               </FieldLabel>
-              <WardCombobox
+              {/* Kết quả xếp bằng `searchWards`: gõ "tan son" thì "Phường Tân Sơn" đứng trước "Phường Tân Sơn Nhất". */}
+              <SearchCombobox
                 id="ward"
-                wards={wards}
-                selectedWard={field.value === '' ? null : field.value}
+                items={wards}
+                search={searchWardsOfCity}
+                selectedItem={field.value === '' ? null : field.value}
                 onSelect={(ward) => field.onChange(ward ?? '')}
                 onBlur={field.onBlur}
                 inputRef={field.ref}
+                placeholder={city === '' ? 'Chọn tỉnh/thành trước' : 'Gõ để tìm phường/xã'}
+                emptyText="Không tìm thấy phường/xã."
                 disabled={city === ''}
                 invalid={fieldState.invalid}
               />
@@ -490,79 +488,5 @@ function PropertyForm({
         </Button>
       </div>
     </form>
-  )
-}
-
-interface WardComboboxProps {
-  id: string
-  /** Phường/xã của tỉnh/thành đang chọn, theo thứ tự danh mục. */
-  wards: string[]
-  selectedWard: string | null
-  onSelect: (ward: string | null) => void
-  onBlur: () => void
-  inputRef: RefCallBack
-  disabled: boolean
-  invalid: boolean
-}
-
-/**
- * Ô chọn phường/xã có tìm kiếm, cùng cách làm với ô ngân hàng ở L4 (`BankCombobox`). Chữ trong ô
- * chỉ để lọc; giá trị của form là phường/xã đã chọn trong danh sách. Kết quả xếp bằng `searchWards`,
- * mục khớp nhất đứng đầu để Enter chọn đúng. Đóng danh sách mà không chọn mục mới (Tab, bấm ra
- * ngoài, Esc) thì ô trở lại tên phường/xã đang chọn, hoặc để trống nếu chưa chọn: chữ trong ô luôn
- * khớp phường/xã sẽ được lưu.
- */
-function WardCombobox({ id, wards, selectedWard, onSelect, onBlur, inputRef, disabled, invalid }: WardComboboxProps) {
-  const [open, setOpen] = useState(false)
-  // `null` là không gõ gì: ô hiện tên phường/xã đang chọn và danh sách hiện đủ.
-  const [query, setQuery] = useState<string | null>(null)
-  const filteredWards = useMemo(() => searchWards(wards, query ?? ''), [wards, query])
-  const popupRef = useRef<HTMLDivElement>(null)
-
-  const close = () => {
-    setOpen(false)
-    setQuery(null)
-  }
-
-  return (
-    <Combobox
-      items={wards}
-      filteredItems={filteredWards}
-      value={selectedWard}
-      onValueChange={(ward: string | null) => onSelect(ward)}
-      inputValue={query ?? selectedWard ?? ''}
-      onInputValueChange={setQuery}
-      open={open}
-      onOpenChange={(nextOpen) => (nextOpen ? setOpen(true) : close())}
-      disabled={disabled}
-      autoHighlight
-    >
-      <ComboboxInput
-        id={id}
-        ref={inputRef}
-        className="w-full"
-        placeholder={disabled ? 'Chọn tỉnh/thành trước' : 'Gõ để tìm phường/xã'}
-        disabled={disabled}
-        aria-invalid={invalid}
-        onBlur={(event) => {
-          // Base UI 1.9 có lúc không đóng danh sách khi Tab sang ô khác (sau vài lần chọn liên tiếp),
-          // để lại chữ vừa gõ khác phường/xã đang chọn. Tự đóng, trừ khi tiêu điểm đi vào chính danh sách.
-          if (!(event.relatedTarget instanceof Node && popupRef.current?.contains(event.relatedTarget))) {
-            close()
-          }
-          onBlur()
-        }}
-      />
-      <ComboboxContent ref={popupRef}>
-        <ComboboxEmpty>Không tìm thấy phường/xã.</ComboboxEmpty>
-        <ComboboxList>
-          {(ward: string) => (
-            <ComboboxItem key={ward} value={ward}>
-              {ward}
-            </ComboboxItem>
-          )}
-        </ComboboxList>
-      </ComboboxContent>
-    </Combobox>
   )
 }
