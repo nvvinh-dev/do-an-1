@@ -90,6 +90,29 @@ public class ContractTests
     }
 
     [Fact]
+    public void CanTransferDeposit_QuaHanGiuChoMaTacVuChuaHuy_KhongChuyenKhoanDuoc()
+    {
+        // Duyệt 01/10 08:00 UTC, hạn giữ chỗ 04/10 08:00 UTC. Tác vụ định kỳ chưa chạy nên vẫn Chờ nhận cọc.
+        var contract = AwaitingDeposit();
+
+        Assert.True(contract.CanTransferDeposit(ApprovedAt.AddHours(72)));
+        Assert.False(contract.CanTransferDeposit(ApprovedAt.AddHours(72).AddSeconds(1)));
+        Assert.Equal(ContractStatus.ChoNhanCoc, contract.Status);
+    }
+
+    [Theory]
+    [InlineData(ContractStatus.ChoNguoiThueXacNhan, 3_000_000)]
+    [InlineData(ContractStatus.DangHieuLuc, 3_000_000)]
+    [InlineData(ContractStatus.DaHuy, 3_000_000)]
+    [InlineData(ContractStatus.ChoNhanCoc, 0)]
+    public void CanTransferDeposit_KhongChoNhanCocHoacKhongCoCoc_KhongChuyenKhoanDuoc(
+        ContractStatus status,
+        decimal depositAmount)
+    {
+        Assert.False(NewContract(status, depositAmount).CanTransferDeposit(ApprovedAt.AddHours(5)));
+    }
+
+    [Fact]
     public void ConfirmDeposit_NguoiThueChuaDongY_NemLoiKhongKichHoat()
     {
         // BR-21, security-design 5.5: không được kích hoạt hợp đồng khi người thuê chưa đồng ý.

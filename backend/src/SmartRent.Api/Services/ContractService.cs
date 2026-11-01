@@ -705,12 +705,11 @@ public class ContractService
 
         var revealPhones = await ArePhonesVisibleAsync(contract, cancellationToken);
 
-        // BR-26, FR-79: mã VietQR cho tiền cọc chỉ dành cho người thuê đứng tên, khi hợp đồng chờ nhận cọc.
-        // Số tiền và nội dung chuyển khoản do server tính.
+        // BR-26, FR-79: mã VietQR cho tiền cọc chỉ dành cho người thuê đứng tên, khi hợp đồng chờ nhận cọc và còn hạn giữ
+        // chỗ. Số tiền và nội dung chuyển khoản do server tính.
         PaymentQrResponse? paymentQr =
             viewerIsTenant
-            && contract.Status == ContractStatus.ChoNhanCoc
-            && contract.DepositAmount > 0
+            && contract.CanTransferDeposit(DateTimeOffset.UtcNow)
             && landlord is { BankBin: { } bankBin, BankAccountNumber: { } accountNumber, BankAccountName: { } accountName }
                 ? new PaymentQrResponse(bankBin, accountNumber, accountName, contract.DepositAmount, $"SMARTRENT COC{contract.Id}")
                 : null;
