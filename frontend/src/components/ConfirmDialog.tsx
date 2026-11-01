@@ -85,7 +85,9 @@ function ConfirmDialogBody({
     <>
       <AlertDialogHeader>
         <AlertDialogTitle>{title}</AlertDialogTitle>
-        <AlertDialogDescription>{description}</AlertDialogDescription>
+        {/* `wrap-anywhere`: câu mô tả chứa tên do người dùng đặt (mã phòng tới 50 ký tự liền nhau), không để
+            chữ và nút tràn khỏi hộp thoại ở 360px. */}
+        <AlertDialogDescription className="wrap-anywhere">{description}</AlertDialogDescription>
       </AlertDialogHeader>
 
       {reason && (

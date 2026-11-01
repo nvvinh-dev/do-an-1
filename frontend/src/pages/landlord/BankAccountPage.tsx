@@ -1,19 +1,11 @@
 import { TriangleAlert } from 'lucide-react'
-import { useMemo, useRef, useState } from 'react'
-import { Controller, useForm, type RefCallBack } from 'react-hook-form'
+import { Controller, useForm } from 'react-hook-form'
 import { toast } from 'sonner'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import PageHeader from '@/components/PageHeader'
+import SearchCombobox from '@/components/SearchCombobox'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from '@/components/ui/combobox'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -24,7 +16,7 @@ import type { BankAccount } from '@/types/bankAccountTypes'
 import { ACCOUNT_NAME_PATTERN, ACCOUNT_NUMBER_PATTERN } from '@/utils/bankAccountPatterns'
 import { normalizeAccountName } from '@/utils/normalizeAccountName'
 import { searchVietQrBanks } from '@/utils/searchVietQrBanks'
-import { findVietQrBank, VIETQR_BANKS, type VietQrBank } from '@/utils/vietQrBanks'
+import { findVietQrBank, VIETQR_BANKS } from '@/utils/vietQrBanks'
 
 const EMPTY_VALUES: BankAccount = { bankBin: '', accountNumber: '', accountName: '' }
 
@@ -49,9 +41,12 @@ export default function BankAccountPage() {
         description="Người thuê chuyển khoản tiền cọc và tiền hóa đơn vào tài khoản này bằng mã VietQR."
       />
       {/* `null` là chưa khai báo, vẫn là dữ liệu. Đã có dữ liệu thì giữ form kể cả khi lần tải lại ngầm bị lỗi,
-          để chữ đang gõ không mất. */}
+          để chữ đang gõ không mất; lỗi đó hiện ở đầu trang kèm nút thử lại. */}
       {bankAccountQuery.data !== undefined ? (
         <>
+          {bankAccountQuery.isRefetchError && (
+            <ApiErrorAlert error={bankAccountQuery.error} onRetry={() => void bankAccountQuery.refetch()} />
+          )}
           {bankAccountQuery.data === null && <MissingAccountNotice />}
           <BankAccountForm bankAccount={bankAccountQuery.data} />
         </>
@@ -141,12 +136,25 @@ function BankAccountForm({ bankAccount }: { bankAccount: BankAccount | null }) {
                 <FieldLabel htmlFor="bankBin">
                   Ngân hàng <span aria-hidden="true">*</span>
                 </FieldLabel>
-                <BankCombobox
+                {/* Kết quả xếp bằng `searchVietQrBanks`: gõ "vpbank" thì VPBank đứng trước CAKE, Ubank. */}
+                <SearchCombobox
                   id="bankBin"
-                  selectedBank={selectedBank}
+                  items={VIETQR_BANKS}
+                  search={searchVietQrBanks}
+                  selectedItem={selectedBank}
                   onSelect={(bank) => field.onChange(bank?.bin ?? '')}
                   onBlur={field.onBlur}
                   inputRef={field.ref}
+                  itemToLabel={(bank) => bank.shortName}
+                  itemToKey={(bank) => bank.bin}
+                  renderItem={(bank) => (
+                    <span className="flex min-w-0 flex-col">
+                      <span className="font-medium">{bank.shortName}</span>
+                      <span className="text-xs text-muted-foreground">{bank.name}</span>
+                    </span>
+                  )}
+                  placeholder="Gõ để tìm ngân hàng"
+                  emptyText="Không tìm thấy ngân hàng."
                   invalid={fieldState.invalid}
                 />
                 {fieldState.invalid ? (
@@ -253,79 +261,5 @@ function BankAccountForm({ bankAccount }: { bankAccount: BankAccount | null }) {
         </Button>
       </div>
     </form>
-  )
-}
-
-interface BankComboboxProps {
-  id: string
-  selectedBank: VietQrBank | null
-  onSelect: (bank: VietQrBank | null) => void
-  onBlur: () => void
-  inputRef: RefCallBack
-  invalid: boolean
-}
-
-/**
- * Ô chọn ngân hàng có tìm kiếm. Chữ trong ô chỉ để lọc; giá trị của form là ngân hàng đã chọn trong
- * danh sách. Kết quả xếp bằng `searchVietQrBanks`, mục khớp nhất đứng đầu để Enter chọn đúng.
- * Đóng danh sách mà không chọn mục mới (Tab, bấm ra ngoài, Esc) thì ô trở lại tên ngân hàng đang
- * chọn, hoặc để trống nếu chưa chọn: chữ trong ô luôn khớp ngân hàng sẽ được lưu.
- */
-function BankCombobox({ id, selectedBank, onSelect, onBlur, inputRef, invalid }: BankComboboxProps) {
-  const [open, setOpen] = useState(false)
-  // `null` là không gõ gì: ô hiện tên ngân hàng đang chọn và danh sách hiện đủ.
-  const [query, setQuery] = useState<string | null>(null)
-  const filteredBanks = useMemo(() => searchVietQrBanks(query ?? ''), [query])
-  const popupRef = useRef<HTMLDivElement>(null)
-
-  const close = () => {
-    setOpen(false)
-    setQuery(null)
-  }
-
-  return (
-    <Combobox
-      items={VIETQR_BANKS}
-      filteredItems={filteredBanks}
-      value={selectedBank}
-      onValueChange={(bank: VietQrBank | null) => onSelect(bank)}
-      inputValue={query ?? selectedBank?.shortName ?? ''}
-      onInputValueChange={setQuery}
-      open={open}
-      onOpenChange={(nextOpen) => (nextOpen ? setOpen(true) : close())}
-      itemToStringLabel={(bank: VietQrBank) => bank.shortName}
-      itemToStringValue={(bank: VietQrBank) => bank.bin}
-      isItemEqualToValue={(item: VietQrBank, value: VietQrBank) => item.bin === value.bin}
-      autoHighlight
-    >
-      <ComboboxInput
-        id={id}
-        ref={inputRef}
-        className="w-full"
-        placeholder="Gõ để tìm ngân hàng"
-        aria-invalid={invalid}
-        onBlur={(event) => {
-          // Base UI 1.9 có lúc không đóng danh sách khi Tab sang ô khác (sau vài lần chọn liên tiếp),
-          // để lại chữ vừa gõ khác ngân hàng đang chọn. Tự đóng, trừ khi tiêu điểm đi vào chính danh sách.
-          if (!(event.relatedTarget instanceof Node && popupRef.current?.contains(event.relatedTarget))) {
-            close()
-          }
-          onBlur()
-        }}
-      />
-      <ComboboxContent ref={popupRef}>
-        <ComboboxEmpty>Không tìm thấy ngân hàng.</ComboboxEmpty>
-        <ComboboxList>
-          {(bank: VietQrBank) => (
-            <ComboboxItem key={bank.bin} value={bank}>
-              <span className="flex min-w-0 flex-col">
-                <span className="font-medium">{bank.shortName}</span>
-                <span className="text-xs text-muted-foreground">{bank.name}</span>
-              </span>
-            </ComboboxItem>
-          )}
-        </ComboboxList>
-      </ComboboxContent>
-    </Combobox>
   )
 }

@@ -1,22 +1,15 @@
 import { Archive } from 'lucide-react'
-import { useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useMemo, useState, type ReactNode } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import ImageUploader from '@/components/ImageUploader'
 import PageHeader from '@/components/PageHeader'
+import SearchCombobox from '@/components/SearchCombobox'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from '@/components/ui/combobox'
 import {
   Field,
   FieldDescription,
@@ -42,7 +35,7 @@ import type { Amenity } from '@/types/amenityTypes'
 import type { UploadedImage } from '@/types/fileTypes'
 import type { Location } from '@/types/locationTypes'
 import type { PropertyDetail, PropertyRequest } from '@/types/propertyTypes'
-import { normalizeSearchText } from '@/utils/normalizeSearchText'
+import { searchWards } from '@/utils/searchWards'
 
 interface PropertyFormValues {
   name: string
@@ -118,39 +111,39 @@ function EditPropertyForm({ propertyId }: { propertyId: number }) {
     return <NotFoundPage />
   }
 
-  const property = propertyQuery.data
-
   return (
-    <PropertyFormLayout title="Sửa khu trọ" description={property?.name}>
+    <PropertyFormLayout title="Sửa khu trọ" description={propertyQuery.data?.name}>
+      {/* Lần tải lại lỗi (quay lại tab) thì giữ form và chữ đang nhập, chỉ báo lỗi kèm nút thử lại. */}
+      {propertyQuery.isRefetchError && (
+        <ApiErrorAlert error={propertyQuery.error} onRetry={() => void propertyQuery.refetch()} />
+      )}
       {propertyQuery.isPending ? (
         <PropertyFormSkeleton />
-      ) : propertyQuery.isError ? (
+      ) : propertyQuery.isLoadingError ? (
         <ApiErrorAlert error={propertyQuery.error} onRetry={() => void propertyQuery.refetch()} />
-      ) : property?.status === 'LuuTru' ? (
+      ) : propertyQuery.data.status === 'LuuTru' ? (
         <ArchivedNotice detailPath={detailPath} />
       ) : (
-        property && (
-          <CatalogGate>
-            {(catalogs) => (
-              <PropertyForm
-                {...catalogs}
-                defaultValues={toFormValues(property)}
-                submitLabel="Lưu thay đổi"
-                cancelTo={detailPath}
-                isPending={updateMutation.isPending}
-                error={updateMutation.error}
-                onSubmit={(request) =>
-                  updateMutation.mutate(request, {
-                    onSuccess: () => {
-                      toast.success('Đã lưu thay đổi')
-                      navigate(detailPath, { replace: true })
-                    },
-                  })
-                }
-              />
-            )}
-          </CatalogGate>
-        )
+        <CatalogGate>
+          {(catalogs) => (
+            <PropertyForm
+              {...catalogs}
+              defaultValues={toFormValues(propertyQuery.data)}
+              submitLabel="Lưu thay đổi"
+              cancelTo={detailPath}
+              isPending={updateMutation.isPending}
+              error={updateMutation.error}
+              onSubmit={(request) =>
+                updateMutation.mutate(request, {
+                  onSuccess: () => {
+                    toast.success('Đã lưu thay đổi')
+                    navigate(detailPath, { replace: true })
+                  },
+                })
+              }
+            />
+          )}
+        </CatalogGate>
       )}
     </PropertyFormLayout>
   )
@@ -278,6 +271,7 @@ function PropertyForm({
 
   const city = useWatch({ control, name: 'city' })
   const wards = useMemo(() => locations.find((location) => location.city === city)?.wards ?? [], [locations, city])
+  const searchWardsOfCity = useCallback((query: string) => searchWards(wards, query), [wards])
 
   const submit = handleSubmit((values) => {
     if (isUploading) return
@@ -359,34 +353,20 @@ function PropertyForm({
               <FieldLabel htmlFor="ward">
                 Phường/xã <span aria-hidden="true">*</span>
               </FieldLabel>
-              <Combobox
+              {/* Kết quả xếp bằng `searchWards`: gõ "tan son" thì "Phường Tân Sơn" đứng trước "Phường Tân Sơn Nhất". */}
+              <SearchCombobox
+                id="ward"
                 items={wards}
-                value={field.value === '' ? null : field.value}
-                onValueChange={(value: string | null) => field.onChange(value ?? '')}
-                filter={(ward: string, query: string) => normalizeSearchText(ward).includes(normalizeSearchText(query))}
+                search={searchWardsOfCity}
+                selectedItem={field.value === '' ? null : field.value}
+                onSelect={(ward) => field.onChange(ward ?? '')}
+                onBlur={field.onBlur}
+                inputRef={field.ref}
+                placeholder={city === '' ? 'Chọn tỉnh/thành trước' : 'Gõ để tìm phường/xã'}
+                emptyText="Không tìm thấy phường/xã."
                 disabled={city === ''}
-                autoHighlight
-              >
-                <ComboboxInput
-                  id="ward"
-                  ref={field.ref}
-                  className="w-full"
-                  placeholder={city === '' ? 'Chọn tỉnh/thành trước' : 'Gõ để tìm phường/xã'}
-                  disabled={city === ''}
-                  aria-invalid={fieldState.invalid}
-                  onBlur={field.onBlur}
-                />
-                <ComboboxContent>
-                  <ComboboxEmpty>Không tìm thấy phường/xã.</ComboboxEmpty>
-                  <ComboboxList>
-                    {(ward: string) => (
-                      <ComboboxItem key={ward} value={ward}>
-                        {ward}
-                      </ComboboxItem>
-                    )}
-                  </ComboboxList>
-                </ComboboxContent>
-              </Combobox>
+                invalid={fieldState.invalid}
+              />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
             </Field>
           )}

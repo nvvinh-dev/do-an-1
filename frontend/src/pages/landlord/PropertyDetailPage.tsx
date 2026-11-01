@@ -45,10 +45,16 @@ export default function PropertyDetailPage() {
 
       {propertyQuery.isPending ? (
         <PropertyDetailSkeleton />
-      ) : propertyQuery.isError ? (
+      ) : propertyQuery.isLoadingError ? (
         <ApiErrorAlert error={propertyQuery.error} onRetry={() => void propertyQuery.refetch()} />
       ) : (
-        <PropertyDetailContent property={propertyQuery.data} />
+        <>
+          {/* Lần tải lại lỗi (quay lại tab, tải lại sau `409`) thì giữ nội dung cũ và hộp thoại đang mở, chỉ báo lỗi kèm nút thử lại. */}
+          {propertyQuery.isRefetchError && (
+            <ApiErrorAlert error={propertyQuery.error} onRetry={() => void propertyQuery.refetch()} />
+          )}
+          <PropertyDetailContent property={propertyQuery.data} />
+        </>
       )}
     </section>
   )

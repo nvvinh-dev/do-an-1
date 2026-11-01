@@ -57,23 +57,29 @@ export default function PropertyRoomList({ propertyId, isArchived }: { propertyI
             <Skeleton key={index} className="h-24 w-full" />
           ))}
         </div>
-      ) : query.isError ? (
+      ) : query.isLoadingError ? (
         <ApiErrorAlert error={query.error} onRetry={() => void query.refetch()} />
-      ) : query.data.length === 0 ? (
-        <Empty className="border">
-          <EmptyHeader>
-            <EmptyTitle>{includeArchived ? 'Chưa có phòng nào' : 'Chưa có phòng đang khai thác'}</EmptyTitle>
-            <EmptyDescription>
-              {!isArchived
-                ? 'Chọn Thêm phòng để khai báo phòng cho khu trọ.'
-                : includeArchived
-                  ? 'Khu trọ đã lưu trữ, không thêm được phòng mới.'
-                  : 'Bật “Hiện cả phòng đã lưu trữ” để xem các phòng của khu.'}
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
       ) : (
-        <RoomList rooms={query.data} />
+        <>
+          {/* Lần tải lại lỗi (quay lại tab, tải lại sau khi đổi trạng thái phòng) thì giữ danh sách cũ, chỉ báo lỗi kèm nút thử lại. */}
+          {query.isRefetchError && <ApiErrorAlert error={query.error} onRetry={() => void query.refetch()} />}
+          {query.data.length === 0 ? (
+            <Empty className="border">
+              <EmptyHeader>
+                <EmptyTitle>{includeArchived ? 'Chưa có phòng nào' : 'Chưa có phòng đang khai thác'}</EmptyTitle>
+                <EmptyDescription>
+                  {!isArchived
+                    ? 'Chọn Thêm phòng để khai báo phòng cho khu trọ.'
+                    : includeArchived
+                      ? 'Khu trọ đã lưu trữ, không thêm được phòng mới.'
+                      : 'Bật “Hiện cả phòng đã lưu trữ” để xem các phòng của khu.'}
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : (
+            <RoomList rooms={query.data} />
+          )}
+        </>
       )}
     </section>
   )
