@@ -9,18 +9,14 @@ import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useResetPassword } from '@/hooks/useResetPassword'
-import { getApiErrorInfo } from '@/lib/apiError'
 import { getRoleHomePath } from '@/utils/getRoleHomePath'
+import { isInvalidResetLinkError } from '@/utils/isInvalidResetLinkError'
 import { validatePassword } from '@/utils/validatePassword'
 
 interface ResetPasswordFormValues {
   newPassword: string
   confirmPassword: string
 }
-
-// Câu `400` khi email không tồn tại, hoặc token sai, hết hạn hay đã dùng (api-design mục 2,
-// `AuthService.ResetPasswordAsync`) — chỉ câu này mới cần xin đường dẫn mới ở A3.
-const INVALID_LINK_DETAIL = 'Yêu cầu đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.'
 
 /**
  * A4 — Đặt lại mật khẩu (docs/frontend-screens.md mục 3). `email` và `token` đọc từ query của
@@ -82,8 +78,7 @@ export default function ResetPasswordPage() {
 
   // Chỉ gợi ý xin đường dẫn mới khi server báo đường dẫn hỏng; lỗi quy tắc mật khẩu thì token
   // vẫn dùng được, gợi ý đó sẽ khiến người dùng bỏ đường dẫn còn hiệu lực.
-  const errorInfo = getApiErrorInfo(resetPasswordMutation.error, { trust400Detail: true })
-  const isInvalidLinkError = errorInfo.status === 400 && errorInfo.message === INVALID_LINK_DETAIL
+  const isInvalidLinkError = isInvalidResetLinkError(resetPasswordMutation.error)
 
   const onSubmit = handleSubmit((values) => {
     resetPasswordMutation.mutate(
