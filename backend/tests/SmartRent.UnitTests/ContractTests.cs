@@ -172,6 +172,73 @@ public class ContractTests
     }
 
     [Fact]
+    public void Send_NhapConHanGiuCho_ChoNguoiThueXacNhan()
+    {
+        var contract = NewContract(ContractStatus.Nhap);
+
+        contract.Send(ApprovedAt.AddHours(5));
+
+        Assert.Equal(ContractStatus.ChoNguoiThueXacNhan, contract.Status);
+    }
+
+    [Theory]
+    [InlineData(ContractStatus.Nhap, 72, true)]
+    [InlineData(ContractStatus.Nhap, 73, false)]
+    [InlineData(ContractStatus.ChoNguoiThueXacNhan, 5, false)]
+    [InlineData(ContractStatus.ChoNhanCoc, 5, false)]
+    [InlineData(ContractStatus.DangHieuLuc, 5, false)]
+    public void CanSend_ChiHopDongNhapConHanGiuCho(ContractStatus status, int hoursAfterApproval, bool expected)
+    {
+        Assert.Equal(expected, NewContract(status).CanSend(ApprovedAt.AddHours(hoursAfterApproval)));
+    }
+
+    [Fact]
+    public void Send_QuaHanGiuChoMaTacVuChuaHuy_NemLoiVaGiuNguyen()
+    {
+        // Duyệt 01/10 08:00 UTC, hạn giữ chỗ 04/10 08:00 UTC; gửi lúc 04/10 08:00:01.
+        var contract = NewContract(ContractStatus.Nhap);
+
+        Assert.Throws<InvalidOperationException>(() => contract.Send(ApprovedAt.AddHours(72).AddSeconds(1)));
+        Assert.Equal(ContractStatus.Nhap, contract.Status);
+    }
+
+    [Fact]
+    public void RequestChanges_ChoNguoiThueXacNhan_VeNhap()
+    {
+        var contract = NewContract(ContractStatus.ChoNguoiThueXacNhan);
+
+        contract.RequestChanges(ApprovedAt.AddHours(5));
+
+        Assert.Equal(ContractStatus.Nhap, contract.Status);
+        Assert.Null(contract.TenantConfirmedAt);
+    }
+
+    [Theory]
+    [InlineData(ContractStatus.ChoNguoiThueXacNhan, 72, true)]
+    [InlineData(ContractStatus.ChoNguoiThueXacNhan, 73, false)]
+    [InlineData(ContractStatus.Nhap, 5, false)]
+    [InlineData(ContractStatus.ChoNhanCoc, 5, false)]
+    [InlineData(ContractStatus.DangHieuLuc, 5, false)]
+    public void CanRequestChanges_ChiKhiChoNguoiThueXacNhanVaConHanGiuCho(
+        ContractStatus status,
+        int hoursAfterApproval,
+        bool expected)
+    {
+        Assert.Equal(expected, NewContract(status).CanRequestChanges(ApprovedAt.AddHours(hoursAfterApproval)));
+    }
+
+    [Fact]
+    public void RequestChanges_DaDongYChoNhanCoc_NemLoiVaGiuNguyen()
+    {
+        // Người thuê đã đồng ý thì muốn sửa phải nhờ Chủ trọ thu hồi (FR-102), không tự đưa về Nháp.
+        var contract = AwaitingDeposit();
+
+        Assert.Throws<InvalidOperationException>(() => contract.RequestChanges(ApprovedAt.AddHours(5)));
+        Assert.Equal(ContractStatus.ChoNhanCoc, contract.Status);
+        Assert.NotNull(contract.TenantConfirmedAt);
+    }
+
+    [Fact]
     public void HoldDeadline_ChiCoKhiChuaHieuLuc()
     {
         Assert.Equal(ApprovedAt.AddHours(72), NewContract(ContractStatus.Nhap).HoldDeadline);

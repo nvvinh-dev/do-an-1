@@ -263,7 +263,7 @@ public class RentalRequestService
 
         var now = DateTimeOffset.UtcNow;
 
-        if (!request.IsAwaitingReview(now))
+        if (!request.CanApprove(now))
         {
             return ServiceResult.Fail(
                 StatusCodes.Status409Conflict, "Yêu cầu thuê không còn chờ duyệt hoặc đã quá hạn xử lý 7 ngày.");
@@ -293,7 +293,7 @@ public class RentalRequestService
         {
             foreach (var expiredHold in expiredHolds)
             {
-                ExpireHeld(expiredHold);
+                ExpireHeld(expiredHold, now);
             }
 
             var expiredSaved = await SaveAsync(cancellationToken);
@@ -321,8 +321,7 @@ public class RentalRequestService
             return TenantHoldingAnotherRoom();
         }
 
-        request.Status = RentalRequestStatus.DaDuyet;
-        request.ProcessedAt = now;
+        request.Approve(now);
         request.Room.OccupancyStatus = RoomOccupancyStatus.DangGiuCho;
 
         _notifier.Notify(
@@ -343,9 +342,7 @@ public class RentalRequestService
 
         foreach (var other in others)
         {
-            other.Status = RentalRequestStatus.TuChoi;
-            other.RejectReason = RoomTakenReason;
-            other.ProcessedAt = now;
+            other.RejectForRoomTaken(RoomTakenReason, now);
 
             _notifier.Notify(
                 other.TenantUserId,
@@ -394,9 +391,8 @@ public class RentalRequestService
         }
 
         var now = DateTimeOffset.UtcNow;
-        var isUnapproving = request.IsHoldingRoom(now);
 
-        if (!request.IsAwaitingReview(now) && !isUnapproving)
+        if (!request.CanReject(now))
         {
             return ServiceResult.Fail(
                 StatusCodes.Status409Conflict,
@@ -405,9 +401,7 @@ public class RentalRequestService
 
         reason = reason.Trim();
 
-        request.Status = RentalRequestStatus.TuChoi;
-        request.RejectReason = reason;
-        request.ProcessedAt = now;
+        var isUnapproving = request.Reject(reason, now);
 
         if (isUnapproving)
         {
@@ -445,16 +439,15 @@ public class RentalRequestService
         }
 
         var now = DateTimeOffset.UtcNow;
-        var wasHoldingRoom = request.IsHoldingRoom(now);
 
-        if (!request.IsAwaitingReview(now) && !wasHoldingRoom)
+        if (!request.CanWithdraw(now))
         {
             return ServiceResult.Fail(
                 StatusCodes.Status409Conflict,
                 "Chỉ rút được yêu cầu đang chờ duyệt, hoặc đã duyệt mà chưa lập hợp đồng và còn hạn giữ chỗ.");
         }
 
-        request.Status = RentalRequestStatus.DaHuy;
+        var wasHoldingRoom = request.Withdraw(now);
 
         if (wasHoldingRoom)
         {
@@ -495,12 +488,12 @@ public class RentalRequestService
 
             var request = await FindAsync(id, cancellationToken);
 
-            if (request is null || request.Status != RentalRequestStatus.ChoDuyet || request.IsAwaitingReview(now))
+            if (request is null || !request.ShouldExpireUnreviewed(now))
             {
                 continue;
             }
 
-            request.Status = RentalRequestStatus.HetHan;
+            request.ExpireUnreviewed(now);
 
             _notifier.Notify(
                 request.TenantUserId,
@@ -542,12 +535,12 @@ public class RentalRequestService
 
             var request = await FindAsync(id, cancellationToken);
 
-            if (request is null || request.Status != RentalRequestStatus.DaDuyet || request.IsHoldingRoom(now))
+            if (request is null || !request.ShouldExpireHold(now))
             {
                 continue;
             }
 
-            ExpireHeld(request);
+            ExpireHeld(request, now);
 
             if ((await SaveAsync(cancellationToken)).Succeeded)
             {
@@ -562,9 +555,9 @@ public class RentalRequestService
     /// FR-36: yêu cầu đã duyệt quá 72 giờ mà chưa lập hợp đồng chuyển Hết hạn, phòng trở lại Trống,
     /// hai bên nhận thông báo. Cần nạp sẵn Room và Property.
     /// </summary>
-    private void ExpireHeld(RentalRequest request)
+    private void ExpireHeld(RentalRequest request, DateTimeOffset now)
     {
-        request.Status = RentalRequestStatus.HetHan;
+        request.ExpireHold(now);
         ReleaseHeldRoom(request.Room);
 
         var content = $"Đã hết hạn giữ chỗ 72 giờ cho phòng {request.Room.Code} ({request.Room.Property.Name}) " +
