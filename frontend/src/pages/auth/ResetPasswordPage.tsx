@@ -9,8 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useResetPassword } from '@/hooks/useResetPassword'
-import { getApiErrorInfo } from '@/lib/apiError'
 import { getRoleHomePath } from '@/utils/getRoleHomePath'
+import { isInvalidResetLinkError } from '@/utils/isInvalidResetLinkError'
 import { validatePassword } from '@/utils/validatePassword'
 
 interface ResetPasswordFormValues {
@@ -22,11 +22,12 @@ interface ResetPasswordFormValues {
  * A4 — Đặt lại mật khẩu (docs/frontend-screens.md mục 3). `email` và `token` đọc từ query của
  * đường dẫn trong email (`/reset-password?email=...&token=...`, api-design mục 2); thiếu một
  * trong hai thì đường dẫn không hợp lệ, không hiện form. Mật khẩu mới kiểm đủ quy tắc trước khi
- * gửi (api-design mục 2), vì mỗi lần gửi đều tính vào ngưỡng 3 lần mỗi giờ và server gộp mọi lần
- * thất bại thành một câu "không hợp lệ hoặc đã hết hạn" (`AuthService.ResetPasswordAsync`) —
- * `ApiErrorAlert` hiện nguyên câu đó qua `trust400Detail` (xem `lib/apiError.ts`). Đặt lại xong
- * chuyển về `/login` kèm thông báo thành công và điền sẵn email (mục 8); `replace` để đường dẫn
- * chứa token không còn trong lịch sử trình duyệt.
+ * gửi (api-design mục 2), vì mỗi lần gửi đều tính vào ngưỡng 3 lần mỗi giờ. Server trả `400` với
+ * một trong hai câu cố định: đường dẫn "không hợp lệ hoặc đã hết hạn", hoặc mật khẩu mới "chưa
+ * đúng quy tắc" — khi đó token chưa bị dùng, sửa mật khẩu rồi gửi lại được. `ApiErrorAlert` hiện
+ * nguyên câu qua `trust400Detail` (xem `lib/apiError.ts`). Đặt lại xong chuyển về `/login` kèm
+ * thông báo thành công và điền sẵn email (mục 8); `replace` để đường dẫn chứa token không còn
+ * trong lịch sử trình duyệt.
  */
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
@@ -75,9 +76,9 @@ export default function ResetPasswordPage() {
     )
   }
 
-  // Mật khẩu đã kiểm đủ quy tắc trước khi gửi, nên `400` ở đây gần như chỉ còn là token sai
-  // hoặc hết hạn — cách duy nhất là xin đường dẫn mới ở A3.
-  const isInvalidLinkError = getApiErrorInfo(resetPasswordMutation.error).status === 400
+  // Chỉ gợi ý xin đường dẫn mới khi server báo đường dẫn hỏng; lỗi quy tắc mật khẩu thì token
+  // vẫn dùng được, gợi ý đó sẽ khiến người dùng bỏ đường dẫn còn hiệu lực.
+  const isInvalidLinkError = isInvalidResetLinkError(resetPasswordMutation.error)
 
   const onSubmit = handleSubmit((values) => {
     resetPasswordMutation.mutate(
