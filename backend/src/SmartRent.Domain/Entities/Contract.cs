@@ -224,6 +224,14 @@ public class Contract
     public bool CanConfirmDeposit(DateTimeOffset now)
         => Status == ContractStatus.ChoNhanCoc && TenantConfirmedAt is not null && !IsHoldExpired(now);
 
+    /// <summary>
+    /// BR-26, FR-79: người thuê còn chuyển khoản tiền cọc được — hợp đồng chờ nhận cọc, có tiền cọc và chưa quá hạn giữ
+    /// chỗ. Quá hạn thì Chủ trọ không xác nhận cọc được nữa (<see cref="CanConfirmDeposit"/>), kể cả khi tác vụ định kỳ
+    /// chưa hủy hợp đồng, nên không đưa mã chuyển khoản.
+    /// </summary>
+    public bool CanTransferDeposit(DateTimeOffset now)
+        => Status == ContractStatus.ChoNhanCoc && DepositAmount > 0 && !IsHoldExpired(now);
+
     /// <summary>FR-102: chỉ thu hồi hợp đồng đã gửi mà chưa có hiệu lực, và chưa quá hạn giữ chỗ.</summary>
     public bool CanRecall(DateTimeOffset now)
         => Status is (ContractStatus.ChoNguoiThueXacNhan or ContractStatus.ChoNhanCoc) && !IsHoldExpired(now);
