@@ -81,6 +81,12 @@ describe('parseRoomSearchParams', () => {
     expect(toRoomSearchQuery(parse('minPrice=1e5')).toString()).toBe('minPrice=100000')
   })
 
+  it('trang vượt int và mã tiện ích vượt số nguyên an toàn thì bỏ', () => {
+    expect(parse('page=3000000000').page).toBe(1)
+    expect(parse('page=2147483647').page).toBe(2147483647)
+    expect(parse('amenityIds=99999999999999999999&amenityIds=3').amenityIds).toEqual([3])
+  })
+
   it('bỏ chiều sắp xếp khi không có sortBy', () => {
     expect(parse('sortDirection=desc').sortDirection).toBeUndefined()
     expect(parse('sortBy=area&sortDirection=up').sortDirection).toBeUndefined()
@@ -181,16 +187,25 @@ describe('kiểm tra ô bộ lọc', () => {
     expect(validateSearchMoney('3.5')).not.toBe(true)
   })
 
-  it('diện tích: nhận dấu phẩy thập phân, không nhận số âm', () => {
-    expect(validateSearchArea('20,5')).toBe(true)
-    expect(validateSearchArea('-3')).not.toBe(true)
+  it('tiền: báo lỗi khi vượt giới hạn cột, cùng câu với form phòng', () => {
+    expect(validateSearchMoney('999999999999')).toBe(true)
+    expect(validateSearchMoney('5000000000000')).toBe('Số tiền tối đa 999.999.999.999 đồng.')
   })
 
-  it('số người: số nguyên từ 1', () => {
+  it('diện tích: nhận dấu phẩy thập phân, không nhận số âm hay vượt giới hạn', () => {
+    expect(validateSearchArea('20,5')).toBe(true)
+    expect(validateSearchArea('-3')).not.toBe(true)
+    expect(validateSearchArea('999999,99')).toBe(true)
+    expect(validateSearchArea('1000000')).toBe('Diện tích tối đa 999.999,99 m².')
+  })
+
+  it('số người: số nguyên từ 1, không vượt int', () => {
     expect(validateSearchOccupants('')).toBe(true)
     expect(validateSearchOccupants('1')).toBe(true)
     expect(validateSearchOccupants('0')).not.toBe(true)
     expect(validateSearchOccupants('1,5')).not.toBe(true)
+    expect(validateSearchOccupants('2147483647')).toBe(true)
+    expect(validateSearchOccupants('99999999999')).toBe('Số người quá lớn.')
   })
 
   it('khoảng: chỉ sai khi cả hai đầu có giá trị và từ > đến', () => {

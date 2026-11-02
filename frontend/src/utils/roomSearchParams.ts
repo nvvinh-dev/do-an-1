@@ -6,8 +6,9 @@ import {
 } from '@/types/roomSearchTypes'
 import { normalizeRoomArea, normalizeRoomMoney, toRoomAreaInput } from '@/utils/validateRoomInput'
 
-// Giới hạn của cột trong database (validateRoomInput.ts). Số lớn hơn không lọc bớt phòng nào, còn gửi
-// lên thì server không đọc được thành số và trả `400` bằng câu tiếng Anh.
+// Giới hạn của cột trong database (validateRoomInput.ts), cũng là số lớn nhất server đọc được cho
+// `page`. Số lớn hơn gửi lên thì server không đọc được thành số và trả `400` bằng câu tiếng Anh, nên
+// URL bỏ các số này và form báo lỗi ngay dưới ô.
 const MAX_MONEY = 999_999_999_999
 const MAX_AREA = 999_999.99
 const MAX_INT = 2_147_483_647
@@ -28,7 +29,8 @@ export function parseRoomSearchParams(query: URLSearchParams): RoomSearchParams 
     maxArea: parseNumber(query.get('maxArea'), MAX_AREA),
     minOccupants: parseInteger(query.get('minOccupants'), MAX_INT),
     amenityIds: [...new Set(query.getAll('amenityIds').map(Number))].filter(
-      (id) => Number.isInteger(id) && id > 0,
+      // Mã lớn hơn số nguyên an toàn của JavaScript thì đổi sang chuỗi bị sai số và có thể vượt `long`.
+      (id) => Number.isSafeInteger(id) && id > 0,
     ),
     sortBy,
     // Không có `sortBy` thì server bỏ qua chiều sắp xếp, nên cũng không giữ trên URL.
@@ -121,6 +123,7 @@ export function validateSearchMoney(input: string): true | string {
   const value = normalizeRoomMoney(input)
   if (value === '') return true
   if (!/^\d+$/.test(value)) return 'Nhập số đồng nguyên, không âm.'
+  if (Number(value) > MAX_MONEY) return 'Số tiền tối đa 999.999.999.999 đồng.'
   return true
 }
 
@@ -128,6 +131,7 @@ export function validateSearchArea(input: string): true | string {
   const value = normalizeRoomArea(input)
   if (value === '') return true
   if (!/^\d+(\.\d+)?$/.test(value)) return 'Nhập diện tích bằng số, không âm.'
+  if (Number(value) > MAX_AREA) return 'Diện tích tối đa 999.999,99 m².'
   return true
 }
 
@@ -135,6 +139,7 @@ export function validateSearchOccupants(input: string): true | string {
   const value = input.trim()
   if (value === '') return true
   if (!/^\d+$/.test(value) || Number(value) < 1) return 'Số người phải là số nguyên từ 1 trở lên.'
+  if (Number(value) > MAX_INT) return 'Số người quá lớn.'
   return true
 }
 
@@ -188,7 +193,7 @@ function parseInteger(value: string | null, max: number): number | undefined {
 
 function parsePage(value: string | null): number {
   const page = Number(value)
-  return Number.isInteger(page) && page > 1 ? page : 1
+  return Number.isInteger(page) && page > 1 && page <= MAX_INT ? page : 1
 }
 
 function optionalNumber(value: string): number | undefined {
