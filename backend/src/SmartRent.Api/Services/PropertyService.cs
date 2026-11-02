@@ -11,6 +11,10 @@ namespace SmartRent.Api.Services;
 /// <summary>
 /// Khu trọ và phòng — BP-02, BP-03. Chủ trọ chỉ thao tác được trên khu trọ và phòng của mình (BR-04, FR-13):
 /// quyền sở hữu phòng truy qua khu trọ tới Chủ trọ, tài nguyên không thuộc người gọi trả 404 như không tồn tại.
+/// Thao tác ghi mở transaction và khóa dòng phòng hoặc khu trọ (<see cref="PropertyRowLocks"/>) trước khi nạp và
+/// kiểm điều kiện: hai thao tác cùng lúc trên một phòng, một khu thì bên sau chờ bên trước xong rồi đọc trạng thái mới.
+/// Đường dẫn ảnh kiểm trên Storage trước khi mở transaction, để không giữ khóa dòng trong lúc chờ Storage; kết quả
+/// giữ lại và lỗi ảnh vẫn trả ở vị trí cũ trong thứ tự kiểm (sau 404, 409).
 /// </summary>
 public class PropertyService
 {
@@ -96,6 +100,12 @@ public class PropertyService
         PropertyRequest request,
         CancellationToken cancellationToken = default)
     {
+        var imagePaths = request.ImagePaths ?? [];
+        var imageError = await CheckImagePathsAsync(imagePaths, FilePurpose.AnhKhuTro, landlordUserId, cancellationToken);
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        await _db.LockPropertyAsync(propertyId, cancellationToken);
+
         var property = await _db.Properties
             .Include(p => p.Amenities)
             .Include(p => p.Images)
@@ -127,9 +137,6 @@ public class PropertyService
             return AmenityScopeError<PropertyResponse>();
         }
 
-        var imagePaths = request.ImagePaths ?? [];
-        var imageError = await CheckImagePathsAsync(imagePaths, FilePurpose.AnhKhuTro, landlordUserId, cancellationToken);
-
         if (imageError is not null)
         {
             return ServiceResult<PropertyResponse>.Fail(StatusCodes.Status422UnprocessableEntity, imageError);
@@ -156,6 +163,7 @@ public class PropertyService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return await GetAsync(landlordUserId, property.Id, cancellationToken);
     }
@@ -244,13 +252,22 @@ public class PropertyService
 
     // ---------------------------------------------------------------- Phòng
 
-    /// <summary>FR-12, FR-15: phòng mới ở Trống và chưa hiển thị cho tới khi Chủ trọ bật.</summary>
+    /// <summary>
+    /// FR-12, FR-15: phòng mới ở Trống và chưa hiển thị cho tới khi Chủ trọ bật. Khóa chia sẻ dòng khu trọ:
+    /// khu không bị lưu trữ giữa lúc kiểm và lúc lưu phòng, còn nhiều lượt thêm phòng không chặn nhau.
+    /// </summary>
     public async Task<ServiceResult<RoomResponse>> CreateRoomAsync(
         long landlordUserId,
         long propertyId,
         RoomRequest request,
         CancellationToken cancellationToken = default)
     {
+        var imageError = await CheckImagePathsAsync(
+            request.ImagePaths ?? [], FilePurpose.AnhPhong, landlordUserId, cancellationToken);
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        await _db.LockPropertyForShareAsync(propertyId, cancellationToken);
+
         var property = await _db.Properties
             .AsNoTracking()
             .FirstOrDefaultAsync(
@@ -270,7 +287,7 @@ public class PropertyService
 
         var amenityIds = (request.AmenityIds ?? []).Distinct().ToList();
         var error = await ValidateRoomAsync(
-            landlordUserId, propertyId, null, request, amenityIds, mustKeepImage: false, cancellationToken);
+            propertyId, null, request, amenityIds, mustKeepImage: false, imageError, cancellationToken);
 
         if (error is not null)
         {
@@ -293,6 +310,8 @@ public class PropertyService
             return RoomCodeTaken<RoomResponse>();
         }
 
+        await transaction.CommitAsync(cancellationToken);
+
         return await GetRoomAsync(landlordUserId, room.Id, cancellationToken);
     }
 
@@ -307,6 +326,12 @@ public class PropertyService
         RoomRequest request,
         CancellationToken cancellationToken = default)
     {
+        var imageError = await CheckImagePathsAsync(
+            request.ImagePaths ?? [], FilePurpose.AnhPhong, landlordUserId, cancellationToken);
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        await _db.LockRoomAsync(roomId, cancellationToken);
+
         var room = await _db.Rooms
             .Include(r => r.ServiceFees)
             .Include(r => r.Amenities)
@@ -329,12 +354,12 @@ public class PropertyService
 
         var amenityIds = (request.AmenityIds ?? []).Distinct().ToList();
         var error = await ValidateRoomAsync(
-            landlordUserId,
             room.PropertyId,
             room.Id,
             request,
             amenityIds,
             mustKeepImage: room.VisibilityStatus == RoomVisibilityStatus.DangHienThi,
+            imageError,
             cancellationToken);
 
         if (error is not null)
@@ -368,6 +393,8 @@ public class PropertyService
         {
             return RoomCodeTaken<RoomResponse>();
         }
+
+        await transaction.CommitAsync(cancellationToken);
 
         return await GetRoomAsync(landlordUserId, room.Id, cancellationToken);
     }
@@ -494,14 +521,15 @@ public class PropertyService
     /// Quy tắc dữ liệu của phòng (api-design mục 5.2): giá trị số, phí dịch vụ, tiện ích và ảnh sai trả 422;
     /// mã phòng trùng với phòng khác trong cùng khu trọ trả 409. Trả null khi hợp lệ.
     /// <paramref name="mustKeepImage"/> khi phòng đang hiển thị: phòng hiển thị phải có ít nhất một ảnh (FR-15).
+    /// <paramref name="imageError"/> là kết quả <see cref="CheckImagePathsAsync"/>, kiểm trước khi mở transaction.
     /// </summary>
     private async Task<ServiceResult?> ValidateRoomAsync(
-        long landlordUserId,
         long propertyId,
         long? roomId,
         RoomRequest request,
         IReadOnlyCollection<long> amenityIds,
         bool mustKeepImage,
+        string? imageError,
         CancellationToken cancellationToken)
     {
         string? invalid = null;
@@ -546,7 +574,7 @@ public class PropertyService
         }
         else
         {
-            invalid = await CheckImagePathsAsync(imagePaths, FilePurpose.AnhPhong, landlordUserId, cancellationToken);
+            invalid = imageError;
         }
 
         if (invalid is not null)
@@ -674,6 +702,9 @@ public class PropertyService
         RoomVisibilityStatus target,
         CancellationToken cancellationToken = default)
     {
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        await _db.LockRoomAsync(roomId, cancellationToken);
+
         var room = await _db.Rooms.FirstOrDefaultAsync(
             r => r.Id == roomId && r.Property.LandlordUserId == landlordUserId,
             cancellationToken);
@@ -701,6 +732,7 @@ public class PropertyService
 
         room.VisibilityStatus = target;
         await _db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return ServiceResult.Ok();
     }
@@ -712,6 +744,9 @@ public class PropertyService
         RoomOccupancyStatus target,
         CancellationToken cancellationToken = default)
     {
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        await _db.LockRoomAsync(roomId, cancellationToken);
+
         var room = await _db.Rooms.FirstOrDefaultAsync(
             r => r.Id == roomId && r.Property.LandlordUserId == landlordUserId,
             cancellationToken);
@@ -740,6 +775,7 @@ public class PropertyService
 
         room.OccupancyStatus = target;
         await _db.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return ServiceResult.Ok();
     }
@@ -754,6 +790,7 @@ public class PropertyService
         CancellationToken cancellationToken = default)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        await _db.LockRoomAsync(roomId, cancellationToken);
 
         var room = await _db.Rooms
             .Include(r => r.Property)
@@ -797,6 +834,8 @@ public class PropertyService
         CancellationToken cancellationToken = default)
     {
         await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        await _db.LockPropertyAsync(propertyId, cancellationToken);
+        await _db.LockRoomsOfPropertyAsync(propertyId, cancellationToken);
 
         var property = await _db.Properties
             .Include(p => p.Rooms)
@@ -877,7 +916,8 @@ public class PropertyService
     }
 
     /// <summary>
-    /// Yêu cầu thuê vừa được duyệt hoặc rút cùng lúc với thao tác lưu trữ: xmin của rental_requests chặn bên lưu sau.
+    /// Yêu cầu thuê đang chờ vừa được rút hoặc từ chối cùng lúc với thao tác lưu trữ — hai thao tác này không khóa
+    /// dòng phòng: xmin của rental_requests chặn bên lưu sau.
     /// </summary>
     private async Task<bool> TrySaveArchiveAsync(CancellationToken cancellationToken)
     {

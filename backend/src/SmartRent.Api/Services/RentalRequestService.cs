@@ -35,6 +35,12 @@ public class RentalRequestService
         SubmitRentalRequestRequest request,
         CancellationToken cancellationToken = default)
     {
+        // Khóa chia sẻ dòng phòng trước khi đọc: phòng không bị lưu trữ hoặc duyệt giữ chỗ giữa lúc kiểm và lúc lưu
+        // yêu cầu, còn nhiều người gửi cùng lúc không chặn nhau. Lưu yêu cầu trước để có id gắn vào thông báo;
+        // hai lần lưu nằm trong cùng transaction.
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        await _db.LockRoomForShareAsync(roomId, cancellationToken);
+
         // FR-26: phòng không đủ điều kiện BR-05 trả 404 giống chi tiết công khai,
         // để không dò được phòng đang ẩn qua id.
         var room = await _db.Rooms
@@ -87,9 +93,6 @@ public class RentalRequestService
             Status = RentalRequestStatus.ChoDuyet,
             SubmittedAt = now
         };
-
-        // Lưu yêu cầu trước để có id gắn vào thông báo; hai lần lưu nằm trong một transaction.
-        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
 
         _db.RentalRequests.Add(rentalRequest);
 
@@ -254,6 +257,11 @@ public class RentalRequestService
         long id,
         CancellationToken cancellationToken = default)
     {
+        // Khóa dòng phòng trước khi đọc, cùng thứ tự với thao tác lưu trữ, đổi trạng thái phòng và gửi yêu cầu thuê:
+        // thao tác chạy sau chờ lượt này xong rồi đọc trạng thái mới, không ghi đè trạng thái phòng của nhau.
+        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
+        await _db.LockRoomOfRentalRequestAsync(id, cancellationToken);
+
         var request = await FindAsync(id, cancellationToken);
 
         if (request is null || request.Room.Property.LandlordUserId != landlordUserId)
@@ -279,8 +287,6 @@ public class RentalRequestService
         // Hết hạn giữ chỗ được tính ngay, không chờ tác vụ định kỳ (architecture mục 7): yêu cầu đã duyệt khác
         // của người thuê mà quá 72 giờ thì chuyển Hết hạn như ExpireHeldAsync. Lưu trước lượt duyệt để unique
         // index BR-28 không thấy hai yêu cầu DaDuyet cùng lúc; hai lần lưu nằm trong một transaction.
-        await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
-
         var expiredHolds = await _db.RentalRequests
             .Include(r => r.Room)
             .ThenInclude(room => room.Property)
