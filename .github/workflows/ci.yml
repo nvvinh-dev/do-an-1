@@ -1,20 +1,22 @@
-# Kiểm tra tự động mỗi PR vào develop và mỗi lần push lên develop (testing-strategy mục 5).
+# Kiểm tra tự động mỗi PR và mỗi lần push lên develop (testing-strategy mục 5).
 # Không cần secret: unit test backend chỉ dùng Domain, test frontend không gọi API.
 name: CI
 
 on:
+  # Không lọc nhánh base: PR xếp chồng (base là nhánh của thẻ trước) cũng chạy, và kết quả gắn với
+  # commit nên vẫn còn khi PR đổi base sang develop.
   pull_request:
-    branches: [develop]
   push:
     branches: [develop]
 
 permissions:
   contents: read
 
-# Push mới lên cùng PR thì hủy lần chạy cũ đang dở.
+# Push mới lên cùng PR thì hủy lần chạy cũ đang dở. Lần chạy trên develop thì không hủy, để mỗi
+# merge commit đều có kết quả.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   backend:
