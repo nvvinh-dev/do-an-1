@@ -77,6 +77,11 @@ const STATUS_DISPLAYS = {
     TuChoi: danger('Từ chối'),
     DaThuHoi: danger('Đã thu hồi'),
   },
+  // Tài khoản ở AD3: API trả cờ `isLocked`, trang đổi thành mã để nhãn và màu nằm chung một chỗ.
+  userAccount: {
+    HoatDong: success('Hoạt động'),
+    BiKhoa: danger('Đã khóa'),
+  },
   // Lời mời ở ghép (Phase 2).
   coTenantInvitation: {
     ChoPhanHoi: pending('Chờ phản hồi'),
