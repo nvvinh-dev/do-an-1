@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SmartRent.Api.Contracts;
+using SmartRent.Domain.Enums;
 using SmartRent.Infrastructure.Identity;
 using SmartRent.Infrastructure.Persistence;
 
@@ -64,6 +65,16 @@ public class UserAdminService
                                  .ToListAsync(cancellationToken))
             .ToLookup(r => r.UserId, r => r.Name!);
 
+        // Số hợp đồng chưa kết thúc để giao diện cảnh báo trước khi khóa Chủ trọ (FR-09).
+        var activeContractCounts = await _db.Contracts
+            .AsNoTracking()
+            .Where(c => pageUserIds.Contains(c.Room.Property.LandlordUserId)
+                        && c.Status != ContractStatus.DaThanhLy
+                        && c.Status != ContractStatus.DaHuy)
+            .GroupBy(c => c.Room.Property.LandlordUserId)
+            .Select(group => new { LandlordUserId = group.Key, Count = group.Count() })
+            .ToDictionaryAsync(group => group.LandlordUserId, group => group.Count, cancellationToken);
+
         var items = users
             .Select(user => new UserListItemResponse(
                 user.Id,
@@ -73,7 +84,10 @@ public class UserAdminService
                 user.IsLocked,
                 user.LockReason,
                 user.RegisteredAt,
-                [.. rolesByUser[user.Id]]))
+                [.. rolesByUser[user.Id]],
+                rolesByUser[user.Id].Contains(AppRoles.Landlord)
+                    ? activeContractCounts.GetValueOrDefault(user.Id)
+                    : null))
             .ToList();
 
         return new PagedResponse<UserListItemResponse>(
