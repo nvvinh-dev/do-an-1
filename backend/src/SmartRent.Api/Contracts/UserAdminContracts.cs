@@ -8,6 +8,7 @@ public record UserListItemResponse(
     bool IsLocked,
     string? LockReason,
     DateTimeOffset RegisteredAt,
-    IReadOnlyList<string> Roles);
+    IReadOnlyList<string> Roles,
+    int? ActiveContractCount);
 
 public record LockUserRequest(string Reason);
