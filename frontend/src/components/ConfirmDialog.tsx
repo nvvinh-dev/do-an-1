@@ -1,5 +1,7 @@
+import { TriangleAlert } from 'lucide-react'
 import { useId, useState } from 'react'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -22,12 +24,19 @@ interface ReasonField {
   placeholder?: string
 }
 
+interface ConfirmDialogWarning {
+  title: string
+  description: string
+}
+
 interface ConfirmDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
   /** Câu nói rõ hậu quả của thao tác, vì thao tác này không hoàn tác được. */
   description: string
+  /** Rủi ro riêng của trường hợp này, Admin phải thấy trước khi xác nhận (khóa Chủ trọ còn hợp đồng, FR-09). */
+  warning?: ConfirmDialogWarning
   confirmLabel: string
   cancelLabel?: string
   /** Hủy, từ chối, khóa: nút xác nhận màu `destructive`. */
@@ -65,6 +74,7 @@ export default function ConfirmDialog({ open, onOpenChange, isPending = false, .
 function ConfirmDialogBody({
   title,
   description,
+  warning,
   confirmLabel,
   cancelLabel = 'Quay lại',
   destructive = false,
@@ -89,6 +99,14 @@ function ConfirmDialogBody({
             chữ và nút tràn khỏi hộp thoại ở 360px. */}
         <AlertDialogDescription className="wrap-anywhere">{description}</AlertDialogDescription>
       </AlertDialogHeader>
+
+      {warning && (
+        <Alert className="border-warning/40">
+          <TriangleAlert />
+          <AlertTitle>{warning.title}</AlertTitle>
+          <AlertDescription>{warning.description}</AlertDescription>
+        </Alert>
+      )}
 
       {reason && (
         <div className="flex flex-col gap-2">

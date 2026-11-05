@@ -11,6 +11,7 @@ describe('getStatusDisplay', () => {
     expect(getStatusDisplay('invoice', 'QuaHan')).toEqual({ label: 'Quá hạn', tone: 'danger' })
     expect(getStatusDisplay('paymentReport', 'TuChoiXacNhan')).toEqual({ label: 'Bị từ chối', tone: 'danger' })
     expect(getStatusDisplay('landlordApplication', 'DaThuHoi')).toEqual({ label: 'Đã thu hồi', tone: 'danger' })
+    expect(getStatusDisplay('userAccount', 'BiKhoa')).toEqual({ label: 'Đã khóa', tone: 'danger' })
     expect(getStatusDisplay('coTenantInvitation', 'DaRut')).toEqual({ label: 'Đã rút', tone: 'neutral' })
   })
 
