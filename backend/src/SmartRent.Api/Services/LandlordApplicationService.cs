@@ -349,9 +349,10 @@ public class LandlordApplicationService
             return ServiceResult.Fail(StatusCodes.Status409Conflict, "Hồ sơ này không còn chờ duyệt.");
         }
 
+        var trimmedReason = reason.Trim();
         var previous = application.Status;
         application.Status = LandlordApplicationStatus.TuChoi;
-        application.RejectReason = reason;
+        application.RejectReason = trimmedReason;
         application.ReviewedByUserId = adminUserId;
         application.ReviewedAt = DateTimeOffset.UtcNow;
 
@@ -361,13 +362,13 @@ public class LandlordApplicationService
             nameof(LandlordApplication),
             application.Id,
             new { Status = previous.ToString() },
-            new { Status = application.Status.ToString(), Reason = reason });
+            new { Status = application.Status.ToString(), Reason = trimmedReason });
 
         _notifier.Notify(
             application.UserId,
             "HoSoChuTroBiTuChoi",
             "Hồ sơ Chủ trọ bị từ chối",
-            $"Lý do: {reason}. Bạn có thể bổ sung và nộp lại hồ sơ mới.",
+            $"Lý do: {trimmedReason}. Bạn có thể bổ sung và nộp lại hồ sơ mới.",
             nameof(LandlordApplication),
             application.Id);
 
