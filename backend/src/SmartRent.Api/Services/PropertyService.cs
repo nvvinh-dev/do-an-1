@@ -901,9 +901,7 @@ public class PropertyService
 
         foreach (var request in pending)
         {
-            request.Status = RentalRequestStatus.TuChoi;
-            request.RejectReason = RoomRetiredReason;
-            request.ProcessedAt = now;
+            request.RejectBySystem(RoomRetiredReason, now);
 
             _notifier.Notify(
                 request.TenantUserId,

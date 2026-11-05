@@ -114,13 +114,14 @@ public class RentalRequest
     }
 
     /// <summary>
-    /// BR-06: phòng vừa được duyệt cho yêu cầu khác, nên mọi yêu cầu còn Chờ duyệt của phòng bị từ chối — kể cả yêu
-    /// cầu đã quá 168 giờ mà tác vụ định kỳ chưa chuyển Hết hạn.
+    /// Hệ thống từ chối một yêu cầu còn Chờ duyệt vì phòng không còn cho thuê được, với lý do do hệ thống sinh:
+    /// BR-06 (phòng vừa được duyệt cho yêu cầu khác) và FR-20 (phòng hoặc khu trọ bị lưu trữ). Từ chối cả yêu cầu
+    /// đã quá 168 giờ mà tác vụ định kỳ chưa chuyển Hết hạn.
     /// </summary>
     /// <exception cref="InvalidOperationException">Gọi khi yêu cầu không ở Chờ duyệt — lỗi lập trình.</exception>
-    public void RejectForRoomTaken(string reason, DateTimeOffset now)
+    public void RejectBySystem(string reason, DateTimeOffset now)
     {
-        EnsureAllowed(Status == RentalRequestStatus.ChoDuyet, nameof(RejectForRoomTaken));
+        EnsureAllowed(Status == RentalRequestStatus.ChoDuyet, nameof(RejectBySystem));
 
         Status = RentalRequestStatus.TuChoi;
         RejectReason = reason;
