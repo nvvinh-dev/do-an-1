@@ -293,6 +293,7 @@ function LockUserDialog({ user, onClose }: UserDialogProps) {
       reason={{
         label: 'Lý do khóa',
         required: true,
+        maxLength: 500,
         placeholder: 'Ví dụ: Đăng thông tin phòng sai sự thật nhiều lần.',
       }}
       isPending={lockMutation.isPending}
