@@ -151,7 +151,7 @@ export default function SearchPage() {
                   <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {searchQuery.data.items.map((room) => (
                       <li key={room.id}>
-                        <RoomCard room={room} />
+                        <RoomCard room={room} listSearch={searchParams.toString()} />
                       </li>
                     ))}
                   </ul>
@@ -219,14 +219,18 @@ function FilterPanel({ params, onApply, onClear }: FilterPanelProps) {
   )
 }
 
-/** Cả thẻ bấm được để mở chi tiết phòng (P2). */
-function RoomCard({ room }: { room: RoomSearchItem }) {
+/**
+ * Cả thẻ bấm được để mở chi tiết phòng (P2). `listSearch` là query bộ lọc và trang đang xem, gửi kèm
+ * qua `state` để nút quay lại ở P2 về đúng kết quả này.
+ */
+function RoomCard({ room, listSearch }: { room: RoomSearchItem; listSearch: string }) {
   const shownAmenities = room.amenities.slice(0, 3)
   const hiddenAmenityCount = room.amenities.length - shownAmenities.length
 
   return (
     <Link
       to={`/rooms/${room.id}`}
+      state={{ listSearch }}
       className="flex h-full flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm outline-none transition-colors hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50"
     >
       {room.coverImageUrl ? (
