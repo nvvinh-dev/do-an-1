@@ -37,6 +37,21 @@ describe('buildAuditLogChanges', () => {
     expect(changes[1].after).toEqual(['******6789'])
   })
 
+  it('hiện tên ngân hàng thay cho mã BIN, số tài khoản giữ nguyên dạng đã che', () => {
+    const changes = buildAuditLogChanges(
+      { BankBin: '970436', AccountNumber: '******6789' },
+      { BankBin: '970418', AccountNumber: '******6789' },
+      'AppUser',
+    )
+    expect(changes[0]).toMatchObject({ label: 'Ngân hàng', before: ['Vietcombank'], after: ['BIDV'], changed: true })
+    expect(changes[1].after).toEqual(['******6789'])
+  })
+
+  it('mã BIN không có trong danh sách VietQR thì hiện nguyên mã', () => {
+    const [change] = buildAuditLogChanges(null, { BankBin: '999999' }, 'AppUser')
+    expect(change.after).toEqual(['999999'])
+  })
+
   it('cả hai vế trống thì không có dòng nào', () => {
     expect(buildAuditLogChanges(null, null, 'Invoice')).toEqual([])
   })

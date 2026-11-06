@@ -5,6 +5,7 @@ import { formatDateTime } from '@/utils/formatDateTime'
 import { formatMeterIndex } from '@/utils/formatMeterIndex'
 import { getPaymentMethodLabel } from '@/utils/paymentMethodLabels'
 import { getStatusDisplay, type StatusKind } from '@/utils/statusLabels'
+import { findVietQrBank } from '@/utils/vietQrBanks'
 
 /** Ô không có giá trị: thao tác không ghi trường này ở vế đó, hoặc trường đang trống. */
 const EMPTY_VALUE = '—'
@@ -14,7 +15,7 @@ const FIELD_LABELS: Record<string, string> = {
   AccountName: 'Tên chủ tài khoản',
   AccountNumber: 'Số tài khoản',
   Amount: 'Số tiền',
-  BankBin: 'Mã ngân hàng',
+  BankBin: 'Ngân hàng',
   CancelReason: 'Lý do hủy',
   CancelledBy: 'Bên hủy',
   Category: 'Loại dòng',
@@ -145,6 +146,7 @@ function formatText(field: string, value: string, entityType: string): string {
   if (field === 'RoomStatus') return getStatusDisplay('roomOccupancy', value).label
   if (field === 'Role' || field === 'CancelledBy') return getLabel(value, PARTY_LABELS)
   if (field === 'Category') return getLabel(value, INVOICE_LINE_CATEGORY_LABELS)
+  if (field === 'BankBin') return findVietQrBank(value)?.shortName ?? value
   if (field === 'DepositReceivedMethod' || field === 'DepositRefundMethod') {
     return value === 'TienMat' || value === 'ChuyenKhoan' ? getPaymentMethodLabel(value) : value
   }
