@@ -1,5 +1,5 @@
 import { ChevronLeft, ImageOff, LogIn, Send } from 'lucide-react'
-import { useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import MoneyText from '@/components/MoneyText'
@@ -80,9 +80,10 @@ function RoomDetailContent({ detail }: { detail: PublicRoomDetail }) {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
         <RoomGallery images={room.images} roomCode={room.code} />
 
-        <aside className="flex flex-col gap-4 rounded-xl border bg-card p-4 shadow-sm md:p-6 lg:sticky lg:top-22 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+        {/* Từ `lg` khối bám theo khi cuộn nên không được cao hơn phần màn hình dưới thanh trên: mở form gửi
+            yêu cầu thì khối tự cuộn bên trong, nút gửi vẫn tới được trên màn laptop. */}
+        <aside className="flex flex-col gap-4 rounded-xl border bg-card p-4 shadow-sm md:p-6 lg:sticky lg:top-22 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:max-h-[calc(100svh-6.5rem)] lg:overflow-y-auto">
           <PriceSummary room={room} />
-          <Separator />
           <RentalRequestAction room={room} />
         </aside>
 
@@ -233,18 +234,24 @@ function RentalRequestAction({ room }: { room: PublicRoom }) {
   const [formOpen, setFormOpen] = useState(false)
 
   if (isPending) {
-    return <Skeleton className="h-10 w-full" />
+    return (
+      <ActionSection>
+        <Skeleton className="h-10 w-full" />
+      </ActionSection>
+    )
   }
 
   if (!user) {
     const redirect = encodeURIComponent(location.pathname)
     return (
-      <Button asChild size="lg" className="w-full">
-        <Link to={`/login?redirect=${redirect}`}>
-          <LogIn />
-          Đăng nhập để gửi yêu cầu
-        </Link>
-      </Button>
+      <ActionSection>
+        <Button asChild size="lg" className="w-full">
+          <Link to={`/login?redirect=${redirect}`}>
+            <LogIn />
+            Đăng nhập để gửi yêu cầu
+          </Link>
+        </Button>
+      </ActionSection>
     )
   }
 
@@ -254,15 +261,17 @@ function RentalRequestAction({ room }: { room: PublicRoom }) {
 
   if (!formOpen) {
     return (
-      <Button type="button" size="lg" className="w-full" onClick={() => setFormOpen(true)}>
-        <Send />
-        Gửi yêu cầu thuê
-      </Button>
+      <ActionSection>
+        <Button type="button" size="lg" className="w-full" onClick={() => setFormOpen(true)}>
+          <Send />
+          Gửi yêu cầu thuê
+        </Button>
+      </ActionSection>
     )
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <ActionSection>
       <div className="flex items-center justify-between gap-2">
         <h2 className="font-semibold">Gửi yêu cầu thuê</h2>
         <Button type="button" variant="ghost" size="sm" onClick={() => setFormOpen(false)}>
@@ -270,7 +279,17 @@ function RentalRequestAction({ room }: { room: PublicRoom }) {
         </Button>
       </div>
       <RentalRequestForm roomId={room.id} maxOccupants={room.maxOccupants} />
-    </div>
+    </ActionSection>
+  )
+}
+
+/** Đường kẻ ngăn với khối giá chỉ hiện khi có nút hoặc form; Chủ trọ, Admin không có nên không có đường kẻ thừa. */
+function ActionSection({ children }: { children: ReactNode }) {
+  return (
+    <>
+      <Separator />
+      <div className="flex flex-col gap-4">{children}</div>
+    </>
   )
 }
 
