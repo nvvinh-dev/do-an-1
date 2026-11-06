@@ -53,29 +53,45 @@ const router = createBrowserRouter([
   // Khách và mọi vai trò
   {
     element: <PublicLayout />,
+    // Lỗi ở chính khung (thanh trên) thì thay cả khung.
+    errorElement: <RouteErrorFallback />,
     children: [
-      { path: '/', element: <SearchPage /> },
-      { path: '/rooms/:id', element: <RoomPublicDetailPage /> },
-      { path: '/login', element: <LoginPage /> },
-      { path: '/register', element: <RegisterPage /> },
-      { path: '/forgot-password', element: <ForgotPasswordPage /> },
-      { path: '/reset-password', element: <ResetPasswordPage /> },
-      { path: '*', element: <NotFoundPage /> },
+      {
+        // Lỗi khi vẽ một trang chỉ thay phần nội dung, giữ thanh trên để sang trang khác.
+        errorElement: <RouteErrorFallback />,
+        children: [
+          { path: '/', element: <SearchPage /> },
+          { path: '/rooms/:id', element: <RoomPublicDetailPage /> },
+          { path: '/login', element: <LoginPage /> },
+          { path: '/register', element: <RegisterPage /> },
+          { path: '/forgot-password', element: <ForgotPasswordPage /> },
+          { path: '/reset-password', element: <ResetPasswordPage /> },
+          { path: '*', element: <NotFoundPage /> },
+        ],
+      },
     ],
   },
 
   // Dùng chung, hiện trong layout của vai trò đang đăng nhập
   {
     element: <ProtectedRoute />,
+    // Lỗi ở chính khung của vai trò đang đăng nhập thì thay cả khung.
+    errorElement: <RouteErrorFallback />,
     children: [
       {
         element: <CurrentRoleLayout />,
         children: [
-          { path: '/account', element: <AccountPage /> },
-          // Admin không có màn Thông báo (docs/frontend-screens.md mục 1, 8.4)
           {
-            element: <ProtectedRoute roles={['Tenant', 'Landlord']} />,
-            children: [{ path: '/notifications', element: <NotificationsPage /> }],
+            // Lỗi khi vẽ một trang chỉ thay phần nội dung, giữ menu để sang trang khác.
+            errorElement: <RouteErrorFallback />,
+            children: [
+              { path: '/account', element: <AccountPage /> },
+              // Admin không có màn Thông báo (docs/frontend-screens.md mục 1, 8.4)
+              {
+                element: <ProtectedRoute roles={['Tenant', 'Landlord']} />,
+                children: [{ path: '/notifications', element: <NotificationsPage /> }],
+              },
+            ],
           },
         ],
       },
@@ -155,16 +171,24 @@ const router = createBrowserRouter([
   {
     path: '/admin',
     element: <ProtectedRoute roles={['Admin']} />,
+    // Lỗi ở chính khung (thanh bên) thì thay cả khung.
+    errorElement: <RouteErrorFallback />,
     children: [
       {
         element: <AdminLayout />,
         children: [
-          { index: true, element: <AdminDashboardPage /> },
-          { path: 'landlord-applications', element: <LandlordApplicationListPage /> },
-          { path: 'landlord-applications/:id', element: <LandlordApplicationReviewPage /> },
-          { path: 'users', element: <UserListPage /> },
-          { path: 'audit-logs', element: <AuditLogPage /> },
-          { path: '*', element: <NotFoundPage /> },
+          {
+            // Lỗi khi vẽ một trang chỉ thay phần nội dung, giữ menu để sang trang khác.
+            errorElement: <RouteErrorFallback />,
+            children: [
+              { index: true, element: <AdminDashboardPage /> },
+              { path: 'landlord-applications', element: <LandlordApplicationListPage /> },
+              { path: 'landlord-applications/:id', element: <LandlordApplicationReviewPage /> },
+              { path: 'users', element: <UserListPage /> },
+              { path: 'audit-logs', element: <AuditLogPage /> },
+              { path: '*', element: <NotFoundPage /> },
+            ],
+          },
         ],
       },
     ],
