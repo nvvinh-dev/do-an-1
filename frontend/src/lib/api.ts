@@ -32,25 +32,30 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// Access token sống 60 phút và hệ thống không dùng refresh token, nên gặp 401 là phiên
-// đã hết: xóa token và đặt tài khoản đang đăng nhập về null. ProtectedRoute thấy chưa
-// đăng nhập sẽ chuyển tới /login?redirect=<trang đang mở>. Riêng 401 của POST /auth/login
-// là sai email hoặc mật khẩu, màn đăng nhập tự hiện (docs/frontend-screens.md mục 1).
+// Kết thúc phiên từ phía client: xóa token và đặt tài khoản đang đăng nhập về null.
+// ProtectedRoute thấy chưa đăng nhập sẽ chuyển tới /login?redirect=<trang đang mở>.
 // Dữ liệu còn trong cache là của phiên cũ nên đặt lại hết, nếu không người đăng nhập kế
 // tiếp trên cùng trang sẽ thấy dữ liệu của tài khoản trước (ví dụ số thông báo chưa đọc)
 // khi API chưa kịp trả. Dùng resetQueries chứ không removeQueries: trang công khai vẫn
-// đứng nguyên sau 401, query của nó phải tải lại không kèm token; xóa hẳn thì component
-// đang bám query đã xóa không nhận được kết quả và đứng ở khung xương. Chỉ chừa query
-// tài khoản để đặt về null: đặt lại nó thì useCurrentUser gọi lại /auth/me vô ích.
+// đứng nguyên sau khi hết phiên, query của nó phải tải lại không kèm token; xóa hẳn thì
+// component đang bám query đã xóa không nhận được kết quả và đứng ở khung xương. Chỉ chừa
+// query tài khoản để đặt về null: đặt lại nó thì useCurrentUser gọi lại /auth/me vô ích.
+export function endSession() {
+  setAccessToken(null)
+  const isSessionData = (query: { queryKey: readonly unknown[] }) =>
+    query.queryKey.join() !== currentUserQueryKey.join()
+  void queryClient.resetQueries({ predicate: isSessionData })
+  queryClient.setQueryData(currentUserQueryKey, null)
+}
+
+// Access token sống 60 phút và hệ thống không dùng refresh token, nên gặp 401 là phiên
+// đã hết. Riêng 401 của POST /auth/login là sai email hoặc mật khẩu, màn đăng nhập tự
+// hiện (docs/frontend-screens.md mục 1).
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (axios.isAxiosError(error) && error.response?.status === 401 && error.config?.url !== '/auth/login') {
-      setAccessToken(null)
-      const isSessionData = (query: { queryKey: readonly unknown[] }) =>
-        query.queryKey.join() !== currentUserQueryKey.join()
-      void queryClient.resetQueries({ predicate: isSessionData })
-      queryClient.setQueryData(currentUserQueryKey, null)
+      endSession()
     }
     return Promise.reject(error)
   },

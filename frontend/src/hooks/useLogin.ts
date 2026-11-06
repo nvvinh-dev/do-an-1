@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { setAccessToken } from '@/lib/api'
-import { currentUserQueryKey } from '@/lib/queryClient'
+import { currentUserQueryKey, sessionRoleChangedQueryKey } from '@/lib/queryClient'
 import { login } from '@/services/authService'
 
 /**
@@ -15,6 +15,7 @@ export function useLogin() {
     onSuccess: (response) => {
       setAccessToken(response.accessToken)
       queryClient.setQueryData(currentUserQueryKey, response.user)
+      queryClient.removeQueries({ queryKey: sessionRoleChangedQueryKey })
     },
   })
 }
