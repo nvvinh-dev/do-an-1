@@ -170,12 +170,12 @@ public class RentalRequestTests
     }
 
     [Fact]
-    public void RejectForRoomTaken_ChoDuyet_TuChoiKemLyDo()
+    public void RejectBySystem_ChoDuyet_TuChoiKemLyDo()
     {
         var request = Pending();
         var now = SubmittedAt.AddHours(3);
 
-        request.RejectForRoomTaken("Phòng đã được duyệt cho người khác.", now);
+        request.RejectBySystem("Phòng đã được duyệt cho người khác.", now);
 
         Assert.Equal(RentalRequestStatus.TuChoi, request.Status);
         Assert.Equal("Phòng đã được duyệt cho người khác.", request.RejectReason);
@@ -183,23 +183,37 @@ public class RentalRequestTests
     }
 
     [Fact]
-    public void RejectForRoomTaken_ChoDuyetQuaHanMaTacVuChuaChay_VanTuChoi()
+    public void RejectBySystem_ChoDuyetQuaHanMaTacVuChuaChay_VanTuChoi()
     {
         // BR-06 từ chối mọi yêu cầu còn ChoDuyet của phòng, kể cả yêu cầu đã quá 168 giờ mà tác vụ chưa chuyển HetHan.
         var request = Pending();
 
-        request.RejectForRoomTaken("Phòng đã được duyệt cho người khác.", SubmittedAt.AddHours(200));
+        request.RejectBySystem("Phòng đã được duyệt cho người khác.", SubmittedAt.AddHours(200));
 
         Assert.Equal(RentalRequestStatus.TuChoi, request.Status);
     }
 
     [Fact]
-    public void RejectForRoomTaken_KhongOChoDuyet_NemLoiVaGiuNguyen()
+    public void RejectBySystem_PhongBiLuuTru_TuChoiKemLyDoNgungChoThue()
+    {
+        // FR-20: lưu trữ phòng hoặc khu trọ từ chối mọi yêu cầu còn ChoDuyet của phòng, kể cả yêu cầu đã quá 168 giờ.
+        var request = Pending();
+        var now = SubmittedAt.AddHours(170);
+
+        request.RejectBySystem("Phòng đã ngừng cho thuê.", now);
+
+        Assert.Equal(RentalRequestStatus.TuChoi, request.Status);
+        Assert.Equal("Phòng đã ngừng cho thuê.", request.RejectReason);
+        Assert.Equal(now, request.ProcessedAt);
+    }
+
+    [Fact]
+    public void RejectBySystem_KhongOChoDuyet_NemLoiVaGiuNguyen()
     {
         var request = Approved();
 
         Assert.Throws<InvalidOperationException>(
-            () => request.RejectForRoomTaken("Phòng đã được duyệt cho người khác.", ApprovedAt.AddHours(1)));
+            () => request.RejectBySystem("Phòng đã được duyệt cho người khác.", ApprovedAt.AddHours(1)));
         Assert.Equal(RentalRequestStatus.DaDuyet, request.Status);
         Assert.Null(request.RejectReason);
     }

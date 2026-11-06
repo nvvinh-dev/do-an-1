@@ -348,7 +348,7 @@ public class RentalRequestService
 
         foreach (var other in others)
         {
-            other.RejectForRoomTaken(RoomTakenReason, now);
+            other.RejectBySystem(RoomTakenReason, now);
 
             _notifier.Notify(
                 other.TenantUserId,
