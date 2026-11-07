@@ -446,6 +446,7 @@ function RejectDialog({ application, open, onOpenChange }: RejectDialogProps) {
       reason={{
         label: 'Lý do từ chối',
         required: true,
+        maxLength: 500,
         placeholder: 'Ví dụ: Ảnh mặt sau CCCD bị mờ, không đọc được số.',
       }}
       isPending={rejectMutation.isPending}
