@@ -121,7 +121,8 @@ export default function AuditLogFilterForm({ filters, onApply, onClear }: AuditL
           control={control}
           rules={{ deps: ['toDate'] }}
           render={({ field }) => (
-            <Field>
+            // Ở 360px nửa hàng không đủ chỗ: ô ngày cắt mất chữ số cuối của năm.
+            <Field className="col-span-2 sm:col-span-1">
               <FieldLabel htmlFor="audit-fromDate">Từ ngày</FieldLabel>
               <Input {...field} id="audit-fromDate" type="date" />
             </Field>
@@ -136,7 +137,7 @@ export default function AuditLogFilterForm({ filters, onApply, onClear }: AuditL
               isDateRangeValid(values.fromDate, toDate) || 'Đến ngày không được trước từ ngày.',
           }}
           render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
+            <Field data-invalid={fieldState.invalid} className="col-span-2 sm:col-span-1">
               <FieldLabel htmlFor="audit-toDate">Đến ngày</FieldLabel>
               <Input {...field} id="audit-toDate" type="date" aria-invalid={fieldState.invalid} />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
