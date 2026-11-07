@@ -118,3 +118,70 @@ export interface ContractDetail {
 export interface ContractReasonRequest {
   reason: string
 }
+
+/**
+ * Body của `POST /contracts` (kèm `rentalRequestId`) và `PUT /contracts/{id}` (docs/api-design.md mục 8):
+ * chốt cứng giá tại thời điểm lập. Ngày dạng `YYYY-MM-DD`.
+ */
+export interface ContractTermsRequest {
+  rentPrice: number
+  electricityUnitPrice: number
+  waterUnitPrice: number
+  depositAmount: number
+  initialElectricityIndex: number
+  initialWaterIndex: number
+  startDate: string
+  endDate: string
+  /** Từ 1 tới 30. */
+  paymentDueDays: number
+  serviceFees: ContractServiceFee[]
+  occupants: ContractOccupant[]
+}
+
+export interface CreateContractRequest extends ContractTermsRequest {
+  rentalRequestId: number
+}
+
+/** Giá trị của form lập, sửa hợp đồng: chuỗi người dùng gõ, đổi sang `ContractTermsRequest` khi gửi. */
+export interface ContractFormValues {
+  rentPrice: string
+  electricityUnitPrice: string
+  waterUnitPrice: string
+  depositAmount: string
+  initialElectricityIndex: string
+  initialWaterIndex: string
+  startDate: string
+  endDate: string
+  paymentDueDays: string
+  serviceFees: { name: string; amount: string }[]
+  occupants: { fullName: string; phoneNumber: string }[]
+}
+
+/** Response của `GET /rooms/{id}/meter-readings/latest`; `null` khi phòng chưa từng có hợp đồng. */
+export interface MeterReading {
+  electricityIndex: number
+  waterIndex: number
+}
+
+/** Body của `POST /contracts/{id}/deposit/confirm`. `receivedAt` không sau thời điểm hiện tại. */
+export interface ConfirmDepositRequest {
+  receivedAt: string
+  method: PaymentMethod
+}
+
+/**
+ * Body của `POST /contracts/{id}/deposit/refund`. `amount` và `note` chỉ dùng khi Người thuê là bên hủy;
+ * Chủ trọ hủy thì server hoàn đủ tiền cọc.
+ */
+export interface RefundDepositRequest {
+  refundedAt: string
+  refundMethod: PaymentMethod
+  amount: number | null
+  note: string | null
+}
+
+/** Body của `PATCH /contracts/{id}/initial-meter-readings`. */
+export interface InitialMeterReadingsRequest {
+  initialElectricityIndex: number
+  initialWaterIndex: number
+}
