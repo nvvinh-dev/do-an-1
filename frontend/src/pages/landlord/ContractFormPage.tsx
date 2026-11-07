@@ -150,10 +150,11 @@ function EditContractPage({ contractId }: { contractId: number }) {
         <Alert variant="destructive">
           <TriangleAlert />
           <AlertTitle>Không sửa được hợp đồng này</AlertTitle>
-          <AlertDescription>
-            {contract.status === 'Nhap'
-              ? 'Đã quá hạn giữ chỗ 72 giờ, hợp đồng sẽ tự hủy.'
-              : 'Chỉ sửa được hợp đồng nháp. Hợp đồng đã gửi thì thu hồi về nháp trước khi sửa.'}
+          <AlertDescription className="flex flex-col items-start gap-2">
+            <p>{getEditBlockedReason(contract)}</p>
+            <Button asChild variant="outline">
+              <Link to={backLink.to}>Xem hợp đồng</Link>
+            </Button>
           </AlertDescription>
         </Alert>
       </FormFrame>
@@ -161,6 +162,25 @@ function EditContractPage({ contractId }: { contractId: number }) {
   }
 
   return <EditContractForm contract={contract} backLink={backLink} />
+}
+
+/**
+ * Vì sao không sửa được. Trang này cũng hiện ra khi đang sửa thì `PUT` trả `409` và dữ liệu tải lại sang
+ * trạng thái mới (người thuê vừa hủy, hợp đồng vừa có hiệu lực), nên chỉ gợi ý thu hồi khi hợp đồng còn
+ * thu hồi được.
+ */
+function getEditBlockedReason(contract: ContractDetail): string {
+  switch (contract.status) {
+    case 'Nhap':
+      return 'Đã quá hạn giữ chỗ 72 giờ, hợp đồng sẽ tự hủy.'
+    case 'ChoNguoiThueXacNhan':
+    case 'ChoNhanCoc':
+      return 'Hợp đồng đã gửi cho người thuê. Thu hồi về nháp ở trang chi tiết rồi mới sửa.'
+    case 'DaHuy':
+      return 'Hợp đồng đã hủy nên không sửa được nữa.'
+    default:
+      return 'Hợp đồng không còn ở trạng thái nháp nên không sửa được điều khoản.'
+  }
 }
 
 function EditContractForm({ contract, backLink }: { contract: ContractDetail; backLink: BackLink }) {
