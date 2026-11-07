@@ -20,7 +20,8 @@ export default function AuditLogChangeTable({ log }: { log: AuditLog }) {
         <Table className="table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead className="px-3">Thông tin</TableHead>
+              {/* Cột nhãn hẹp hơn hai cột giá trị để số điện thoại không bị ngắt dòng ở 360px. */}
+              <TableHead className="w-[30%] px-3">Thông tin</TableHead>
               <TableHead>Trước</TableHead>
               <TableHead className="px-3">Sau</TableHead>
             </TableRow>
