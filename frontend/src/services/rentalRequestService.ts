@@ -35,3 +35,16 @@ export async function submitRentalRequest(
 export async function cancelRentalRequest(id: number): Promise<void> {
   await api.post(`/rental-requests/${id}/cancel`)
 }
+
+// Chủ trọ duyệt yêu cầu `ChoDuyet` chưa quá 168 giờ, phòng còn Trống; người thuê đang giữ phòng khác
+// (BR-28) hoặc trạng thái khác trả `409`. Duyệt xong phòng sang Đang giữ chỗ, các yêu cầu chờ khác của
+// phòng bị từ chối (BR-06).
+export async function approveRentalRequest(id: number): Promise<void> {
+  await api.post(`/rental-requests/${id}/approve`)
+}
+
+// Từ chối yêu cầu `ChoDuyet`, hoặc hủy duyệt yêu cầu `DaDuyet` chưa lập hợp đồng và còn hạn giữ chỗ
+// (phòng về Trống); lý do bắt buộc, trạng thái khác trả `409`.
+export async function rejectRentalRequest(id: number, reason: string): Promise<void> {
+  await api.post(`/rental-requests/${id}/reject`, { reason })
+}
