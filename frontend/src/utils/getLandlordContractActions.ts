@@ -22,6 +22,15 @@ export interface LandlordContractActions {
   showInvoices: boolean
 }
 
+/**
+ * Hợp đồng đã hoặc đang có hóa đơn: từ lúc có hiệu lực tới khi thanh lý xong. Dùng cả để quyết định có
+ * tải `GET /contracts/{id}/invoices` hay không, nên tách khỏi `getLandlordContractActions` (hàm đó cần
+ * danh sách hóa đơn đã tải).
+ */
+export function canShowContractInvoices(status: ContractStatus): boolean {
+  return status === 'DangHieuLuc' || status === 'SapHetHan' || status === 'DangThanhLy' || status === 'DaThanhLy'
+}
+
 interface ContractForActions {
   status: ContractStatus
   startDate: string
@@ -61,6 +70,6 @@ export function getLandlordContractActions(
     canRecordRefund: status === 'DaHuy' && contract.depositRefundPending,
     // Hóa đơn định kỳ lập từ ngày bắt đầu; khi đang thanh lý vẫn lập cho tháng trọn còn thiếu.
     canCreateInvoice: ((isActive || status === 'SapHetHan') && hasStarted) || status === 'DangThanhLy',
-    showInvoices: isActive || status === 'SapHetHan' || status === 'DangThanhLy' || status === 'DaThanhLy',
+    showInvoices: canShowContractInvoices(status),
   }
 }

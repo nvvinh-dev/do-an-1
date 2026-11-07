@@ -54,9 +54,10 @@ import { normalizeMeterIndex, validateMeterIndex } from '@/utils/contractForm'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDate } from '@/utils/formatDate'
 import { formatMeterIndex } from '@/utils/formatMeterIndex'
-import { getLandlordContractActions } from '@/utils/getLandlordContractActions'
+import { canShowContractInvoices, getLandlordContractActions } from '@/utils/getLandlordContractActions'
 import { getVietnamToday } from '@/utils/getVietnamToday'
 import { isHoldExpired } from '@/utils/isHoldExpired'
+import { getInvoiceTypeLabel } from '@/utils/invoiceTypeLabels'
 import { getPaymentMethodLabel } from '@/utils/paymentMethodLabels'
 import { normalizeRoomMoney, validateRoomMoney } from '@/utils/validateRoomInput'
 import { toVietnamDateTimeInput, vietnamDateTimeInputToIso } from '@/utils/vietnamDateTimeInput'
@@ -134,8 +135,7 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
     return () => clearTimeout(timer)
   }, [contract.holdExpiresAt])
 
-  const showInvoiceStatuses = ['DangHieuLuc', 'SapHetHan', 'DangThanhLy', 'DaThanhLy']
-  const invoicesQuery = useContractInvoices(contract.id, showInvoiceStatuses.includes(contract.status))
+  const invoicesQuery = useContractInvoices(contract.id, canShowContractInvoices(contract.status))
   // Chưa tải xong danh sách hóa đơn thì coi như đã có hóa đơn, để không hiện nút sửa chỉ số đầu rồi ẩn đi.
   const hasActiveInvoice = invoicesQuery.data ? invoicesQuery.data.some((invoice) => invoice.status !== 'DaHuy') : true
   const actions = getLandlordContractActions(contract, today, now, hasActiveInvoice)
@@ -248,7 +248,7 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
 
       {contract.status === 'DaHuy' && <DepositRefundSection contract={contract} />}
 
-      {showInvoiceStatuses.includes(contract.status) && (
+      {actions.showInvoices && (
         <ContractInvoicesSection
           invoices={invoicesQuery.data}
           isPending={invoicesQuery.isPending}
@@ -616,8 +616,6 @@ function DepositRefundSection({ contract }: { contract: ContractDetail }) {
   )
 }
 
-const INVOICE_TYPE_LABELS = { DinhKy: 'Định kỳ', ThanhLy: 'Thanh lý' } as const
-
 interface ContractInvoicesSectionProps {
   invoices: ContractInvoiceListItem[] | undefined
   isPending: boolean
@@ -654,7 +652,7 @@ function ContractInvoicesSection({ invoices, isPending, error, onRetry }: Contra
                     {formatDate(invoice.periodStart)} – {formatDate(invoice.periodEnd)}
                   </span>
                   <span className="text-sm text-muted-foreground">
-                    Hóa đơn {INVOICE_TYPE_LABELS[invoice.type].toLowerCase()}
+                    {getInvoiceTypeLabel(invoice.type)}
                     {invoice.dueDate && ` · Hạn ${formatDate(invoice.dueDate)}`}
                   </span>
                 </span>

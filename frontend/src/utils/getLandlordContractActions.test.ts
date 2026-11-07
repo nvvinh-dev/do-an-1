@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import type { ContractStatus } from '@/types/contractTypes'
-import { getLandlordContractActions, type LandlordContractActions } from '@/utils/getLandlordContractActions'
+import {
+  canShowContractInvoices,
+  getLandlordContractActions,
+  type LandlordContractActions,
+} from '@/utils/getLandlordContractActions'
 
 const TODAY = '2026-11-07'
 const NOW = new Date('2026-11-07T03:00:00Z')
@@ -111,5 +115,14 @@ describe('getLandlordContractActions', () => {
 
   it('DaThanhLy: chỉ xem, còn danh sách hóa đơn', () => {
     expect(actionsOf('DaThanhLy', { startDate: STARTED })).toEqual({ ...NONE, showInvoices: true })
+  })
+})
+
+describe('canShowContractInvoices', () => {
+  it('chỉ hợp đồng từ lúc có hiệu lực tới khi thanh lý xong', () => {
+    const shown = ['DangHieuLuc', 'SapHetHan', 'DangThanhLy', 'DaThanhLy']
+    for (const status of ['Nhap', 'ChoNguoiThueXacNhan', 'ChoNhanCoc', 'DangHieuLuc', 'SapHetHan', 'DangThanhLy', 'DaThanhLy', 'DaHuy'] as const) {
+      expect(canShowContractInvoices(status)).toBe(shown.includes(status))
+    }
   })
 })
