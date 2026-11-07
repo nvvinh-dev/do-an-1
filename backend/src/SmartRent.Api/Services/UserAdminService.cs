@@ -120,8 +120,9 @@ public class UserAdminService
             return ServiceResult.Fail(StatusCodes.Status409Conflict, "Tài khoản đã bị khóa.");
         }
 
+        var trimmedReason = reason.Trim();
         user.IsLocked = true;
-        user.LockReason = reason;
+        user.LockReason = trimmedReason;
 
         _auditLogger.Write(
             adminUserId,
@@ -129,13 +130,13 @@ public class UserAdminService
             nameof(AppUser),
             user.Id,
             new { IsLocked = false },
-            new { IsLocked = true, Reason = reason });
+            new { IsLocked = true, Reason = trimmedReason });
 
         _notifier.Notify(
             user.Id,
             "TaiKhoanBiKhoa",
             "Tài khoản của bạn đã bị khóa",
-            $"Lý do: {reason}.",
+            $"Lý do: {trimmedReason}.",
             nameof(AppUser),
             user.Id);
 
