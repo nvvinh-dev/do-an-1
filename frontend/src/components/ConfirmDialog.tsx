@@ -62,7 +62,9 @@ interface ConfirmDialogProps {
 export default function ConfirmDialog({ open, onOpenChange, isPending = false, ...contentProps }: ConfirmDialogProps) {
   return (
     <AlertDialog open={open} onOpenChange={(nextOpen) => !isPending && onOpenChange(nextOpen)}>
-      <AlertDialogContent>
+      {/* Cảnh báo, ô lý do và lỗi cộng lại có thể cao hơn màn điện thoại (nhất là lúc bàn phím mở):
+          giới hạn chiều cao và cho cuộn để tiêu đề và nút xác nhận vẫn tới được. */}
+      <AlertDialogContent className="max-h-[calc(100dvh-2rem)] overflow-y-auto">
         <ConfirmDialogBody isPending={isPending} {...contentProps} />
       </AlertDialogContent>
     </AlertDialog>
