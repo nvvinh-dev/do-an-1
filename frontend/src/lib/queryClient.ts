@@ -7,6 +7,12 @@ import { isAxiosError } from 'axios'
  */
 export const currentUserQueryKey = ['auth', 'me'] as const
 
+/**
+ * `true` khi phiên vừa bị kết thúc vì vai trò đã đổi sau lúc đăng nhập, để màn đăng nhập nhắc lý
+ * do. Giữ trong cache vì chỉ dùng cho lần tải trang này; `localStorage` chỉ để lưu token.
+ */
+export const sessionRoleChangedQueryKey = ['auth', 'roleChanged'] as const
+
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

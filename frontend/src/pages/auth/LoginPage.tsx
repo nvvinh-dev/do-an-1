@@ -1,4 +1,5 @@
-import { CircleCheck } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
+import { CircleCheck, Info } from 'lucide-react'
 import { Controller, useForm } from 'react-hook-form'
 import { Link, Navigate, useLocation, useSearchParams } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
@@ -10,6 +11,7 @@ import { Input } from '@/components/ui/input'
 import { Spinner } from '@/components/ui/spinner'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useLogin } from '@/hooks/useLogin'
+import { sessionRoleChangedQueryKey } from '@/lib/queryClient'
 import type { LoginRequest } from '@/types/authTypes'
 import { EMAIL_PATTERN } from '@/utils/emailPattern'
 import { getRoleHomePath } from '@/utils/getRoleHomePath'
@@ -27,6 +29,7 @@ interface LoginLocationState {
  * ngay trên form, không chuyển trang (mục 1). Đăng nhập xong, hoặc mở /login khi đã đăng nhập,
  * thì về `redirect` nếu có, không thì về trang chủ của vai trò. Đăng ký (A2) và đặt lại mật khẩu
  * (A4) xong cũng về đây (mục 8): hiện thông báo thành công và điền sẵn email của tài khoản.
+ * Phiên bị kết thúc vì vai trò đã đổi (mục 1) thì nhắc lý do phải đăng nhập lại.
  */
 export default function LoginPage() {
   const [searchParams] = useSearchParams()
@@ -35,6 +38,7 @@ export default function LoginPage() {
   const registeredEmail = locationState?.registeredEmail ?? null
   const passwordResetEmail = locationState?.passwordResetEmail ?? null
   const { data: user, isPending } = useCurrentUser()
+  const roleChanged = useQueryClient().getQueryData<boolean>(sessionRoleChangedQueryKey) === true
   const loginMutation = useLogin()
   const { control, handleSubmit } = useForm<LoginRequest>({
     mode: 'onTouched',
@@ -70,6 +74,14 @@ export default function LoginPage() {
         onSubmit={onSubmit}
         className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground md:p-6"
       >
+        {roleChanged && (
+          <Alert>
+            <Info />
+            <AlertTitle>Vai trò tài khoản đã thay đổi</AlertTitle>
+            <AlertDescription>Vui lòng đăng nhập lại để dùng quyền mới.</AlertDescription>
+          </Alert>
+        )}
+
         {registeredEmail && (
           <Alert className="border-success/40 text-success">
             <CircleCheck />
