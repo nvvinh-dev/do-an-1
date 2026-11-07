@@ -1,4 +1,5 @@
 import { api } from '@/lib/api'
+import type { MeterReading } from '@/types/contractTypes'
 import type {
   LandlordRoomOccupancyStatus,
   LandlordRoomVisibilityStatus,
@@ -45,4 +46,11 @@ export async function changeRoomOccupancyStatus(
 // Chỉ phòng Trống hoặc Bảo trì, trạng thái khác trả `409`. Lưu trữ là vĩnh viễn.
 export async function archiveRoom(id: number): Promise<void> {
   await api.post(`/rooms/${id}/archive`)
+}
+
+// Chỉ số cuối đã ghi nhận của phòng, để điền sẵn chỉ số đầu khi lập hợp đồng; `null` khi phòng chưa
+// từng có hợp đồng (docs/api-design.md mục 8, "Chỉ số đầu").
+export async function getLatestRoomMeterReading(roomId: number): Promise<MeterReading | null> {
+  const response = await api.get<MeterReading | null>(`/rooms/${roomId}/meter-readings/latest`)
+  return response.data ?? null
 }
