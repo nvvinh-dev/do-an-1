@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router'
+import { createBrowserRouter, type RouteObject } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import RouteErrorFallback from '@/components/RouteErrorFallback'
@@ -7,6 +7,7 @@ import AdminLayout from '@/layouts/AdminLayout'
 import CurrentRoleLayout from '@/layouts/CurrentRoleLayout'
 import LandlordLayout from '@/layouts/LandlordLayout'
 import PublicLayout from '@/layouts/PublicLayout'
+import RootLayout from '@/layouts/RootLayout'
 import TenantLayout from '@/layouts/TenantLayout'
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage'
 import AuditLogPage from '@/pages/admin/AuditLogPage'
@@ -49,7 +50,7 @@ import TenantRentalRequestListPage from '@/pages/tenant/TenantRentalRequestListP
 
 // Đường dẫn và file trang theo docs/frontend-screens.md mục 2–7; layout theo mục 1.
 // Đường dẫn lạ trong nhóm của một vai trò vẫn qua kiểm tra vai trò trước khi tới NotFoundPage.
-const router = createBrowserRouter([
+const routes: RouteObject[] = [
   // Khách và mọi vai trò
   {
     element: <PublicLayout />,
@@ -193,7 +194,10 @@ const router = createBrowserRouter([
       },
     ],
   },
-])
+]
+
+// `RootLayout` bọc mọi route để gắn `ScrollRestoration` một lần cho cả ứng dụng.
+const router = createBrowserRouter([{ element: <RootLayout />, children: routes }])
 
 export default function App() {
   return (
