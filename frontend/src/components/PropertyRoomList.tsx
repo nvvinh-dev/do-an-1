@@ -44,7 +44,8 @@ export default function PropertyRoomList({ propertyId, isArchived }: { propertyI
             const next = new URLSearchParams(searchParams)
             if (checked === true) next.set('includeArchived', 'true')
             else next.delete('includeArchived')
-            setSearchParams(next, { replace: true })
+            // Ô này nằm ở giữa trang chi tiết khu trọ: giữ vị trí cuộn, không để ScrollRestoration đưa về đầu trang.
+            setSearchParams(next, { replace: true, preventScrollReset: true })
           }}
         />
         <FieldLabel htmlFor="include-archived-rooms" className="font-normal">
