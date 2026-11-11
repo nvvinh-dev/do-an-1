@@ -8,7 +8,9 @@ import type {
   ContractTermsRequest,
   CreateContractRequest,
   InitialMeterReadingsRequest,
+  MoveOutNotice,
   RefundDepositRequest,
+  SendMoveOutNoticeRequest,
 } from '@/types/contractTypes'
 import type { ContractInvoiceListItem } from '@/types/invoiceTypes'
 import type { PagedResponse } from '@/types/paginationTypes'
@@ -82,6 +84,20 @@ export async function refundDeposit(id: number, request: RefundDepositRequest): 
 // Chỉ `DangHieuLuc` chưa có hóa đơn nào khác `DaHuy` (FR-90), ngược lại `409`.
 export async function updateInitialMeterReadings(id: number, request: InitialMeterReadingsRequest): Promise<void> {
   await api.patch(`/contracts/${id}/initial-meter-readings`, request)
+}
+
+// Thông báo trả phòng (docs/api-design.md mục 10). Chỉ nhận ở `DangHieuLuc` đã tới `startDate` hoặc
+// `SapHetHan`, ngược lại `409`; ngày trả phòng dự kiến trước hôm nay trả `422`. Hợp đồng sang
+// `DangThanhLy`, bên còn lại nhận thông báo; trả `noticeDays` và `penaltyAllowed`.
+export async function sendMoveOutNotice(id: number, request: SendMoveOutNoticeRequest): Promise<MoveOutNotice> {
+  const response = await api.post<MoveOutNotice>(`/contracts/${id}/move-out-notice`, request)
+  return response.data
+}
+
+// Chỉ bên đã gửi, khi `DangThanhLy` và chưa có hóa đơn thanh lý, ngược lại `409` (FR-98). Hợp đồng về
+// `SapHetHan` nếu còn 15 ngày hoặc ít hơn tới `endDate`, ngược lại `DangHieuLuc`.
+export async function withdrawMoveOutNotice(id: number): Promise<void> {
+  await api.post(`/contracts/${id}/move-out-notice/withdraw`)
 }
 
 // Không phân trang, kỳ mới trước (docs/api-design.md mục 9).

@@ -76,6 +76,15 @@ export interface MoveOutNotice {
   penaltyAllowed: boolean
 }
 
+/**
+ * Body của `POST /contracts/{id}/move-out-notice`. `expectedMoveOutDate` dạng `YYYY-MM-DD`, không trước hôm
+ * nay (`422`); `reason` bắt buộc, tối đa 500 ký tự. Response là `MoveOutNotice` của hợp đồng vừa gửi.
+ */
+export interface SendMoveOutNoticeRequest {
+  expectedMoveOutDate: string
+  reason: string
+}
+
 /** Response của `GET /contracts/{id}`. */
 export interface ContractDetail {
   id: number
