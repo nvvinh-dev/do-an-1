@@ -6,7 +6,8 @@ import type {
   SettlementInvoiceRequest,
 } from '@/types/settlementTypes'
 
-// Bảng thanh lý phía Chủ trọ (docs/api-design.md mục 10).
+// Bảng thanh lý (docs/api-design.md mục 10): Chủ trọ lập, sửa, gửi, tự chốt, hoàn tất; Người thuê đồng ý hoặc
+// yêu cầu sửa.
 
 // Chỉ khi hợp đồng `DangThanhLy`, chưa có bảng, `moveOutDate` không sau hôm nay; còn hóa đơn định kỳ nháp,
 // lượt báo thanh toán chờ xác nhận, hoặc kỳ không thuộc hai trường hợp của FR-93 trả `409`. Dòng sai,
@@ -31,6 +32,20 @@ export async function updateSettlementInvoice(
 // `Nhap` → `ChoNguoiThueXacNhan`, ghi `sentAt`; người thuê nhận thông báo.
 export async function sendSettlementInvoice(contractId: number): Promise<void> {
   await api.post(`/contracts/${contractId}/settlement-invoice/send`)
+}
+
+// Phía Người thuê đứng tên: hai thao tác chỉ nhận khi bảng ở `ChoNguoiThueXacNhan`. Bảng ở `Nhap` (chờ Chủ trọ
+// gửi lại) trả `404` như chưa có bảng, bảng đã khóa trả `409`.
+
+// Bảng bị khóa: số dư dương sang `ChuaThanhToan` (hạn tính từ lúc đồng ý), âm sang `ChoHoanCoc`, bằng 0 sang
+// `DaThanhToan`; Chủ trọ nhận thông báo.
+export async function confirmSettlementInvoice(contractId: number): Promise<void> {
+  await api.post(`/contracts/${contractId}/settlement-invoice/confirm`)
+}
+
+// `reason` bắt buộc, tối đa 500 ký tự (`400`). Bảng về `Nhap`, Chủ trọ nhận thông báo kèm lý do.
+export async function requestSettlementChanges(contractId: number, reason: string): Promise<void> {
+  await api.post(`/contracts/${contractId}/settlement-invoice/request-changes`, { reason })
 }
 
 // Chỉ khi `ChoNguoiThueXacNhan` và đã quá 7 ngày kể từ `sentAt` (`409`). Kết quả giống người thuê đồng ý.
