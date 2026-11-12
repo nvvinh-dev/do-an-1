@@ -172,7 +172,7 @@ public class InvoiceService
         await transaction.CommitAsync(cancellationToken);
 
         return ServiceResult<InvoiceDetailResponse>.Ok(
-            await _invoiceDetailBuilder.BuildAsync(invoice, paymentQr: null, cancellationToken));
+            await _invoiceDetailBuilder.BuildAsync(invoice, paymentQr: null, includeFilePaths: true, cancellationToken));
     }
 
     /// <summary>
@@ -263,7 +263,7 @@ public class InvoiceService
         await _db.SaveChangesAsync(cancellationToken);
 
         return ServiceResult<InvoiceDetailResponse>.Ok(
-            await _invoiceDetailBuilder.BuildAsync(invoice, paymentQr: null, cancellationToken));
+            await _invoiceDetailBuilder.BuildAsync(invoice, paymentQr: null, includeFilePaths: true, cancellationToken));
     }
 
     /// <summary>
@@ -670,7 +670,7 @@ public class InvoiceService
         }
 
         return ServiceResult<InvoiceDetailResponse>.Ok(
-            await _invoiceDetailBuilder.BuildAsync(invoice, paymentQr, cancellationToken));
+            await _invoiceDetailBuilder.BuildAsync(invoice, paymentQr, includeFilePaths: !viewerIsTenant, cancellationToken));
     }
 
     /// <summary>
