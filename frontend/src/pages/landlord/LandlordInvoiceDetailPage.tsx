@@ -83,6 +83,10 @@ type InvoiceDialog = 'issue' | 'cancel' | 'confirmPayment' | 'rejectPayment'
 
 function InvoiceDetailContent({ invoice }: { invoice: InvoiceDetail }) {
   const [openDialog, setOpenDialog] = useState<InvoiceDialog | null>(null)
+  // Lượt báo mà Chủ trọ bấm Xác nhận / Từ chối. Giữ riêng, không lấy `actions.pendingReport` lúc vẽ: server trả
+  // `409` (lượt báo vừa được xử lý ở tab khác) thì trang tải lại, `pendingReport` thành `null`, nhưng hộp thoại vẫn
+  // phải mở để hiện `detail`.
+  const [dialogReport, setDialogReport] = useState<PaymentReport | null>(null)
   const contractQuery = useContract(invoice.contractId)
   // Sửa, hủy hóa đơn đã phát hành chỉ với hóa đơn định kỳ mới nhất của hợp đồng: cần danh sách hóa đơn của nó.
   const needsLatest = invoice.type === 'DinhKy' && (invoice.status === 'ChuaThanhToan' || invoice.status === 'QuaHan')
@@ -97,16 +101,21 @@ function InvoiceDetailContent({ invoice }: { invoice: InvoiceDetail }) {
     onOpenChange: (open: boolean) => setOpenDialog(open ? dialog : null),
   })
 
+  const openReportDialog = (dialog: 'confirmPayment' | 'rejectPayment', report: PaymentReport) => {
+    setDialogReport(report)
+    setOpenDialog(dialog)
+  }
+
   const paymentReports = (
     <PaymentReportList
       reports={invoice.paymentReports}
-      renderPendingActions={() => (
+      renderPendingActions={(report) => (
         <div className="flex flex-col gap-2 md:flex-row">
-          <Button type="button" onClick={() => setOpenDialog('confirmPayment')}>
+          <Button type="button" onClick={() => openReportDialog('confirmPayment', report)}>
             <Check />
             Xác nhận đã thu
           </Button>
-          <Button type="button" variant="outline" onClick={() => setOpenDialog('rejectPayment')}>
+          <Button type="button" variant="outline" onClick={() => openReportDialog('rejectPayment', report)}>
             <X />
             Từ chối
           </Button>
@@ -173,13 +182,14 @@ function InvoiceDetailContent({ invoice }: { invoice: InvoiceDetail }) {
       </Link>
 
       {/* Hộp thoại nằm ngoài nút mở nó để không bị gỡ theo nút khi server trả `409` và trang tải lại sang trạng thái
-          mới (người thuê vừa báo thanh toán, hóa đơn mới hơn vừa lập): vẫn mở và hiện `detail`. */}
+          mới (người thuê vừa báo thanh toán, hóa đơn mới hơn vừa lập, lượt báo vừa được xử lý ở tab khác): vẫn mở và
+          hiện `detail`. Hộp thoại lượt báo đi theo `dialogReport` đã giữ lúc bấm, không theo dữ liệu vừa tải lại. */}
       <IssueDialog {...dialogProps('issue')} contract={contract} />
       <CancelInvoiceDialog {...dialogProps('cancel')} />
-      {actions.pendingReport && (
+      {dialogReport && (
         <>
-          <ConfirmPaymentDialog {...dialogProps('confirmPayment')} report={actions.pendingReport} />
-          <RejectPaymentDialog {...dialogProps('rejectPayment')} report={actions.pendingReport} />
+          <ConfirmPaymentDialog {...dialogProps('confirmPayment')} report={dialogReport} />
+          <RejectPaymentDialog {...dialogProps('rejectPayment')} report={dialogReport} />
         </>
       )}
 
