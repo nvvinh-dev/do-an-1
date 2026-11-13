@@ -1,7 +1,7 @@
-import { ImageIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import MoneyText from '@/components/MoneyText'
+import PrivatePhotoLink from '@/components/PrivatePhotoLink'
 import StatusBadge from '@/components/StatusBadge'
 import type { InvoiceDetail } from '@/types/invoiceTypes'
 import { formatDate } from '@/utils/formatDate'
@@ -75,7 +75,7 @@ export default function SettlementInvoiceSummary({ invoice, invoicePath }: Settl
               kWh (dùng {formatMeterIndex(electricityUsed)} kWh × <MoneyText amount={invoice.electricityUnitPrice} />)
             </span>
             <MoneyText amount={invoice.electricityAmount} className="font-medium" />
-            <PhotoLink url={invoice.electricityMeterPhotoUrl} label="Xem ảnh đồng hồ điện" />
+            <PrivatePhotoLink url={invoice.electricityMeterPhotoUrl} label="Xem ảnh đồng hồ điện" />
           </dd>
 
           <dt className="text-muted-foreground">Nước</dt>
@@ -85,7 +85,7 @@ export default function SettlementInvoiceSummary({ invoice, invoicePath }: Settl
               {formatMeterIndex(waterUsed)} m³ × <MoneyText amount={invoice.waterUnitPrice} />)
             </span>
             <MoneyText amount={invoice.waterAmount} className="font-medium" />
-            <PhotoLink url={invoice.waterMeterPhotoUrl} label="Xem ảnh đồng hồ nước" />
+            <PrivatePhotoLink url={invoice.waterMeterPhotoUrl} label="Xem ảnh đồng hồ nước" />
           </dd>
         </dl>
       </SummaryCard>
@@ -108,7 +108,7 @@ export default function SettlementInvoiceSummary({ invoice, invoicePath }: Settl
                       Hóa đơn gốc #{line.relatedInvoiceId}
                     </Link>
                   )}
-                  <PhotoLink url={line.evidenceUrl} label="Xem ảnh hư hỏng" />
+                  <PrivatePhotoLink url={line.evidenceUrl} label="Xem ảnh hư hỏng" />
                 </span>
                 <MoneyText amount={line.amount} className="font-medium md:shrink-0" />
               </li>
@@ -141,21 +141,5 @@ function SummaryCard({ title, children }: { title: string; children: ReactNode }
       <h2 className="text-lg font-medium">{title}</h2>
       {children}
     </div>
-  )
-}
-
-/** Ảnh riêng tư là URL có chữ ký hết hạn sau 1 giờ; mở ở tab mới, quá hạn thì tải lại trang. */
-function PhotoLink({ url, label }: { url: string | null; label: string }) {
-  if (url === null) return null
-  return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noreferrer"
-      className="inline-flex items-center gap-1 self-start underline underline-offset-4"
-    >
-      <ImageIcon className="size-4" aria-hidden="true" />
-      {label}
-    </a>
   )
 }
