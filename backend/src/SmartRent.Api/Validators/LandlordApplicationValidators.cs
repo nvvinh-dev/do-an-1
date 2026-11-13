@@ -14,7 +14,8 @@ public class SubmitLandlordApplicationRequestValidator : AbstractValidator<Submi
         RuleFor(x => x.IdCardNumber)
             .Cascade(CascadeMode.Stop)
             .NotEmpty().WithMessage("Vui lòng nhập số CCCD.")
-            .Matches("^[0-9]{12}$").WithMessage("Số CCCD phải gồm đúng 12 chữ số.");
+            // \z thay cho $: trong .NET, $ còn khớp ngay trước "\n" cuối chuỗi. [0-9] thay cho \d: \d nhận cả chữ số Unicode khác.
+            .Matches(@"^[0-9]{12}\z").WithMessage("Số CCCD phải gồm đúng 12 chữ số.");
     }
 }
 
