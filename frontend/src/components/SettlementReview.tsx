@@ -117,7 +117,11 @@ function lockedNextStep(invoice: InvoiceDetail): string {
   if (invoice.status === 'ChoHoanCoc') {
     return 'Chủ trọ hoàn lại phần cọc dư cho bạn; Chủ trọ ghi nhận đã hoàn thì bạn nhận thông báo.'
   }
-  if (invoice.totalAmount <= 0) {
+  // Số dư âm mà không còn `ChoHoanCoc` thì bảng đã sang `DaThanhToan`: Chủ trọ đã ghi nhận hoàn khi hoàn tất thanh lý.
+  if (invoice.totalAmount < 0) {
+    return 'Chủ trọ đã ghi nhận hoàn phần cọc dư; ngày và hình thức hoàn xem ở trang hợp đồng.'
+  }
+  if (invoice.totalAmount === 0) {
     return 'Hai bên không còn khoản nào phải trả.'
   }
   if (invoice.status === 'DaThanhToan') {
