@@ -1,5 +1,6 @@
 import {
   Banknote,
+  CalendarX,
   ChevronLeft,
   CircleX,
   FilePlus,
@@ -19,8 +20,11 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import CountdownText from '@/components/CountdownText'
 import FormDialog, { FormDialogBody } from '@/components/FormDialog'
 import MoneyText from '@/components/MoneyText'
+import MoveOutNoticeCard from '@/components/MoveOutNoticeCard'
 import PageHeader from '@/components/PageHeader'
+import SendMoveOutNoticeDialog from '@/components/SendMoveOutNoticeDialog'
 import StatusBadge from '@/components/StatusBadge'
+import WithdrawMoveOutNoticeDialog from '@/components/WithdrawMoveOutNoticeDialog'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
@@ -55,6 +59,7 @@ import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDate } from '@/utils/formatDate'
 import { formatMeterIndex } from '@/utils/formatMeterIndex'
 import { canShowContractInvoices, getLandlordContractActions } from '@/utils/getLandlordContractActions'
+import { getMoveOutNoticeActions } from '@/utils/getMoveOutNoticeActions'
 import { getVietnamToday } from '@/utils/getVietnamToday'
 import { isHoldExpired } from '@/utils/isHoldExpired'
 import { getInvoiceTypeLabel } from '@/utils/invoiceTypeLabels'
@@ -74,8 +79,10 @@ const PAYMENT_METHODS: PaymentMethod[] = ['TienMat', 'ChuyenKhoan']
  * tác theo trạng thái" (`getLandlordContractActions`): nháp → sửa, gửi, hủy; chờ người thuê → thu hồi,
  * hủy; chờ nhận cọc → xác nhận đã nhận cọc, thu hồi, hủy; đang hiệu lực → hủy trước ngày bắt đầu, sửa
  * chỉ số đầu khi chưa có hóa đơn, lập hóa đơn (→ L7) từ ngày bắt đầu; đang thanh lý → lập hóa đơn còn
- * thiếu, mở bảng thanh lý (→ L9); đã hủy chờ hoàn cọc → ghi nhận hoàn cọc. Thông báo trả phòng (gửi,
- * rút) là phần riêng của BP-10. Thao tác xong thì ở lại trang, hiện `toast` và tải lại dữ liệu (mục 8).
+ * thiếu, mở bảng thanh lý (→ L9); đã hủy chờ hoàn cọc → ghi nhận hoàn cọc. Thông báo trả phòng dùng
+ * chung với T4 (`getMoveOutNoticeActions`, `MoveOutNoticeCard`): gửi từ ngày bắt đầu khi đang hiệu lực
+ * hoặc sắp hết hạn; rút khi mình là bên gửi và chưa có bảng thanh lý. Thao tác xong thì ở lại trang, hiện
+ * `toast` và tải lại dữ liệu (mục 8).
  */
 export default function LandlordContractDetailPage() {
   const { id } = useParams()
@@ -115,7 +122,15 @@ export default function LandlordContractDetailPage() {
   )
 }
 
-type ContractDialog = 'send' | 'recall' | 'confirmDeposit' | 'cancel' | 'initialMeter' | 'refund'
+type ContractDialog =
+  | 'send'
+  | 'recall'
+  | 'confirmDeposit'
+  | 'cancel'
+  | 'initialMeter'
+  | 'refund'
+  | 'sendMoveOutNotice'
+  | 'withdrawMoveOutNotice'
 
 function ContractDetailContent({ contract }: { contract: ContractDetail }) {
   const [openDialog, setOpenDialog] = useState<ContractDialog | null>(null)
@@ -139,7 +154,8 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
   // Chưa tải xong danh sách hóa đơn thì coi như đã có hóa đơn, để không hiện nút sửa chỉ số đầu rồi ẩn đi.
   const hasActiveInvoice = invoicesQuery.data ? invoicesQuery.data.some((invoice) => invoice.status !== 'DaHuy') : true
   const actions = getLandlordContractActions(contract, today, now, hasActiveInvoice)
-  const settlementLink = getSettlementLink(contract, today)
+  const settlementLink = getSettlementLink(contract)
+  const moveOutActions = getMoveOutNoticeActions(contract, 'Landlord', today)
 
   const dialogProps = (dialog: ContractDialog) => ({
     contract,
@@ -189,6 +205,34 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
           <FileText />
           {settlementLink}
         </Link>
+      </Button>,
+    )
+  }
+  if (moveOutActions.canSend) {
+    buttons.push(
+      <Button
+        key="moveOutNotice"
+        type="button"
+        variant="outline"
+        size="page"
+        onClick={() => setOpenDialog('sendMoveOutNotice')}
+      >
+        <CalendarX />
+        Gửi thông báo trả phòng
+      </Button>,
+    )
+  }
+  if (moveOutActions.canWithdraw) {
+    buttons.push(
+      <Button
+        key="withdrawMoveOutNotice"
+        type="button"
+        variant="outline"
+        size="page"
+        onClick={() => setOpenDialog('withdrawMoveOutNotice')}
+      >
+        <Undo2 />
+        Rút thông báo
       </Button>,
     )
   }
@@ -243,10 +287,15 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
       <ConfirmDepositDialog {...dialogProps('confirmDeposit')} />
       <InitialMeterDialog {...dialogProps('initialMeter')} />
       <RefundDialog {...dialogProps('refund')} />
+      <SendMoveOutNoticeDialog viewer="Landlord" {...dialogProps('sendMoveOutNotice')} />
+      <WithdrawMoveOutNoticeDialog viewer="Landlord" {...dialogProps('withdrawMoveOutNotice')} />
 
       <ContractStatusNotice contract={contract} today={today} now={now} />
 
       {contract.status === 'DaHuy' && <DepositRefundSection contract={contract} />}
+
+      {/* Lối vào bảng thanh lý đã có ở đầu trang (`getSettlementLink`), nên khối này không lặp lại. */}
+      <MoveOutNoticeCard contract={contract} viewer="Landlord" today={today} />
 
       {actions.showInvoices && (
         <ContractInvoicesSection
@@ -369,14 +418,16 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
 }
 
 /**
- * Lối vào bảng thanh lý (L9): đã có bảng thì mở bảng; đang thanh lý mà chưa có bảng thì lập được từ
- * ngày trả phòng dự kiến (docs/frontend-screens.md mục 6, dòng `DangThanhLy`).
+ * Lối vào bảng thanh lý (L9): đã có bảng thì mở bảng; đang thanh lý mà chưa có bảng thì hiện nút lập
+ * (docs/frontend-screens.md mục 6, dòng `DangThanhLy`). Không chờ tới ngày trả phòng dự kiến: người thuê
+ * dọn đi sớm thì bảng lập được ngay, vì ngày trả phòng thực tế chỉ cần không sau hôm nay (FR-54, FR-93);
+ * L9 và server tự kiểm tra ngày này.
  */
-function getSettlementLink(contract: ContractDetail, today: string): string | null {
+function getSettlementLink(contract: ContractDetail): string | null {
   if (contract.settlementInvoiceId !== null) {
     return contract.status === 'DaThanhLy' ? 'Xem bảng thanh lý' : 'Mở bảng thanh lý'
   }
-  if (contract.status === 'DangThanhLy' && contract.moveOutNotice && today >= contract.moveOutNotice.expectedMoveOutDate) {
+  if (contract.status === 'DangThanhLy') {
     return 'Lập bảng thanh lý'
   }
   return null
@@ -541,7 +592,7 @@ function ContractStatusNotice({ contract, today, now }: ContractStatusNoticeProp
         </Alert>
       )
 
-    // `SapHetHan`, `DangThanhLy`: thông báo trả phòng và thanh lý thuộc BP-10.
+    // `SapHetHan`, `DangThanhLy`: khối trả phòng (`MoveOutNoticeCard`) nói rõ việc tiếp theo.
     default:
       return null
   }

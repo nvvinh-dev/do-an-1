@@ -1,4 +1,14 @@
-import { ChevronLeft, CircleCheck, CircleX, FilePen, PencilLine, TimerOff, TriangleAlert } from 'lucide-react'
+import {
+  CalendarX,
+  ChevronLeft,
+  CircleCheck,
+  CircleX,
+  FilePen,
+  PencilLine,
+  TimerOff,
+  TriangleAlert,
+  Undo2,
+} from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { toast } from 'sonner'
@@ -6,9 +16,12 @@ import ApiErrorAlert from '@/components/ApiErrorAlert'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import CountdownText from '@/components/CountdownText'
 import MoneyText from '@/components/MoneyText'
+import MoveOutNoticeCard from '@/components/MoveOutNoticeCard'
 import PageHeader from '@/components/PageHeader'
+import SendMoveOutNoticeDialog from '@/components/SendMoveOutNoticeDialog'
 import StatusBadge from '@/components/StatusBadge'
 import VietQrBox from '@/components/VietQrBox'
+import WithdrawMoveOutNoticeDialog from '@/components/WithdrawMoveOutNoticeDialog'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -22,6 +35,7 @@ import type { ContractDetail, ContractParty } from '@/types/contractTypes'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDate } from '@/utils/formatDate'
 import { formatMeterIndex } from '@/utils/formatMeterIndex'
+import { getMoveOutNoticeActions } from '@/utils/getMoveOutNoticeActions'
 import { getTenantContractActions } from '@/utils/getTenantContractActions'
 import { getVietnamToday } from '@/utils/getVietnamToday'
 import { isHoldExpired } from '@/utils/isHoldExpired'
@@ -36,7 +50,10 @@ interface ContractDetailLocationState {
  * T4 — Chi tiết hợp đồng (docs/frontend-screens.md mục 5), phần trước khi trả phòng. Hiện theo
  * trạng thái: nháp → chỉ đọc, nút hủy; chờ người thuê xác nhận → đủ điều khoản, nút đồng ý, yêu cầu
  * sửa, hủy; chờ nhận cọc → mã VietQR tiền cọc, đếm ngược hạn giữ chỗ, nút hủy; đang hiệu lực trước
- * ngày bắt đầu → nút hủy kèm cảnh báo mất cọc; đã hủy → lý do và hoàn cọc; đã thanh lý → chỉ xem.
+ * ngày bắt đầu → nút hủy kèm cảnh báo mất cọc; đang hiệu lực từ ngày bắt đầu, sắp hết hạn → nút gửi
+ * thông báo trả phòng; đang thanh lý → thông tin thông báo, nút rút khi mình là bên gửi và chưa có bảng
+ * thanh lý, liên kết tới hóa đơn thanh lý khi đã có (`MoveOutNoticeCard`); đã hủy → lý do và hoàn cọc;
+ * đã thanh lý → chỉ xem.
  * Chưa hiệu lực mà đã quá hạn giữ chỗ (tác vụ định kỳ chưa kịp hủy) → chỉ còn nút hủy, không hướng
  * dẫn đồng ý hay chuyển cọc, không hiện mã VietQR. Thao tác xong thì ở lại trang, hiện `toast` và tải lại dữ liệu (design-system mục 8).
  */
@@ -79,7 +96,7 @@ export default function TenantContractDetailPage() {
   )
 }
 
-type ContractDialog = 'confirm' | 'requestChanges' | 'cancel'
+type ContractDialog = 'confirm' | 'requestChanges' | 'cancel' | 'sendMoveOutNotice' | 'withdrawMoveOutNotice'
 
 function ContractDetailContent({ contract }: { contract: ContractDetail }) {
   const [openDialog, setOpenDialog] = useState<ContractDialog | null>(null)
@@ -100,7 +117,13 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
     return () => clearTimeout(timer)
   }, [contract.holdExpiresAt])
   const actions = getTenantContractActions(contract, today, now)
-  const hasAction = actions.canConfirm || actions.canRequestChanges || actions.canCancel
+  const moveOutActions = getMoveOutNoticeActions(contract, 'Tenant', today)
+  const hasAction =
+    actions.canConfirm ||
+    actions.canRequestChanges ||
+    actions.canCancel ||
+    moveOutActions.canSend ||
+    moveOutActions.canWithdraw
 
   const dialogProps = (dialog: ContractDialog) => ({
     contract,
@@ -128,6 +151,18 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
                   Yêu cầu sửa
                 </Button>
               )}
+              {moveOutActions.canSend && (
+                <Button type="button" size="page" onClick={() => setOpenDialog('sendMoveOutNotice')}>
+                  <CalendarX />
+                  Gửi thông báo trả phòng
+                </Button>
+              )}
+              {moveOutActions.canWithdraw && (
+                <Button type="button" variant="outline" size="page" onClick={() => setOpenDialog('withdrawMoveOutNotice')}>
+                  <Undo2 />
+                  Rút thông báo
+                </Button>
+              )}
               {actions.canCancel && (
                 <Button type="button" variant="destructive" size="page" onClick={() => setOpenDialog('cancel')}>
                   <CircleX />
@@ -142,6 +177,8 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
       <ConfirmContractDialog {...dialogProps('confirm')} />
       <RequestContractChangesDialog {...dialogProps('requestChanges')} />
       <CancelContractDialog {...dialogProps('cancel')} />
+      <SendMoveOutNoticeDialog viewer="Tenant" {...dialogProps('sendMoveOutNotice')} />
+      <WithdrawMoveOutNoticeDialog viewer="Tenant" {...dialogProps('withdrawMoveOutNotice')} />
 
       <ContractStatusNotice contract={contract} today={today} now={now} />
 
@@ -150,7 +187,19 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
           xác nhận cọc đã bị chặn, tiền chuyển lúc này không được ghi nhận là cọc. */}
       <VietQrBox paymentQr={isHoldExpired(contract.holdExpiresAt, now) ? null : contract.paymentQr} />
 
-      {contract.status === 'DaHuy' && <DepositRefundSection contract={contract} />}
+      {/* Đã thanh lý có số dư âm thì Chủ trọ hoàn phần cọc dư lúc hoàn tất thanh lý; người thuê xem được như khi hủy (FR-86). */}
+      {(contract.status === 'DaHuy' || contract.status === 'DaThanhLy') && <DepositRefundSection contract={contract} />}
+
+      <MoveOutNoticeCard
+        contract={contract}
+        viewer="Tenant"
+        today={today}
+        settlementLink={
+          contract.settlementInvoiceId !== null
+            ? { to: `/tenant/invoices/${contract.settlementInvoiceId}`, label: 'Xem bảng thanh lý' }
+            : null
+        }
+      />
 
       <DetailCard title="Các bên">
         <dt className="text-muted-foreground">Chủ trọ</dt>
@@ -376,7 +425,7 @@ function ContractStatusNotice({ contract, today, now }: ContractStatusNoticeProp
       )
 
     case 'DangHieuLuc':
-      // Từ ngày bắt đầu, khối thông báo trả phòng thay chỗ này (thẻ BP-10).
+      // Từ ngày bắt đầu, khối trả phòng (`MoveOutNoticeCard`) thay chỗ này.
       if (today >= contract.startDate) {
         return null
       }
@@ -422,7 +471,7 @@ function ContractStatusNotice({ contract, today, now }: ContractStatusNoticeProp
         </Alert>
       )
 
-    // `SapHetHan`, `DangThanhLy`: thông báo trả phòng và thanh lý thuộc thẻ BP-10.
+    // `SapHetHan`, `DangThanhLy`: khối trả phòng (`MoveOutNoticeCard`) nói rõ việc tiếp theo.
     default:
       return null
   }
@@ -460,8 +509,9 @@ function cancelledSentence(contract: ContractDetail): string {
 }
 
 /**
- * Hoàn cọc của hợp đồng đã hủy (FR-86): đã hoàn thì hiện số tiền, ngày, hình thức và ghi chú của
- * Chủ trọ; đã nhận cọc mà chưa hoàn thì hiện "Chờ hoàn cọc". Hợp đồng chưa từng nhận cọc thì không hiện.
+ * Hoàn cọc của hợp đồng đã hủy hoặc đã thanh lý (FR-86): đã hoàn thì hiện số tiền, ngày, hình thức và
+ * ghi chú của Chủ trọ; hợp đồng đã hủy, đã nhận cọc mà chưa hoàn thì hiện "Chờ hoàn cọc"
+ * (`depositRefundPending` chỉ có ở `DaHuy`). Không có gì để hiện thì không hiện.
  */
 function DepositRefundSection({ contract }: { contract: ContractDetail }) {
   const refund = contract.depositRefund
@@ -471,8 +521,14 @@ function DepositRefundSection({ contract }: { contract: ContractDetail }) {
       <DetailCard title="Hoàn cọc">
         <dt className="text-muted-foreground">Số tiền hoàn</dt>
         <dd>
-          <MoneyText amount={refund.amount} className="font-medium" /> (tiền cọc{' '}
-          <MoneyText amount={contract.depositAmount} />)
+          <MoneyText amount={refund.amount} className="font-medium" />
+          {/* Thanh lý có số dư âm thì vẫn hoàn khi hợp đồng không đặt cọc; khi đó không ghi "tiền cọc 0 ₫". */}
+          {contract.depositAmount > 0 && (
+            <>
+              {' '}
+              (tiền cọc <MoneyText amount={contract.depositAmount} />)
+            </>
+          )}
         </dd>
 
         <dt className="text-muted-foreground">Ngày hoàn</dt>
