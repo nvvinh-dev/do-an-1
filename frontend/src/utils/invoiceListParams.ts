@@ -23,23 +23,26 @@ function parsePositiveInteger(value: string | null): number | undefined {
 /**
  * Bộ lọc và trang của L8, T5 nằm trên query của URL để lối tắt ở L1 (`?status=ChoXacNhan`), T1
  * (`?type=ThanhLy&status=ChoNguoiThueXacNhan`) dẫn thẳng tới đúng danh sách, và quay lại từ chi tiết giữ chỗ đang
- * xem. Giá trị lạ (gõ tay, đường dẫn cũ) thì coi như không lọc, không gửi lên server để nhận `400`. Lọc theo khu
- * trọ chỉ có ở L8.
+ * xem. Giá trị lạ (gõ tay, đường dẫn cũ) thì coi như không lọc, không gửi lên server để nhận `400`.
+ *
+ * Mỗi vai trò chỉ đọc bộ lọc mà màn của mình có ô nhập — L8: trạng thái, tháng, khu trọ; T5: loại, trạng thái —
+ * để danh sách không bị lọc ngầm theo một khóa trên URL mà người dùng không thấy và không bỏ được.
  */
 export function parseInvoiceListParams(
   searchParams: URLSearchParams,
   role: 'landlord' | 'tenant',
 ): InvoiceListParams & { page: number } {
-  const params: InvoiceListParams & { page: number } = {
-    status: parseStatus(searchParams.get('status')),
-    month: parseMonth(searchParams.get('month')),
-    type: parseType(searchParams.get('type')),
-    page: Math.max(parsePositiveInteger(searchParams.get('page')) ?? 1, 1),
-  }
+  const status = parseStatus(searchParams.get('status'))
+  const page = Math.max(parsePositiveInteger(searchParams.get('page')) ?? 1, 1)
   if (role === 'landlord') {
-    params.propertyId = parsePositiveInteger(searchParams.get('propertyId'))
+    return {
+      status,
+      month: parseMonth(searchParams.get('month')),
+      propertyId: parsePositiveInteger(searchParams.get('propertyId')),
+      page,
+    }
   }
-  return params
+  return { status, type: parseType(searchParams.get('type')), page }
 }
 
 /** Query của bộ lọc mới, bỏ khóa trống và về trang 1 (số trang của bộ lọc mới khác). */

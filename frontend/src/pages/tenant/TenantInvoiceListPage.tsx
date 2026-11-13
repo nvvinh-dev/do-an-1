@@ -27,7 +27,7 @@ export default function TenantInvoiceListPage() {
   const params = parseInvoiceListParams(searchParams, 'tenant')
   const { page, ...filters } = params
   const listQuery = useInvoiceList(params)
-  const hasFilter = filters.status !== undefined || filters.type !== undefined || filters.month !== undefined
+  const hasFilter = filters.status !== undefined || filters.type !== undefined
 
   // Đổi bộ lọc thì về trang 1, vì số trang của bộ lọc mới khác.
   const setFilters = (next: Omit<InvoiceListParams, 'page'>) => {
