@@ -152,6 +152,7 @@ export default function SettlementInvoiceForm({
             category={line.category}
             relatedInvoices={relatedInvoices}
             disabled={isPending}
+            removeDisabled={isPending || uploadingCount > 0}
             onUploadingChange={onUploadingChange}
             onRemove={() => lineArray.remove(index)}
           />
@@ -327,6 +328,11 @@ interface LineFieldsProps {
   category: SettlementLineCategory
   relatedInvoices: ContractInvoiceListItem[]
   disabled: boolean
+  /**
+   * Khóa nút xóa khi đang lưu hoặc còn ảnh đang tải. Xóa một dòng làm các dòng sau dồn lên chỉ số mới, mà ảnh
+   * tải xong vẫn ghi theo tên ô cũ (`lines.<chỉ số>.evidence`): ảnh của dòng đã xóa sẽ gắn nhầm sang dòng khác.
+   */
+  removeDisabled: boolean
   onUploadingChange: (uploading: boolean) => void
   onRemove: () => void
 }
@@ -339,6 +345,7 @@ function LineFields({
   category,
   relatedInvoices,
   disabled,
+  removeDisabled,
   onUploadingChange,
   onRemove,
 }: LineFieldsProps) {
@@ -350,7 +357,14 @@ function LineFields({
         <span className="font-medium">
           {index + 1}. {label}
         </span>
-        <Button type="button" variant="ghost" size="sm" aria-label={`Xóa dòng ${index + 1}`} onClick={onRemove}>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          aria-label={`Xóa dòng ${index + 1}`}
+          disabled={removeDisabled}
+          onClick={onRemove}
+        >
           <Trash2 />
           <span className="max-md:sr-only">Xóa dòng</span>
         </Button>
