@@ -26,10 +26,13 @@ public class InvoiceDetailBuilder
     /// Cần nạp <see cref="Invoice.Contract"/> kèm <see cref="Contract.ServiceFees"/>, <see cref="Invoice.Lines"/> và
     /// <see cref="Invoice.PaymentReports"/>. <paramref name="paymentQr"/> do bên gọi tính theo mục 9.1 — chỉ có với
     /// Người thuê đứng tên khi hóa đơn còn phải trả; hóa đơn ở Nháp luôn là <c>null</c>.
+    /// <paramref name="includeFilePaths"/> chỉ bật khi người gọi là Chủ trọ sở hữu: trả kèm <c>path</c> đã lưu của ảnh
+    /// đồng hồ và ảnh hư hỏng để form sửa gửi lại được, vì <c>PUT</c> ghi đè ảnh bằng đúng đường dẫn nhận được.
     /// </summary>
     public async Task<InvoiceDetailResponse> BuildAsync(
         Invoice invoice,
         PaymentQrResponse? paymentQr,
+        bool includeFilePaths,
         CancellationToken cancellationToken = default)
     {
         var lines = invoice.Lines.OrderBy(l => l.Id).ToList();
@@ -80,9 +83,16 @@ public class InvoiceDetailBuilder
             invoice.CancelReason,
             electricityPhotoTask.Result,
             waterPhotoTask.Result,
+            includeFilePaths ? invoice.ElectricityMeterPhotoUrl : null,
+            includeFilePaths ? invoice.WaterMeterPhotoUrl : null,
             lines
                 .Select((l, index) => new InvoiceLineResponse(
-                    l.Category, l.Description, l.Amount, evidenceTasks[index].Result, l.RelatedInvoiceId))
+                    l.Category,
+                    l.Description,
+                    l.Amount,
+                    evidenceTasks[index].Result,
+                    includeFilePaths ? l.EvidenceUrl : null,
+                    l.RelatedInvoiceId))
                 .ToList(),
             paymentReports
                 .Select((p, index) => PaymentReportResponseOf(p, proofTasks[index].Result!))

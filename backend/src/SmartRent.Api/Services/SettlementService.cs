@@ -281,7 +281,7 @@ public class SettlementService
         await transaction.CommitAsync(cancellationToken);
 
         return ServiceResult<InvoiceDetailResponse>.Ok(
-            await _invoiceDetailBuilder.BuildAsync(invoice, paymentQr: null, cancellationToken));
+            await _invoiceDetailBuilder.BuildAsync(invoice, paymentQr: null, includeFilePaths: true, cancellationToken));
     }
 
     /// <summary>
@@ -366,7 +366,7 @@ public class SettlementService
         await _db.SaveChangesAsync(cancellationToken);
 
         return ServiceResult<InvoiceDetailResponse>.Ok(
-            await _invoiceDetailBuilder.BuildAsync(settlementInvoice, paymentQr: null, cancellationToken));
+            await _invoiceDetailBuilder.BuildAsync(settlementInvoice, paymentQr: null, includeFilePaths: true, cancellationToken));
     }
 
     /// <summary>FR-57: Chủ trọ gửi bảng thanh lý đang ở Nháp cho người thuê xác nhận; người thuê nhận thông báo.</summary>

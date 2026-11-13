@@ -97,6 +97,8 @@ public record InvoiceListItemResponse(
 /// <c>SMARTRENT HD&lt;id hóa đơn&gt;</c> (mục 9.1).
 /// <see cref="SentAt"/>, <see cref="TenantConfirmedAt"/>, <see cref="ChangeRequestReason"/>,
 /// <see cref="LandlordFinalizeNote"/> chỉ có giá trị với hóa đơn thanh lý.
+/// <see cref="ElectricityMeterPhotoPath"/>, <see cref="WaterMeterPhotoPath"/> là <c>path</c> đã lưu, chỉ trả cho Chủ trọ
+/// sở hữu để gửi lại khi sửa hóa đơn — <c>PUT</c> ghi đè ảnh bằng đúng đường dẫn nhận được; Người thuê nhận <c>null</c>.
 /// </summary>
 public record InvoiceDetailResponse(
     long Id,
@@ -126,6 +128,8 @@ public record InvoiceDetailResponse(
     string? CancelReason,
     string? ElectricityMeterPhotoUrl,
     string? WaterMeterPhotoUrl,
+    string? ElectricityMeterPhotoPath,
+    string? WaterMeterPhotoPath,
     IReadOnlyList<InvoiceLineResponse> Lines,
     IReadOnlyList<PaymentReportResponse> PaymentReports,
     PaymentQrResponse? PaymentQr,
@@ -134,12 +138,16 @@ public record InvoiceDetailResponse(
     string? ChangeRequestReason,
     string? LandlordFinalizeNote);
 
-/// <summary>Một dòng chi tiết của hóa đơn. Số tiền dương là khoản phải thu, âm là khoản trừ.</summary>
+/// <summary>
+/// Một dòng chi tiết của hóa đơn. Số tiền dương là khoản phải thu, âm là khoản trừ. <see cref="EvidencePath"/> là
+/// <c>path</c> đã lưu của ảnh hư hỏng, chỉ trả cho Chủ trọ sở hữu như các trường <c>...Path</c> của hóa đơn.
+/// </summary>
 public record InvoiceLineResponse(
     InvoiceLineCategory Category,
     string Description,
     decimal Amount,
     string? EvidenceUrl,
+    string? EvidencePath,
     long? RelatedInvoiceId);
 
 /// <summary>Một lượt người thuê báo đã thanh toán và kết quả Chủ trọ xác nhận (api-design mục 9).</summary>
