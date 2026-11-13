@@ -56,11 +56,13 @@ export function getNewSettlementFormValues(expectedMoveOutDate: string | null, t
   }
 }
 
-function toMeterInput(value: number): string {
+/** Chỉ số server trả (số thực) thành chuỗi trong ô nhập, dấu phẩy thập phân như người dùng gõ. */
+export function toMeterInput(value: number): string {
   return String(value).replace('.', ',')
 }
 
-function photoOf(path: string | null, url: string | null): UploadedImage[] {
+/** Ảnh đã lưu của hóa đơn thành giá trị `ImageUploader`: giữ `path` để form sửa gửi lại đúng ảnh cũ. */
+export function photoOf(path: string | null, url: string | null): UploadedImage[] {
   return path === null ? [] : [{ path, url }]
 }
 

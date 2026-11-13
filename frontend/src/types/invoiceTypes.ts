@@ -33,6 +33,24 @@ export interface ContractInvoiceListItem {
   dueDate: string | null
 }
 
+/** Một dòng của `GET /invoices` (docs/api-design.md mục 9): như danh sách theo hợp đồng, thêm phòng và người thuê. */
+export interface InvoiceListItem extends ContractInvoiceListItem {
+  contractId: number
+  roomCode: string
+  propertyName: string
+  tenantName: string
+}
+
+/** Query của `GET /invoices`. `propertyId` chỉ Chủ trọ dùng; Người thuê gửi thì server bỏ qua. */
+export interface InvoiceListParams {
+  status?: InvoiceStatus
+  /** Tháng của `periodStart`, dạng `YYYY-MM`. */
+  month?: string
+  propertyId?: number
+  type?: InvoiceType
+  page?: number
+}
+
 /**
  * Loại dòng chi tiết. Chủ trọ chỉ gửi `BoiThuongHuHong`, `PhiPhat`, `DieuChinhKhac`; `CongNoKyTruoc` và
  * `KhauTruTienCoc` do server tự thêm vào hóa đơn thanh lý (docs/api-design.md mục 10).
@@ -108,4 +126,31 @@ export interface InvoiceDetail {
   tenantConfirmedAt: string | null
   changeRequestReason: string | null
   landlordFinalizeNote: string | null
+}
+
+/** Dòng điều chỉnh của hóa đơn định kỳ: chỉ `DieuChinhKhac`; số âm là khoản giảm. */
+export interface InvoiceAdjustmentLineRequest {
+  category: 'DieuChinhKhac'
+  description: string
+  amount: number
+  relatedInvoiceId: number | null
+}
+
+/**
+ * Body của `POST /contracts/{contractId}/invoices` và `PUT /invoices/{id}` (docs/api-design.md mục 9). Không
+ * có chỉ số cũ, kỳ hay số tiền: server tự điền và tự tính. Ảnh gửi `path`; `PUT` ghi đè ảnh bằng đúng giá trị
+ * gửi lên, gửi `null` là bỏ ảnh.
+ */
+export interface PeriodicInvoiceRequest {
+  currentElectricityIndex: number
+  currentWaterIndex: number
+  electricityMeterPhotoPath: string | null
+  waterMeterPhotoPath: string | null
+  adjustmentLines: InvoiceAdjustmentLineRequest[]
+}
+
+/** Body của `POST /invoices/{id}/payment-reports`: số đồng nguyên và ảnh minh chứng (`MinhChungThanhToan`). */
+export interface ReportPaymentRequest {
+  reportedAmount: number
+  proofImagePath: string
 }
