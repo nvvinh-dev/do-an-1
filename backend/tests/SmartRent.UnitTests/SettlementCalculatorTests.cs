@@ -121,6 +121,46 @@ public class SettlementCalculatorTests
     }
 
     /// <summary>
+    /// BR-15, FR-93: hợp đồng chưa có hóa đơn định kỳ, vào ở 15/10, trả phòng 25/10 — kỳ thanh lý bắt đầu giữa tháng,
+    /// tính 11 ngày (cả ngày vào và ngày trả) trên 31 ngày của tháng 10. Tiền phòng 3.000.000 × 11 ÷ 31 = 1.064.516,13
+    /// → 1.064.516; phí dịch vụ 120.000 × 11 ÷ 31 = 42.580,65 → 42.581. Tổng 1.064.516 + 210.000 + 60.000 + 42.581 =
+    /// 1.377.097 (hợp đồng không cọc).
+    /// </summary>
+    [Fact]
+    public void Calculate_KyTuNgayBatDauGiuaThang_TyLe11Tren31()
+    {
+        var period = new SettlementPeriod(D(2026, 10, 15), D(2026, 10, 25), includesRentAndServiceFees: true);
+
+        var amounts = SettlementCalculator.Calculate(NewContract(depositAmount: 0), period, Electricity, Water, [], []).Amounts;
+
+        Assert.Equal(new SettlementInvoiceAmounts(
+            RentAmount: 1_064_516,
+            ElectricityAmount: 210_000,
+            WaterAmount: 60_000,
+            ServiceFeeAmount: 42_581,
+            LinesAmount: 0,
+            TotalAmount: 1_377_097), amounts);
+    }
+
+    /// <summary>
+    /// BR-15, FR-54: trả phòng ngay ngày bắt đầu 15/10 — kỳ một ngày, tiền phòng 3.000.000 ÷ 31 = 96.774,19 → 96.774,
+    /// phí dịch vụ 120.000 ÷ 31 = 3.870,97 → 3.871; cọc 3.000.000 trừ hết, số dư −2.629.355, hoàn 2.629.355.
+    /// </summary>
+    [Fact]
+    public void Calculate_TraPhongDungNgayBatDau_KyMotNgay_HoanPhanCocDu()
+    {
+        var period = new SettlementPeriod(D(2026, 10, 15), D(2026, 10, 15), includesRentAndServiceFees: true);
+
+        var amounts = SettlementCalculator.Calculate(NewContract(), period, Electricity, Water, [], []).Amounts;
+
+        Assert.Equal(96_774m, amounts.RentAmount);
+        Assert.Equal(3_871m, amounts.ServiceFeeAmount);
+        Assert.Equal(-3_000_000m, amounts.LinesAmount);
+        Assert.Equal(-2_629_355m, amounts.TotalAmount);
+        Assert.Equal(2_629_355m, amounts.DepositRefundAmount);
+    }
+
+    /// <summary>
     /// FR-93: tháng trả phòng đã có hóa đơn định kỳ — hóa đơn thanh lý không có tiền phòng và phí dịch vụ,
     /// chỉ tính điện nước từ lần chốt gần nhất.
     /// </summary>

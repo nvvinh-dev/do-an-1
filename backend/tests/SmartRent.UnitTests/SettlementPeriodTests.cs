@@ -145,6 +145,30 @@ public class SettlementPeriodTests
         Assert.Throws<ArgumentException>(() => SettlementPeriod.For(StartDate, FirstPeriod, D(2026, 10, 10)));
     }
 
+    /// <summary>
+    /// FR-54, FR-93: biên của chặn ngày trả phòng — trả phòng đúng ngày bắt đầu 15/10 vẫn hợp lệ. Chưa có hóa đơn định
+    /// kỳ thì kỳ thanh lý là một ngày 15/10, có tiền phòng và phí dịch vụ (BR-15 tính cả ngày vào và ngày trả).
+    /// </summary>
+    [Fact]
+    public void For_TraPhongDungNgayBatDau_ChuaCoHoaDonDinhKy_KyMotNgay()
+    {
+        Assert.Equal(
+            new SettlementPeriod(StartDate, StartDate, includesRentAndServiceFees: true),
+            SettlementPeriod.For(StartDate, lastPeriodicPeriod: null, StartDate));
+    }
+
+    /// <summary>
+    /// FR-54, FR-93: trả phòng đúng ngày bắt đầu 15/10 khi kỳ đầu 15/10 – 31/10 đã lập — tháng trả phòng đã có hóa đơn
+    /// định kỳ nên chỉ tính điện nước, không ném lỗi.
+    /// </summary>
+    [Fact]
+    public void For_TraPhongDungNgayBatDau_DaCoKyDau_ChiTinhDienNuoc()
+    {
+        Assert.Equal(
+            new SettlementPeriod(StartDate, StartDate, includesRentAndServiceFees: false),
+            SettlementPeriod.For(StartDate, FirstPeriod, StartDate));
+    }
+
     // ------------------------------ Kỳ tự kiểm tra như BillingPeriod
 
     /// <summary>
