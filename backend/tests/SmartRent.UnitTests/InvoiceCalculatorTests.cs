@@ -205,6 +205,36 @@ public class InvoiceCalculatorTests
     }
 
     /// <summary>
+    /// BR-15, FR-41, FR-42, FR-91: kỳ đầu ở tháng 30 ngày — vào ở 16/09, kỳ 16/09–30/09 (15/30 ngày).
+    /// Tiền phòng 3.000.000 × 15 ÷ 30 = 1.500.000; phí dịch vụ 120.000 × 15 ÷ 30 = 60.000;
+    /// điện 175.000; nước 67.500; tổng 1.802.500.
+    /// </summary>
+    [Fact]
+    public void CalculatePeriodic_KyDauThang30Ngay()
+    {
+        var contract = NewContract();
+        contract.StartDate = D(2026, 9, 16);
+        contract.EndDate = D(2027, 9, 15);
+        var period = BillingPeriod.First(contract.StartDate);
+
+        var amounts = InvoiceCalculator.CalculatePeriodic(
+            contract,
+            period,
+            new MeterReading(1_200, 1_250),
+            new MeterReading(80, 84.5m),
+            []);
+
+        Assert.Equal((15, 30), (period.DaysCharged, period.DaysInMonth));
+        Assert.Equal(new PeriodicInvoiceAmounts(
+            RentAmount: 1_500_000,
+            ElectricityAmount: 175_000,
+            WaterAmount: 67_500,
+            ServiceFeeAmount: 60_000,
+            AdjustmentAmount: 0,
+            TotalAmount: 1_802_500), amounts);
+    }
+
+    /// <summary>
     /// BR-15, FR-42: phí dịch vụ tính theo tỷ lệ trên tổng phí tháng rồi mới làm tròn một lần —
     /// 120.000 × 17 ÷ 31 = 65.806, không cộng từng khoản đã làm tròn (10.968 + 54.839 = 65.807).
     /// </summary>

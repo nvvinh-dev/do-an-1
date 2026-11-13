@@ -138,6 +138,23 @@ public class InvoicePeriodicLifecycleTests
         Assert.False(invoice.CanBeEditedOrCancelled);
     }
 
+    /// <summary>
+    /// FR-41, FR-49, FR-52: hóa đơn tổng 0 sang Đã thanh toán ngay khi phát hành dù chưa ai trả đồng nào — số đã thu
+    /// bằng 0 nhưng không sửa, không hủy được nữa. Cần thu thêm thì thêm dòng điều chỉnh ở kỳ kế tiếp (BR-16).
+    /// </summary>
+    [Fact]
+    public void CanBeEditedOrCancelled_TongBang0DaPhatHanh_ChuaThuNhungKhongSuaHuyDuoc()
+    {
+        var invoice = Issued(total: 0);
+
+        Assert.Equal(InvoiceStatus.DaThanhToan, invoice.Status);
+        Assert.Equal(0m, invoice.PaidAmount);
+        Assert.False(invoice.CanBeEditedOrCancelled);
+        Assert.Throws<InvalidOperationException>(() => invoice.Cancel("Lập nhầm"));
+        Assert.Equal(InvoiceStatus.DaThanhToan, invoice.Status);
+        Assert.Null(invoice.CancelReason);
+    }
+
     // ---------------------------------------------------------------- Sau khi sửa
 
     /// <summary>Hóa đơn Nháp sửa xong vẫn là Nháp, chưa có hạn.</summary>
@@ -170,7 +187,10 @@ public class InvoicePeriodicLifecycleTests
         Assert.Equal(Vn(2026, 11, 26, 9), invoice.IssuedAt);
     }
 
-    /// <summary>FR-41: hóa đơn đã phát hành sửa thành tổng 0 → Đã thanh toán ngay, bỏ hạn thanh toán.</summary>
+    /// <summary>
+    /// FR-41, FR-50: hóa đơn đã phát hành sửa thành tổng 0 → Đã thanh toán ngay, bỏ hạn thanh toán; ngày phát hành
+    /// giữ lần đầu.
+    /// </summary>
     [Fact]
     public void ResetPaymentAfterEdit_DaPhatHanhSuaThanhTong0_DaThanhToan()
     {
@@ -182,6 +202,7 @@ public class InvoicePeriodicLifecycleTests
         Assert.Equal(InvoiceStatus.DaThanhToan, invoice.Status);
         Assert.Equal(Vn(2026, 11, 28, 9), invoice.SettledAt);
         Assert.Null(invoice.DueDate);
+        Assert.Equal(Vn(2026, 11, 26, 9), invoice.IssuedAt);
     }
 
     [Fact]
