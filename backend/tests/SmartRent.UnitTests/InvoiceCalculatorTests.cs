@@ -212,10 +212,13 @@ public class InvoiceCalculatorTests
     [Fact]
     public void CalculatePeriodic_KyDauThang30Ngay()
     {
-        var period = BillingPeriod.First(D(2026, 9, 16));
+        var contract = NewContract();
+        contract.StartDate = D(2026, 9, 16);
+        contract.EndDate = D(2027, 9, 15);
+        var period = BillingPeriod.First(contract.StartDate);
 
         var amounts = InvoiceCalculator.CalculatePeriodic(
-            NewContract(),
+            contract,
             period,
             new MeterReading(1_200, 1_250),
             new MeterReading(80, 84.5m),
