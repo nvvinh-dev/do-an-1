@@ -187,7 +187,8 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
           xác nhận cọc đã bị chặn, tiền chuyển lúc này không được ghi nhận là cọc. */}
       <VietQrBox paymentQr={isHoldExpired(contract.holdExpiresAt, now) ? null : contract.paymentQr} />
 
-      {contract.status === 'DaHuy' && <DepositRefundSection contract={contract} />}
+      {/* Đã thanh lý có số dư âm thì Chủ trọ hoàn phần cọc dư lúc hoàn tất thanh lý; người thuê xem được như khi hủy (FR-86). */}
+      {(contract.status === 'DaHuy' || contract.status === 'DaThanhLy') && <DepositRefundSection contract={contract} />}
 
       <MoveOutNoticeCard
         contract={contract}
@@ -508,8 +509,9 @@ function cancelledSentence(contract: ContractDetail): string {
 }
 
 /**
- * Hoàn cọc của hợp đồng đã hủy (FR-86): đã hoàn thì hiện số tiền, ngày, hình thức và ghi chú của
- * Chủ trọ; đã nhận cọc mà chưa hoàn thì hiện "Chờ hoàn cọc". Hợp đồng chưa từng nhận cọc thì không hiện.
+ * Hoàn cọc của hợp đồng đã hủy hoặc đã thanh lý (FR-86): đã hoàn thì hiện số tiền, ngày, hình thức và
+ * ghi chú của Chủ trọ; hợp đồng đã hủy, đã nhận cọc mà chưa hoàn thì hiện "Chờ hoàn cọc"
+ * (`depositRefundPending` chỉ có ở `DaHuy`). Không có gì để hiện thì không hiện.
  */
 function DepositRefundSection({ contract }: { contract: ContractDetail }) {
   const refund = contract.depositRefund
@@ -519,8 +521,14 @@ function DepositRefundSection({ contract }: { contract: ContractDetail }) {
       <DetailCard title="Hoàn cọc">
         <dt className="text-muted-foreground">Số tiền hoàn</dt>
         <dd>
-          <MoneyText amount={refund.amount} className="font-medium" /> (tiền cọc{' '}
-          <MoneyText amount={contract.depositAmount} />)
+          <MoneyText amount={refund.amount} className="font-medium" />
+          {/* Thanh lý có số dư âm thì vẫn hoàn khi hợp đồng không đặt cọc; khi đó không ghi "tiền cọc 0 ₫". */}
+          {contract.depositAmount > 0 && (
+            <>
+              {' '}
+              (tiền cọc <MoneyText amount={contract.depositAmount} />)
+            </>
+          )}
         </dd>
 
         <dt className="text-muted-foreground">Ngày hoàn</dt>
