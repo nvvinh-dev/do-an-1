@@ -50,7 +50,7 @@ export default function MoveOutNoticeCard({ contract, viewer, today, settlementL
         </dl>
 
         {contract.status === 'DangThanhLy' && (
-          <p className="text-sm text-muted-foreground">{settlingSentence(contract, notice, viewer, today)}</p>
+          <p className="text-sm text-muted-foreground">{settlingSentence(contract, notice, viewer)}</p>
         )}
 
         {settlementLink && (
@@ -116,7 +116,6 @@ function settlingSentence(
   contract: ContractDetail,
   notice: MoveOutNotice,
   viewer: ContractViewer,
-  today: string,
 ): string {
   if (contract.settlementInvoiceId !== null) {
     return viewer === 'Tenant'
@@ -130,7 +129,5 @@ function settlingSentence(
   if (viewer === 'Tenant') {
     return `Chủ trọ lập bảng thanh lý sau khi bạn trả phòng; bảng gửi tới thì bạn nhận thông báo.${withdrawHint}`
   }
-  return today >= notice.expectedMoveOutDate
-    ? `Đã tới ngày trả phòng dự kiến: chốt chỉ số lần cuối rồi bấm Lập bảng thanh lý.${withdrawHint}`
-    : `Bảng thanh lý lập được từ ngày trả phòng dự kiến.${withdrawHint}`
+  return `Người thuê đã dọn đi (kể cả sớm hơn ngày dự kiến) thì chốt chỉ số lần cuối rồi bấm Lập bảng thanh lý.${withdrawHint}`
 }

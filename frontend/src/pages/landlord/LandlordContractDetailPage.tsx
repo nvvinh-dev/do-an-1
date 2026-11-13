@@ -154,7 +154,7 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
   // Chưa tải xong danh sách hóa đơn thì coi như đã có hóa đơn, để không hiện nút sửa chỉ số đầu rồi ẩn đi.
   const hasActiveInvoice = invoicesQuery.data ? invoicesQuery.data.some((invoice) => invoice.status !== 'DaHuy') : true
   const actions = getLandlordContractActions(contract, today, now, hasActiveInvoice)
-  const settlementLink = getSettlementLink(contract, today)
+  const settlementLink = getSettlementLink(contract)
   const moveOutActions = getMoveOutNoticeActions(contract, 'Landlord', today)
 
   const dialogProps = (dialog: ContractDialog) => ({
@@ -418,14 +418,16 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
 }
 
 /**
- * Lối vào bảng thanh lý (L9): đã có bảng thì mở bảng; đang thanh lý mà chưa có bảng thì lập được từ
- * ngày trả phòng dự kiến (docs/frontend-screens.md mục 6, dòng `DangThanhLy`).
+ * Lối vào bảng thanh lý (L9): đã có bảng thì mở bảng; đang thanh lý mà chưa có bảng thì hiện nút lập
+ * (docs/frontend-screens.md mục 6, dòng `DangThanhLy`). Không chờ tới ngày trả phòng dự kiến: người thuê
+ * dọn đi sớm thì bảng lập được ngay, vì ngày trả phòng thực tế chỉ cần không sau hôm nay (FR-54, FR-93);
+ * L9 và server tự kiểm tra ngày này.
  */
-function getSettlementLink(contract: ContractDetail, today: string): string | null {
+function getSettlementLink(contract: ContractDetail): string | null {
   if (contract.settlementInvoiceId !== null) {
     return contract.status === 'DaThanhLy' ? 'Xem bảng thanh lý' : 'Mở bảng thanh lý'
   }
-  if (contract.status === 'DangThanhLy' && contract.moveOutNotice && today >= contract.moveOutNotice.expectedMoveOutDate) {
+  if (contract.status === 'DangThanhLy') {
     return 'Lập bảng thanh lý'
   }
   return null
