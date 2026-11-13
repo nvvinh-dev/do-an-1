@@ -1,3 +1,4 @@
+import type { ContractStatus } from '@/types/contractTypes'
 import type { RoomCounts } from '@/types/propertyTypes'
 
 /** Số tài khoản theo vai trò, tính cả tài khoản đang bị khóa; mỗi tài khoản có đúng một vai trò. */
@@ -44,4 +45,29 @@ export interface LandlordDashboard {
   unpaidInvoices: UnpaidInvoices
   monthlyRevenue: MonthlyRevenue[]
   pendingActions: LandlordPendingActions
+}
+
+/** Hợp đồng chưa kết thúc (khác `DaThanhLy`, `DaHuy`) trên dashboard Người thuê. `startDate`, `endDate` là ngày thuần. */
+export interface TenantDashboardContract {
+  id: number
+  roomCode: string
+  propertyName: string
+  status: ContractStatus
+  startDate: string
+  endDate: string
+  rentPrice: number
+}
+
+/** Việc cần xử lý của Người thuê — hợp đồng chờ mình xác nhận và bảng thanh lý chờ mình đồng ý. */
+export interface TenantPendingActions {
+  contractsToConfirm: number
+  settlementsToConfirm: number
+}
+
+/** `GET /dashboard/tenant`. `totalPaid` là tổng đã được Chủ trọ xác nhận thu, không tính tiền cọc. */
+export interface TenantDashboard {
+  contracts: TenantDashboardContract[]
+  unpaidInvoices: UnpaidInvoices
+  totalPaid: number
+  pendingActions: TenantPendingActions
 }
