@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SmartRent.Api/SmartRent.Api.csproj" />
+    <Project Path="src/SmartRent.Domain/SmartRent.Domain.csproj" />
+    <Project Path="src/SmartRent.Infrastructure/SmartRent.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SmartRent.UnitTests/SmartRent.UnitTests.csproj" />
+  </Folder>
+</Solution>

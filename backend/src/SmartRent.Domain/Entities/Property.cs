@@ -1,0 +1,39 @@
+using SmartRent.Domain.Enums;
+
+namespace SmartRent.Domain.Entities;
+
+/// <summary>Khu trọ. Một khu trọ thuộc về đúng một Chủ trọ.</summary>
+public class Property
+{
+    public long Id { get; set; }
+
+    public long LandlordUserId { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public string Address { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Phường/xã. Địa chỉ theo đơn vị hành chính 2 cấp từ 01/07/2025 nên không có quận/huyện;
+    /// cặp (<see cref="City"/>, <see cref="Ward"/>) phải có trong danh mục đơn vị hành chính.
+    /// </summary>
+    public string Ward { get; set; } = string.Empty;
+
+    public string City { get; set; } = string.Empty;
+
+    public string? Description { get; set; }
+
+    public PropertyStatus Status { get; set; }
+
+    /// <summary>
+    /// Khu trọ đã lưu trữ chỉ còn xem được: không sửa thông tin, không thêm phòng mới.
+    /// Lưu trữ là vĩnh viễn (BR-10).
+    /// </summary>
+    public bool IsArchived => Status == PropertyStatus.LuuTru;
+
+    public ICollection<Room> Rooms { get; set; } = [];
+
+    public ICollection<PropertyImage> Images { get; set; } = [];
+
+    public ICollection<PropertyAmenity> Amenities { get; set; } = [];
+}
