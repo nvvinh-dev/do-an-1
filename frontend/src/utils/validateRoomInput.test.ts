@@ -7,7 +7,7 @@ import {
   validateRoomMoney,
   validateRoomOccupants,
   validateServiceFeeName,
-} from './validateRoomInput'
+} from '@/utils/validateRoomInput'
 
 describe('dữ liệu số của phòng', () => {
   it('cho phép phí miễn phí nhưng giá thuê phải lớn hơn 0', () => {
