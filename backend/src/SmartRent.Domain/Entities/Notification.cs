@@ -17,7 +17,7 @@ public class Notification
 
     public string Content { get; set; } = string.Empty;
 
-    /// <summary>Contract, Invoice, RentalRequest, LandlordApplication, AppUser.</summary>
+    /// <summary>Contract, Invoice, RentalRequest, LandlordApplication, AppUser; Phase 2 thêm RoommateInvitation, MaintenanceRequest.</summary>
     public string? RelatedEntityType { get; set; }
 
     public long? RelatedEntityId { get; set; }

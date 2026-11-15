@@ -36,6 +36,11 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
     public DbSet<PaymentReport> PaymentReports => Set<PaymentReport>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<RoommateProfile> RoommateProfiles => Set<RoommateProfile>();
+    public DbSet<RoommateInvitation> RoommateInvitations => Set<RoommateInvitation>();
+    public DbSet<RoommateBlock> RoommateBlocks => Set<RoommateBlock>();
+    public DbSet<MaintenanceRequest> MaintenanceRequests => Set<MaintenanceRequest>();
+    public DbSet<MaintenanceRequestImage> MaintenanceRequestImages => Set<MaintenanceRequestImage>();
 
     /// <summary>Số tiền: numeric(14,2).</summary>
     private const string Money = "numeric(14,2)";
@@ -57,6 +62,8 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
         ConfigureContracts(builder);
         ConfigureInvoices(builder);
         ConfigureNotificationsAndAuditLogs(builder);
+        ConfigureRoommates(builder);
+        ConfigureMaintenanceRequests(builder);
     }
 
     // ------------------------------------------------------------- Identity
@@ -565,6 +572,176 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
 
             // Tra cứu khi xử lý khiếu nại
             entity.HasIndex(a => new { a.EntityType, a.EntityId });
+        });
+    }
+
+    // ---------------------------------------------- Ở ghép (BP-11, Phase 2)
+
+    private static void ConfigureRoommates(ModelBuilder builder)
+    {
+        builder.Entity<RoommateProfile>(entity =>
+        {
+            entity.Property(p => p.Gender).HasConversion<string>().IsRequired();
+            entity.Property(p => p.PreferredRoommateGender).HasConversion<string>().IsRequired();
+            entity.Property(p => p.City).IsRequired();
+            entity.Property(p => p.BudgetMin).HasColumnType(Money);
+            entity.Property(p => p.BudgetMax).HasColumnType(Money);
+            entity.Property(p => p.SleepTime).HasConversion<string>().IsRequired();
+            entity.Property(p => p.Cooking).HasConversion<string>().IsRequired();
+            entity.Property(p => p.NoiseLevel).HasConversion<string>().IsRequired();
+            entity.Property(p => p.OccupationType).HasConversion<string>().IsRequired();
+            entity.Property(p => p.OrganizationName).IsRequired();
+            entity.Property(p => p.Visibility).HasConversion<string>().IsRequired();
+
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "ck_roommate_profiles_gender",
+                    $"gender IN ({EnumValues<Gender>()})");
+
+                t.HasCheckConstraint(
+                    "ck_roommate_profiles_preferred_roommate_gender",
+                    $"preferred_roommate_gender IN ({EnumValues<PreferredRoommateGender>()})");
+
+                t.HasCheckConstraint(
+                    "ck_roommate_profiles_sleep_time",
+                    $"sleep_time IN ({EnumValues<SleepTime>()})");
+
+                t.HasCheckConstraint(
+                    "ck_roommate_profiles_cooking",
+                    $"cooking IN ({EnumValues<CookingFrequency>()})");
+
+                t.HasCheckConstraint(
+                    "ck_roommate_profiles_noise_level",
+                    $"noise_level IN ({EnumValues<NoiseLevel>()})");
+
+                t.HasCheckConstraint(
+                    "ck_roommate_profiles_occupation_type",
+                    $"occupation_type IN ({EnumValues<OccupationType>()})");
+
+                t.HasCheckConstraint(
+                    "ck_roommate_profiles_visibility",
+                    $"visibility IN ({EnumValues<RoommateProfileVisibility>()})");
+
+                t.HasCheckConstraint("ck_roommate_profiles_budget_min", "budget_min > 0");
+
+                t.HasCheckConstraint("ck_roommate_profiles_budget_max", "budget_max >= budget_min");
+            });
+
+            entity.HasOne<AppUser>()
+                  .WithMany()
+                  .HasForeignKey(p => p.TenantUserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            // Mỗi Người thuê một hồ sơ
+            entity.HasIndex(p => p.TenantUserId).IsUnique();
+        });
+
+        builder.Entity<RoommateInvitation>(entity =>
+        {
+            entity.Property(i => i.Status).HasConversion<string>().IsRequired();
+
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "ck_roommate_invitations_status",
+                    $"status IN ({EnumValues<RoommateInvitationStatus>()})");
+
+                t.HasCheckConstraint(
+                    "ck_roommate_invitations_khac_nguoi",
+                    "recipient_user_id <> sender_user_id");
+            });
+
+            entity.HasOne<AppUser>()
+                  .WithMany()
+                  .HasForeignKey(i => i.SenderUserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne<AppUser>()
+                  .WithMany()
+                  .HasForeignKey(i => i.RecipientUserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            // FR-116: chặn hai lời mời đang chờ cùng chiều khi gửi đồng thời; chiều ngược lại do service kiểm tra.
+            entity.HasIndex(i => new { i.SenderUserId, i.RecipientUserId })
+                  .IsUnique()
+                  .HasFilter("status = 'ChoPhanHoi'")
+                  .HasDatabaseName("ux_roommate_invitations_sender_recipient_cho_phan_hoi");
+        });
+
+        builder.Entity<RoommateBlock>(entity =>
+        {
+            entity.ToTable(t => t.HasCheckConstraint(
+                "ck_roommate_blocks_khac_nguoi",
+                "blocked_user_id <> blocker_user_id"));
+
+            entity.HasOne<AppUser>()
+                  .WithMany()
+                  .HasForeignKey(b => b.BlockerUserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne<AppUser>()
+                  .WithMany()
+                  .HasForeignKey(b => b.BlockedUserId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(b => new { b.BlockerUserId, b.BlockedUserId }).IsUnique();
+        });
+    }
+
+    // --------------------------------------------- Sự cố (BP-08, Phase 2)
+
+    private static void ConfigureMaintenanceRequests(ModelBuilder builder)
+    {
+        builder.Entity<MaintenanceRequest>(entity =>
+        {
+            entity.Property(m => m.Title).IsRequired();
+            entity.Property(m => m.Description).IsRequired();
+            entity.Property(m => m.Urgency).HasConversion<string>().IsRequired();
+            entity.Property(m => m.Status).HasConversion<string>().IsRequired();
+            entity.Property(m => m.EstimatedCompensation).HasColumnType(Money);
+
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "ck_maintenance_requests_urgency",
+                    $"urgency IN ({EnumValues<MaintenanceUrgency>()})");
+
+                t.HasCheckConstraint(
+                    "ck_maintenance_requests_status",
+                    $"status IN ({EnumValues<MaintenanceRequestStatus>()})");
+
+                t.HasCheckConstraint(
+                    "ck_maintenance_requests_estimated_compensation",
+                    "estimated_compensation > 0");
+            });
+
+            entity.HasOne(m => m.Contract)
+                  .WithMany()
+                  .HasForeignKey(m => m.ContractId)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            // Liệt kê sự cố theo hợp đồng; truy quyền sở hữu
+            entity.HasIndex(m => m.ContractId);
+
+            // Quét sự cố Mới quá 72 giờ chưa tiếp nhận
+            entity.HasIndex(m => new { m.Status, m.CreatedAt });
+
+            // Quét sự cố Chờ người thuê xác nhận quá hạn tự đóng
+            entity.HasIndex(m => new { m.Status, m.CompletedAt });
+
+            // Hai bên có thể thao tác cùng lúc trên một sự cố: bên lưu sau nhận 409.
+            ConfigureRowVersion(entity);
+        });
+
+        builder.Entity<MaintenanceRequestImage>(entity =>
+        {
+            entity.Property(i => i.Url).IsRequired();
+
+            entity.HasOne(i => i.MaintenanceRequest)
+                  .WithMany(m => m.Images)
+                  .HasForeignKey(i => i.MaintenanceRequestId)
+                  .OnDelete(DeleteBehavior.Cascade);
         });
     }
 

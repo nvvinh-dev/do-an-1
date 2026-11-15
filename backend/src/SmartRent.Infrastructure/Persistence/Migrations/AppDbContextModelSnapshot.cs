@@ -736,6 +736,142 @@ namespace SmartRent.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("SmartRent.Domain.Entities.MaintenanceRequest", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset?>("AcceptedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("accepted_at");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cancelled_at");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("closed_at");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at");
+
+                    b.Property<long>("ContractId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("contract_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<decimal?>("EstimatedCompensation")
+                        .HasColumnType("numeric(14,2)")
+                        .HasColumnName("estimated_compensation");
+
+                    b.Property<DateOnly?>("ExpectedCompletionDate")
+                        .HasColumnType("date")
+                        .HasColumnName("expected_completion_date");
+
+                    b.Property<bool>("IsAutoClosed")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_auto_closed");
+
+                    b.Property<string>("NotFixedReason")
+                        .HasColumnType("text")
+                        .HasColumnName("not_fixed_reason");
+
+                    b.Property<DateTimeOffset?>("RejectedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("rejected_at");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("text")
+                        .HasColumnName("rejection_reason");
+
+                    b.Property<uint>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("title");
+
+                    b.Property<string>("Urgency")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("urgency");
+
+                    b.HasKey("Id")
+                        .HasName("pk_maintenance_requests");
+
+                    b.HasIndex("ContractId")
+                        .HasDatabaseName("ix_maintenance_requests_contract_id");
+
+                    b.HasIndex("Status", "CompletedAt")
+                        .HasDatabaseName("ix_maintenance_requests_status_completed_at");
+
+                    b.HasIndex("Status", "CreatedAt")
+                        .HasDatabaseName("ix_maintenance_requests_status_created_at");
+
+                    b.ToTable("maintenance_requests", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_maintenance_requests_estimated_compensation", "estimated_compensation > 0");
+
+                            t.HasCheckConstraint("ck_maintenance_requests_status", "status IN ('Moi', 'DangXuLy', 'ChoNguoiThueXacNhan', 'DaDong', 'TuChoi', 'DaHuy')");
+
+                            t.HasCheckConstraint("ck_maintenance_requests_urgency", "urgency IN ('BinhThuong', 'Gap', 'KhanCap')");
+                        });
+                });
+
+            modelBuilder.Entity("SmartRent.Domain.Entities.MaintenanceRequestImage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer")
+                        .HasColumnName("display_order");
+
+                    b.Property<long>("MaintenanceRequestId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("maintenance_request_id");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("url");
+
+                    b.HasKey("Id")
+                        .HasName("pk_maintenance_request_images");
+
+                    b.HasIndex("MaintenanceRequestId")
+                        .HasDatabaseName("ix_maintenance_request_images_maintenance_request_id");
+
+                    b.ToTable("maintenance_request_images", (string)null);
+                });
+
             modelBuilder.Entity("SmartRent.Domain.Entities.Notification", b =>
                 {
                     b.Property<long>("Id")
@@ -1199,6 +1335,211 @@ namespace SmartRent.Infrastructure.Persistence.Migrations
                     b.ToTable("room_service_fees", (string)null);
                 });
 
+            modelBuilder.Entity("SmartRent.Domain.Entities.RoommateBlock", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset>("BlockedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("blocked_at");
+
+                    b.Property<long>("BlockedUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("blocked_user_id");
+
+                    b.Property<long>("BlockerUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("blocker_user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_roommate_blocks");
+
+                    b.HasIndex("BlockedUserId")
+                        .HasDatabaseName("ix_roommate_blocks_blocked_user_id");
+
+                    b.HasIndex("BlockerUserId", "BlockedUserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_roommate_blocks_blocker_user_id_blocked_user_id");
+
+                    b.ToTable("roommate_blocks", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_roommate_blocks_khac_nguoi", "blocked_user_id <> blocker_user_id");
+                        });
+                });
+
+            modelBuilder.Entity("SmartRent.Domain.Entities.RoommateInvitation", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("RecipientUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("recipient_user_id");
+
+                    b.Property<DateTimeOffset?>("RespondedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("responded_at");
+
+                    b.Property<long>("SenderUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("sender_user_id");
+
+                    b.Property<DateTimeOffset>("SentAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sent_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("status");
+
+                    b.HasKey("Id")
+                        .HasName("pk_roommate_invitations");
+
+                    b.HasIndex("RecipientUserId")
+                        .HasDatabaseName("ix_roommate_invitations_recipient_user_id");
+
+                    b.HasIndex("SenderUserId", "RecipientUserId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_roommate_invitations_sender_recipient_cho_phan_hoi")
+                        .HasFilter("status = 'ChoPhanHoi'");
+
+                    b.ToTable("roommate_invitations", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_roommate_invitations_khac_nguoi", "recipient_user_id <> sender_user_id");
+
+                            t.HasCheckConstraint("ck_roommate_invitations_status", "status IN ('ChoPhanHoi', 'DaChapNhan', 'TuChoi', 'DaRut')");
+                        });
+                });
+
+            modelBuilder.Entity("SmartRent.Domain.Entities.RoommateProfile", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("BudgetMax")
+                        .HasColumnType("numeric(14,2)")
+                        .HasColumnName("budget_max");
+
+                    b.Property<decimal>("BudgetMin")
+                        .HasColumnType("numeric(14,2)")
+                        .HasColumnName("budget_min");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("city");
+
+                    b.Property<string>("Cooking")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("cooking");
+
+                    b.Property<string>("Gender")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("gender");
+
+                    b.Property<bool>("HasPet")
+                        .HasColumnType("boolean")
+                        .HasColumnName("has_pet");
+
+                    b.Property<bool>("IsSearching")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_searching");
+
+                    b.Property<DateOnly>("MoveInFrom")
+                        .HasColumnType("date")
+                        .HasColumnName("move_in_from");
+
+                    b.Property<string>("NoiseLevel")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("noise_level");
+
+                    b.Property<string>("OccupationType")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("occupation_type");
+
+                    b.Property<string>("OrganizationName")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("organization_name");
+
+                    b.Property<string>("PreferredRoommateGender")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("preferred_roommate_gender");
+
+                    b.Property<string>("SleepTime")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("sleep_time");
+
+                    b.Property<bool>("Smokes")
+                        .HasColumnType("boolean")
+                        .HasColumnName("smokes");
+
+                    b.Property<long>("TenantUserId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("tenant_user_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("Visibility")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("visibility");
+
+                    b.Property<string>("Ward")
+                        .HasColumnType("text")
+                        .HasColumnName("ward");
+
+                    b.HasKey("Id")
+                        .HasName("pk_roommate_profiles");
+
+                    b.HasIndex("TenantUserId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_roommate_profiles_tenant_user_id");
+
+                    b.ToTable("roommate_profiles", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_roommate_profiles_budget_max", "budget_max >= budget_min");
+
+                            t.HasCheckConstraint("ck_roommate_profiles_budget_min", "budget_min > 0");
+
+                            t.HasCheckConstraint("ck_roommate_profiles_cooking", "cooking IN ('ThuongXuyen', 'ThinhThoang', 'Khong')");
+
+                            t.HasCheckConstraint("ck_roommate_profiles_gender", "gender IN ('Nam', 'Nu')");
+
+                            t.HasCheckConstraint("ck_roommate_profiles_noise_level", "noise_level IN ('YenTinh', 'BinhThuong', 'On')");
+
+                            t.HasCheckConstraint("ck_roommate_profiles_occupation_type", "occupation_type IN ('SinhVien', 'DiLam')");
+
+                            t.HasCheckConstraint("ck_roommate_profiles_preferred_roommate_gender", "preferred_roommate_gender IN ('ChiNam', 'ChiNu', 'KhongYeuCau')");
+
+                            t.HasCheckConstraint("ck_roommate_profiles_sleep_time", "sleep_time IN ('Truoc23Gio', 'Tu23Den1Gio', 'Sau1Gio')");
+
+                            t.HasCheckConstraint("ck_roommate_profiles_visibility", "visibility IN ('CongKhai', 'ChiKhiToiKetNoi')");
+                        });
+                });
+
             modelBuilder.Entity("SmartRent.Infrastructure.Identity.AppRole", b =>
                 {
                     b.Property<long>("Id")
@@ -1526,6 +1867,30 @@ namespace SmartRent.Infrastructure.Persistence.Migrations
                         .HasConstraintName("fk_landlord_applications_users_user_id");
                 });
 
+            modelBuilder.Entity("SmartRent.Domain.Entities.MaintenanceRequest", b =>
+                {
+                    b.HasOne("SmartRent.Domain.Entities.Contract", "Contract")
+                        .WithMany()
+                        .HasForeignKey("ContractId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_maintenance_requests_contracts_contract_id");
+
+                    b.Navigation("Contract");
+                });
+
+            modelBuilder.Entity("SmartRent.Domain.Entities.MaintenanceRequestImage", b =>
+                {
+                    b.HasOne("SmartRent.Domain.Entities.MaintenanceRequest", "MaintenanceRequest")
+                        .WithMany("Images")
+                        .HasForeignKey("MaintenanceRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_maintenance_request_images_maintenance_requests_maintenance");
+
+                    b.Navigation("MaintenanceRequest");
+                });
+
             modelBuilder.Entity("SmartRent.Domain.Entities.Notification", b =>
                 {
                     b.HasOne("SmartRent.Infrastructure.Identity.AppUser", null)
@@ -1673,6 +2038,50 @@ namespace SmartRent.Infrastructure.Persistence.Migrations
                     b.Navigation("Room");
                 });
 
+            modelBuilder.Entity("SmartRent.Domain.Entities.RoommateBlock", b =>
+                {
+                    b.HasOne("SmartRent.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("BlockedUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_roommate_blocks_users_blocked_user_id");
+
+                    b.HasOne("SmartRent.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("BlockerUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_roommate_blocks_users_blocker_user_id");
+                });
+
+            modelBuilder.Entity("SmartRent.Domain.Entities.RoommateInvitation", b =>
+                {
+                    b.HasOne("SmartRent.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("RecipientUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_roommate_invitations_users_recipient_user_id");
+
+                    b.HasOne("SmartRent.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("SenderUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_roommate_invitations_users_sender_user_id");
+                });
+
+            modelBuilder.Entity("SmartRent.Domain.Entities.RoommateProfile", b =>
+                {
+                    b.HasOne("SmartRent.Infrastructure.Identity.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("TenantUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_roommate_profiles_users_tenant_user_id");
+                });
+
             modelBuilder.Entity("SmartRent.Domain.Entities.Contract", b =>
                 {
                     b.Navigation("Invoices");
@@ -1687,6 +2096,11 @@ namespace SmartRent.Infrastructure.Persistence.Migrations
                     b.Navigation("Lines");
 
                     b.Navigation("PaymentReports");
+                });
+
+            modelBuilder.Entity("SmartRent.Domain.Entities.MaintenanceRequest", b =>
+                {
+                    b.Navigation("Images");
                 });
 
             modelBuilder.Entity("SmartRent.Domain.Entities.Property", b =>
