@@ -301,7 +301,7 @@ Sau đó mở Pull Request trên GitHub để người còn lại duyệt.
 
 ## 12. Cấu hình và chạy dự án
 
-Yêu cầu môi trường: .NET SDK 10, Node.js 20 trở lên.
+Yêu cầu môi trường: .NET SDK 10, Node.js 24 (bản CI dùng).
 
 ### 12.1 Cấu hình secret
 
