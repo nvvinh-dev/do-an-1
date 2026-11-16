@@ -59,4 +59,30 @@ public class MaintenanceRequest
 
     /// <summary>Từ 0 tới 5 ảnh, ghi một lần khi tạo.</summary>
     public ICollection<MaintenanceRequestImage> Images { get; set; } = [];
+
+    /// <summary>Số ảnh tối đa của một sự cố (FR-136).</summary>
+    public const int MaxImages = 5;
+
+    /// <summary>
+    /// FR-136: sự cố mới ở trạng thái Mới. Điều kiện hợp đồng (<see cref="Contract.CanReportMaintenance"/>) và
+    /// quyền sở hữu ảnh do service kiểm tra trước. Thứ tự <paramref name="imagePaths"/> là thứ tự hiển thị.
+    /// </summary>
+    public static MaintenanceRequest Report(
+        long contractId,
+        string title,
+        string description,
+        MaintenanceUrgency urgency,
+        IReadOnlyList<string> imagePaths,
+        DateTimeOffset now) => new()
+    {
+        ContractId = contractId,
+        Title = title,
+        Description = description,
+        Urgency = urgency,
+        Status = MaintenanceRequestStatus.Moi,
+        CreatedAt = now,
+        Images = imagePaths
+            .Select((path, index) => new MaintenanceRequestImage { Url = path, DisplayOrder = index })
+            .ToList()
+    };
 }

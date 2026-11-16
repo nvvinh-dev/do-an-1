@@ -353,6 +353,18 @@ public class Contract
     public bool CanSendMoveOutNotice(DateOnly today)
         => Status is ContractStatus.DangHieuLuc or ContractStatus.SapHetHan && today >= StartDate;
 
+    /// <summary>
+    /// FR-137: Người thuê báo được sự cố khi đang ở trong phòng — hợp đồng Đang hiệu lực hoặc Sắp hết hạn đã tới
+    /// ngày bắt đầu, hoặc Đang thanh lý mà chưa qua ngày trả phòng dự kiến. Đã dọn đi thì hư hỏng ghi vào bảng thanh lý.
+    /// </summary>
+    /// <param name="today">Ngày hiện tại theo lịch Việt Nam.</param>
+    public bool CanReportMaintenance(DateOnly today) => Status switch
+    {
+        ContractStatus.DangHieuLuc or ContractStatus.SapHetHan => today >= StartDate,
+        ContractStatus.DangThanhLy => ExpectedMoveOutDate is { } moveOut && today <= moveOut,
+        _ => false
+    };
+
     /// <summary>FR-53, FR-87: ghi bên gửi — căn cứ cho phí phạt — và chuyển hợp đồng sang Đang thanh lý.</summary>
     /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanSendMoveOutNotice"/> sai — lỗi lập trình.</exception>
     public void SendMoveOutNotice(long senderUserId, DateOnly expectedMoveOutDate, string reason, DateTimeOffset now)

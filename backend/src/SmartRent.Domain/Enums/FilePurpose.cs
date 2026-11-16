@@ -11,5 +11,8 @@ public enum FilePurpose
     GiayToNhanThan,
     AnhDongHo,
     MinhChungThanhToan,
-    AnhHuHong
+    AnhHuHong,
+
+    /// <summary>Ảnh sự cố do Người thuê chụp (BP-08), bucket riêng tư.</summary>
+    AnhSuCo
 }
