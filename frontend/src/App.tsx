@@ -40,11 +40,14 @@ import SearchPage from '@/pages/public/SearchPage'
 import AccountPage from '@/pages/shared/AccountPage'
 import NotificationsPage from '@/pages/shared/NotificationsPage'
 import LandlordApplicationPage from '@/pages/tenant/LandlordApplicationPage'
+import ReportMaintenanceRequestPage from '@/pages/tenant/ReportMaintenanceRequestPage'
 import TenantContractDetailPage from '@/pages/tenant/TenantContractDetailPage'
 import TenantContractListPage from '@/pages/tenant/TenantContractListPage'
 import TenantDashboardPage from '@/pages/tenant/TenantDashboardPage'
 import TenantInvoiceDetailPage from '@/pages/tenant/TenantInvoiceDetailPage'
 import TenantInvoiceListPage from '@/pages/tenant/TenantInvoiceListPage'
+import TenantMaintenanceRequestDetailPage from '@/pages/tenant/TenantMaintenanceRequestDetailPage'
+import TenantMaintenanceRequestListPage from '@/pages/tenant/TenantMaintenanceRequestListPage'
 import TenantRentalRequestDetailPage from '@/pages/tenant/TenantRentalRequestDetailPage'
 import TenantRentalRequestListPage from '@/pages/tenant/TenantRentalRequestListPage'
 
@@ -120,6 +123,9 @@ const routes: RouteObject[] = [
               { path: 'contracts/:id', element: <TenantContractDetailPage /> },
               { path: 'invoices', element: <TenantInvoiceListPage /> },
               { path: 'invoices/:id', element: <TenantInvoiceDetailPage /> },
+              { path: 'maintenance-requests', element: <TenantMaintenanceRequestListPage /> },
+              { path: 'maintenance-requests/new', element: <ReportMaintenanceRequestPage /> },
+              { path: 'maintenance-requests/:id', element: <TenantMaintenanceRequestDetailPage /> },
               { path: '*', element: <NotFoundPage /> },
             ],
           },

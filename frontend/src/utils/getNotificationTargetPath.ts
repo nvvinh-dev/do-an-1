@@ -8,7 +8,8 @@ import type { NotificationListItem } from '@/types/notificationTypes'
  * mở cho Người thuê, nên Chủ trọ về Tổng quan.
  *
  * `null` thì chỉ đánh dấu đã đọc, ở lại trang: thông báo không gắn bản ghi, Admin (không có màn
- * Thông báo), lời mời ở ghép (trang T9 thuộc Phase 2, chưa có).
+ * Thông báo), lời mời ở ghép (trang T9 thuộc Phase 2, chưa có), sự cố với Chủ trọ (màn sự cố của
+ * Chủ trọ chưa có).
  */
 export function getNotificationTargetPath(
   notification: Pick<NotificationListItem, 'relatedEntityType' | 'relatedEntityId'>,
@@ -32,6 +33,8 @@ export function getNotificationTargetPath(
       return relatedEntityId === null ? null : `${rolePath}/invoices/${relatedEntityId}`
     case 'RentalRequest':
       return relatedEntityId === null ? null : `${rolePath}/rental-requests/${relatedEntityId}`
+    case 'MaintenanceRequest':
+      return relatedEntityId === null || role !== 'Tenant' ? null : `/tenant/maintenance-requests/${relatedEntityId}`
     default:
       return null
   }
