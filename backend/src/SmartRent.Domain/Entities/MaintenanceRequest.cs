@@ -64,6 +64,144 @@ public class MaintenanceRequest
     public const int MaxImages = 5;
 
     /// <summary>
+    /// FR-143, FR-144: 7 ngày tính đủ giờ kể từ lần báo sửa xong gần nhất — quá mốc này Người thuê không báo
+    /// Chưa đạt được nữa và hệ thống tự đóng (kiến trúc mục 7.1).
+    /// </summary>
+    public static readonly TimeSpan ConfirmationWindow = TimeSpan.FromHours(168);
+
+    /// <summary>BP-08 A4: sự cố ở Mới quá 72 giờ thì Người thuê được gợi ý gửi khiếu nại.</summary>
+    public static readonly TimeSpan AcceptanceWindow = TimeSpan.FromHours(72);
+
+    /// <summary>Hạn Người thuê xác nhận; chỉ có nghĩa khi sự cố đang Chờ người thuê xác nhận.</summary>
+    public DateTimeOffset? ConfirmationDeadline => CompletedAt + ConfirmationWindow;
+
+    public bool CanAccept => Status == MaintenanceRequestStatus.Moi;
+
+    public bool CanChangeExpectedCompletionDate => Status == MaintenanceRequestStatus.DangXuLy;
+
+    public bool CanReject => Status is MaintenanceRequestStatus.Moi or MaintenanceRequestStatus.DangXuLy;
+
+    public bool CanComplete => Status == MaintenanceRequestStatus.DangXuLy;
+
+    /// <summary>Quá hạn xác nhận mà tác vụ định kỳ chưa kịp tự đóng thì vẫn xác nhận được (api-design mục 18).</summary>
+    public bool CanConfirm => Status == MaintenanceRequestStatus.ChoNguoiThueXacNhan;
+
+    /// <summary>FR-143: quá 168 giờ kể từ lần báo sửa xong gần nhất thì không báo Chưa đạt được, dù tác vụ chưa chạy.</summary>
+    public bool CanMarkNotFixed(DateTimeOffset now)
+        => Status == MaintenanceRequestStatus.ChoNguoiThueXacNhan && now <= ConfirmationDeadline;
+
+    public bool CanCancel => Status is MaintenanceRequestStatus.Moi or MaintenanceRequestStatus.DangXuLy;
+
+    /// <summary>FR-144: tác vụ định kỳ tự đóng sự cố Chờ người thuê xác nhận đã quá 168 giờ.</summary>
+    public bool ShouldAutoClose(DateTimeOffset now)
+        => Status == MaintenanceRequestStatus.ChoNguoiThueXacNhan && now > ConfirmationDeadline;
+
+    /// <summary>BP-08 A4: sự cố vẫn ở Mới sau 72 giờ kể từ lúc gửi.</summary>
+    public bool IsOverdueForAcceptance(DateTimeOffset now)
+        => Status == MaintenanceRequestStatus.Moi && now > CreatedAt + AcceptanceWindow;
+
+    /// <summary>FR-140: Mới → Đang xử lý. Ngày dự kiến được null; không trước hôm nay do validator kiểm.</summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanAccept"/> sai — lỗi lập trình.</exception>
+    public void Accept(DateOnly? expectedCompletionDate, DateTimeOffset now)
+    {
+        EnsureAllowed(CanAccept, nameof(Accept));
+
+        Status = MaintenanceRequestStatus.DangXuLy;
+        AcceptedAt ??= now;
+        ExpectedCompletionDate = expectedCompletionDate;
+    }
+
+    /// <summary>FR-140: sửa ngày dự kiến khi Đang xử lý; trạng thái giữ nguyên.</summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanChangeExpectedCompletionDate"/> sai — lỗi lập trình.</exception>
+    public void ChangeExpectedCompletionDate(DateOnly? expectedCompletionDate)
+    {
+        EnsureAllowed(CanChangeExpectedCompletionDate, nameof(ChangeExpectedCompletionDate));
+
+        ExpectedCompletionDate = expectedCompletionDate;
+    }
+
+    /// <summary>FR-141: Mới / Đang xử lý → Từ chối, ghi lý do và bồi thường dự kiến (được null).</summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanReject"/> sai — lỗi lập trình.</exception>
+    public void Reject(string reason, decimal? estimatedCompensation, DateTimeOffset now)
+    {
+        EnsureAllowed(CanReject, nameof(Reject));
+
+        Status = MaintenanceRequestStatus.TuChoi;
+        RejectionReason = reason;
+        EstimatedCompensation = estimatedCompensation;
+        RejectedAt = now;
+    }
+
+    /// <summary>FR-142: Đang xử lý → Chờ người thuê xác nhận; mốc 168 giờ tính lại từ lần báo này.</summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanComplete"/> sai — lỗi lập trình.</exception>
+    public void Complete(DateTimeOffset now)
+    {
+        EnsureAllowed(CanComplete, nameof(Complete));
+
+        Status = MaintenanceRequestStatus.ChoNguoiThueXacNhan;
+        CompletedAt = now;
+    }
+
+    /// <summary>
+    /// FR-143: Chờ người thuê xác nhận → Đã đóng. Đã quá hạn xác nhận thì kết quả giống tự đóng (api-design mục 18).
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanConfirm"/> sai — lỗi lập trình.</exception>
+    public void Confirm(DateTimeOffset now)
+    {
+        EnsureAllowed(CanConfirm, nameof(Confirm));
+
+        Close(isAutoClosed: now > ConfirmationDeadline, now);
+    }
+
+    /// <summary>FR-143: Chờ người thuê xác nhận → Đang xử lý, ghi đè lý do Chưa đạt gần nhất.</summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanMarkNotFixed"/> sai — lỗi lập trình.</exception>
+    public void MarkNotFixed(string reason, DateTimeOffset now)
+    {
+        EnsureAllowed(CanMarkNotFixed(now), nameof(MarkNotFixed));
+
+        Status = MaintenanceRequestStatus.DangXuLy;
+        NotFixedReason = reason;
+    }
+
+    /// <summary>FR-145: Mới / Đang xử lý → Đã hủy.</summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanCancel"/> sai — lỗi lập trình.</exception>
+    public void Cancel(DateTimeOffset now)
+    {
+        EnsureAllowed(CanCancel, nameof(Cancel));
+
+        Status = MaintenanceRequestStatus.DaHuy;
+        CancelledAt = now;
+    }
+
+    /// <summary>FR-144: tác vụ định kỳ tự đóng.</summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="ShouldAutoClose"/> sai — lỗi lập trình.</exception>
+    public void AutoClose(DateTimeOffset now)
+    {
+        EnsureAllowed(ShouldAutoClose(now), nameof(AutoClose));
+
+        Close(isAutoClosed: true, now);
+    }
+
+    private void Close(bool isAutoClosed, DateTimeOffset now)
+    {
+        Status = MaintenanceRequestStatus.DaDong;
+        ClosedAt = now;
+        IsAutoClosed = isAutoClosed;
+    }
+
+    /// <summary>
+    /// Service phải kiểm tra điều kiện bằng các hàm Can.../Should... và trả 409 (hoặc bỏ qua, với tác vụ định kỳ)
+    /// trước khi đổi trạng thái; tới được đây mà điều kiện sai là lỗi lập trình, không phải lỗi nghiệp vụ.
+    /// </summary>
+    private void EnsureAllowed(bool allowed, string operation)
+    {
+        if (!allowed)
+        {
+            throw new InvalidOperationException($"Sự cố {Id} ở trạng thái {Status}: không thực hiện được {operation}.");
+        }
+    }
+
+    /// <summary>
     /// FR-136: sự cố mới ở trạng thái Mới. Điều kiện hợp đồng (<see cref="Contract.CanReportMaintenance"/>) và
     /// quyền sở hữu ảnh do service kiểm tra trước. Thứ tự <paramref name="imagePaths"/> là thứ tự hiển thị.
     /// </summary>
