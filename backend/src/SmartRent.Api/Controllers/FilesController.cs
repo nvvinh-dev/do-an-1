@@ -118,7 +118,8 @@ public class FilesController : ControllerBase
     /// <summary>Mỗi loại file chỉ vai trò có nghiệp vụ tương ứng mới được tải lên.</summary>
     private bool IsAllowedForRole(FilePurpose purpose) => purpose switch
     {
-        FilePurpose.GiayToNhanThan or FilePurpose.MinhChungThanhToan => User.IsInRole(AppRoles.Tenant),
+        FilePurpose.GiayToNhanThan or FilePurpose.MinhChungThanhToan or FilePurpose.AnhSuCo
+            => User.IsInRole(AppRoles.Tenant),
         FilePurpose.AnhKhuTro or FilePurpose.AnhPhong or FilePurpose.AnhDongHo or FilePurpose.AnhHuHong
             => User.IsInRole(AppRoles.Landlord),
         _ => false
