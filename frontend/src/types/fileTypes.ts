@@ -6,6 +6,7 @@ export type UploadPurpose =
   | 'AnhDongHo'
   | 'MinhChungThanhToan'
   | 'AnhHuHong'
+  | 'AnhSuCo'
 
 /** Response của `POST /files`. `url` chỉ để xem trước; `GiayToNhanThan` không có URL nên là `null`. */
 export interface UploadFileResponse {

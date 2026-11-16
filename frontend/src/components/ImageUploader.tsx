@@ -18,6 +18,7 @@ const DEFAULT_IMAGE_LABELS: Record<UploadPurpose, string> = {
   AnhDongHo: 'Ảnh đồng hồ',
   MinhChungThanhToan: 'Ảnh minh chứng thanh toán',
   AnhHuHong: 'Ảnh hư hỏng',
+  AnhSuCo: 'Ảnh sự cố',
 }
 
 interface ImageUploaderProps {
