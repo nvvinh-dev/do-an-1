@@ -27,10 +27,30 @@ export interface ReportMaintenanceRequestRequest {
   imagePaths: string[]
 }
 
+/** Cách xếp danh sách: mới gửi trước (mặc định), hoặc khẩn cấp trước, cùng mức thì mới hơn trước. */
+export const MAINTENANCE_REQUEST_SORTS = ['createdAt', 'urgency'] as const
+
+export type MaintenanceRequestSort = (typeof MAINTENANCE_REQUEST_SORTS)[number]
+
 /** Query của `GET /maintenance-requests`; bỏ trống thì server dùng mặc định (mới gửi trước). */
 export interface MaintenanceRequestListParams {
   status?: MaintenanceRequestStatus
+  /** Chỉ Chủ trọ. */
+  propertyId?: number
+  urgency?: MaintenanceUrgency
+  sortBy?: MaintenanceRequestSort
   page?: number
+}
+
+/** Body của `/accept` và `PATCH /expected-completion-date`: ngày thuần `YYYY-MM-DD`, `null` là không ghi ngày. */
+export interface MaintenanceExpectedCompletionDateRequest {
+  expectedCompletionDate: string | null
+}
+
+/** Body của `/reject`: lý do 1–500 ký tự; bồi thường dự kiến là đồng nguyên lớn hơn 0 hoặc `null` (FR-141). */
+export interface RejectMaintenanceRequestRequest {
+  reason: string
+  estimatedCompensation: number | null
 }
 
 /** Một dòng của `GET /maintenance-requests`. */
