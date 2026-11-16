@@ -26,6 +26,8 @@ import LandlordContractListPage from '@/pages/landlord/LandlordContractListPage'
 import LandlordDashboardPage from '@/pages/landlord/LandlordDashboardPage'
 import LandlordInvoiceDetailPage from '@/pages/landlord/LandlordInvoiceDetailPage'
 import LandlordInvoiceListPage from '@/pages/landlord/LandlordInvoiceListPage'
+import LandlordMaintenanceRequestDetailPage from '@/pages/landlord/LandlordMaintenanceRequestDetailPage'
+import LandlordMaintenanceRequestListPage from '@/pages/landlord/LandlordMaintenanceRequestListPage'
 import LandlordRentalRequestDetailPage from '@/pages/landlord/LandlordRentalRequestDetailPage'
 import LandlordRentalRequestListPage from '@/pages/landlord/LandlordRentalRequestListPage'
 import LandlordRoomDetailPage from '@/pages/landlord/LandlordRoomDetailPage'
@@ -167,6 +169,8 @@ const routes: RouteObject[] = [
               { path: 'invoices', element: <LandlordInvoiceListPage /> },
               { path: 'invoices/:id', element: <LandlordInvoiceDetailPage /> },
               { path: 'invoices/:id/edit', element: <InvoiceFormPage /> },
+              { path: 'maintenance-requests', element: <LandlordMaintenanceRequestListPage /> },
+              { path: 'maintenance-requests/:id', element: <LandlordMaintenanceRequestDetailPage /> },
               { path: '*', element: <NotFoundPage /> },
             ],
           },

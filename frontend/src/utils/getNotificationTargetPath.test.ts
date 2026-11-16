@@ -44,10 +44,11 @@ describe('getNotificationTargetPath', () => {
     expect(target('RoommateInvitation', 5, 'Tenant')).toBeNull()
   })
 
-  it('Sự cố (Phase 2): Người thuê mở T10; Chủ trọ chưa có màn sự cố nên không chuyển trang', () => {
+  it('Sự cố (Phase 2): Người thuê mở T10, Chủ trọ mở L11', () => {
     expect(target('MaintenanceRequest', 9, 'Tenant')).toBe('/tenant/maintenance-requests/9')
     expect(target('MaintenanceRequest', null, 'Tenant')).toBeNull()
-    expect(target('MaintenanceRequest', 9, 'Landlord')).toBeNull()
+    expect(target('MaintenanceRequest', 9, 'Landlord')).toBe('/landlord/maintenance-requests/9')
+    expect(target('MaintenanceRequest', null, 'Landlord')).toBeNull()
   })
 
   it('Admin không có màn Thông báo: không chuyển trang', () => {
