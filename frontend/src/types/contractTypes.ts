@@ -112,6 +112,9 @@ export interface ContractDetail {
   /** `System` khi hợp đồng tự hủy vì quá hạn giữ chỗ. */
   cancelledBy: 'Landlord' | 'Tenant' | 'System' | null
   cancelledAt: string | null
+  /** Lý do người thuê yêu cầu sửa ở lần gần nhất; lần sau ghi đè lần trước. */
+  changeRequestReason: string | null
+  changeRequestedAt: string | null
   holdExpiresAt: string | null
   /** Chỉ có với Người thuê đứng tên khi `ChoNhanCoc` và tiền cọc > 0. */
   paymentQr: PaymentQr | null

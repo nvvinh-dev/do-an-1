@@ -390,6 +390,9 @@ function ContractStatusNotice({ contract, today, now }: ContractStatusNoticeProp
           <FilePen />
           <AlertTitle>Chủ trọ đang soạn hợp đồng</AlertTitle>
           <AlertDescription>
+            {contract.changeRequestReason && (
+              <p className="whitespace-pre-line wrap-anywhere">Lý do bạn đã gửi: {contract.changeRequestReason}</p>
+            )}
             <p>Hợp đồng chỉ để xem. Chủ trọ gửi xong thì bạn nhận thông báo để kiểm tra và đồng ý.</p>
             <HoldDeadline holdExpiresAt={contract.holdExpiresAt} />
           </AlertDescription>
