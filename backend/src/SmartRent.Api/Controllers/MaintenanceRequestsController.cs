@@ -91,4 +91,67 @@ public class MaintenanceRequestsController : ControllerBase
             ? Ok(result.Value)
             : Problem(detail: result.Error, statusCode: result.StatusCode);
     }
+
+    // Chuyển trạng thái: sai trạng thái nguồn trả 409 (BR-05b), thành công trả 204.
+
+    /// <summary>Tiếp nhận: Mới → Đang xử lý.</summary>
+    [HttpPost("{id:long}/accept")]
+    [Authorize(Roles = AppRoles.Landlord)]
+    public async Task<IActionResult> Accept(
+        long id,
+        MaintenanceExpectedCompletionDateRequest request,
+        CancellationToken cancellationToken)
+        => ToResponse(await _service.AcceptAsync(
+            this.CurrentUserId(), id, request.ExpectedCompletionDate, cancellationToken));
+
+    /// <summary>Sửa ngày dự kiến sửa xong khi Đang xử lý.</summary>
+    [HttpPatch("{id:long}/expected-completion-date")]
+    [Authorize(Roles = AppRoles.Landlord)]
+    public async Task<IActionResult> ChangeExpectedCompletionDate(
+        long id,
+        MaintenanceExpectedCompletionDateRequest request,
+        CancellationToken cancellationToken)
+        => ToResponse(await _service.ChangeExpectedCompletionDateAsync(
+            this.CurrentUserId(), id, request.ExpectedCompletionDate, cancellationToken));
+
+    /// <summary>Từ chối: Mới / Đang xử lý → Từ chối.</summary>
+    [HttpPost("{id:long}/reject")]
+    [Authorize(Roles = AppRoles.Landlord)]
+    public async Task<IActionResult> Reject(
+        long id,
+        RejectMaintenanceRequestRequest request,
+        CancellationToken cancellationToken)
+        => ToResponse(await _service.RejectAsync(this.CurrentUserId(), id, request, cancellationToken));
+
+    /// <summary>Báo đã sửa xong: Đang xử lý → Chờ người thuê xác nhận.</summary>
+    [HttpPost("{id:long}/complete")]
+    [Authorize(Roles = AppRoles.Landlord)]
+    public async Task<IActionResult> Complete(long id, CancellationToken cancellationToken)
+        => ToResponse(await _service.CompleteAsync(this.CurrentUserId(), id, cancellationToken));
+
+    /// <summary>Xác nhận đã khắc phục: Chờ người thuê xác nhận → Đã đóng.</summary>
+    [HttpPost("{id:long}/confirm")]
+    [Authorize(Roles = AppRoles.Tenant)]
+    public async Task<IActionResult> Confirm(long id, CancellationToken cancellationToken)
+        => ToResponse(await _service.ConfirmAsync(this.CurrentUserId(), id, cancellationToken));
+
+    /// <summary>Báo chưa đạt: Chờ người thuê xác nhận → Đang xử lý.</summary>
+    [HttpPost("{id:long}/not-fixed")]
+    [Authorize(Roles = AppRoles.Tenant)]
+    public async Task<IActionResult> NotFixed(
+        long id,
+        MaintenanceNotFixedRequest request,
+        CancellationToken cancellationToken)
+        => ToResponse(await _service.MarkNotFixedAsync(this.CurrentUserId(), id, request.Reason, cancellationToken));
+
+    /// <summary>Hủy: Mới / Đang xử lý → Đã hủy.</summary>
+    [HttpPost("{id:long}/cancel")]
+    [Authorize(Roles = AppRoles.Tenant)]
+    public async Task<IActionResult> Cancel(long id, CancellationToken cancellationToken)
+        => ToResponse(await _service.CancelAsync(this.CurrentUserId(), id, cancellationToken));
+
+    private IActionResult ToResponse(ServiceResult result)
+        => result.Succeeded
+            ? NoContent()
+            : Problem(detail: result.Error, statusCode: result.StatusCode);
 }
