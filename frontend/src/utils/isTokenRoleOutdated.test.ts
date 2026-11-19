@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isTokenRoleOutdated } from './isTokenRoleOutdated'
+import { isTokenRoleOutdated } from '@/utils/isTokenRoleOutdated'
 
 const ROLE_CLAIM = 'http://schemas.microsoft.com/ws/2008/06/identity/claims/role'
 

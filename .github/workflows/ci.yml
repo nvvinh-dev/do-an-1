@@ -49,7 +49,9 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      # Lấy cả repo: vietQrBanks.test.ts đọc backend/src/SmartRent.Api/Validators/VietQrBankBins.cs.
+      # Lấy cả repo: hai test frontend đọc file backend — vietQrBanks.test.ts đọc
+      # backend/src/SmartRent.Api/Validators/VietQrBankBins.cs, isInvalidResetLinkError.test.ts đọc
+      # backend/src/SmartRent.Api/Services/AuthService.cs.
       - uses: actions/checkout@v5
 
       - uses: actions/setup-node@v5
