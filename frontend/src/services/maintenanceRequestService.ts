@@ -1,14 +1,16 @@
 import { api } from '@/lib/api'
 import type {
+  MaintenanceExpectedCompletionDateRequest,
   MaintenanceRequestDetail,
   MaintenanceRequestListItem,
   MaintenanceRequestListParams,
+  RejectMaintenanceRequestRequest,
   ReportMaintenanceRequestRequest,
 } from '@/types/maintenanceRequestTypes'
 import type { PagedResponse } from '@/types/paginationTypes'
 
-// Sự cố (docs/api-design.md mục 18). Người thuê thấy sự cố của các hợp đồng mình đứng tên; sự cố
-// không thuộc người gọi trả `404`. Thao tác chuyển trạng thái chỉ nhận đúng trạng thái nguồn, ngược
+// Sự cố (docs/api-design.md mục 18). Người thuê thấy sự cố của các hợp đồng mình đứng tên, Chủ trọ
+// thấy sự cố trên khu trọ của mình; sự cố không thuộc người gọi trả `404`. Thao tác chuyển trạng thái chỉ nhận đúng trạng thái nguồn, ngược
 // lại `409`.
 
 export async function getMaintenanceRequests(
@@ -45,4 +47,32 @@ export async function reportMaintenanceRequestNotFixed(id: number, reason: strin
 // `Moi` hoặc `DangXuLy` → `DaHuy`.
 export async function cancelMaintenanceRequest(id: number): Promise<void> {
   await api.post(`/maintenance-requests/${id}/cancel`)
+}
+
+// Thao tác của Chủ trọ sở hữu khu trọ (FR-140 – FR-142).
+
+// `Moi` → `DangXuLy`; ngày dự kiến trước hôm nay (giờ Việt Nam) thì `400`. Quá 72 giờ vẫn nhận.
+export async function acceptMaintenanceRequest(
+  id: number,
+  request: MaintenanceExpectedCompletionDateRequest,
+): Promise<void> {
+  await api.post(`/maintenance-requests/${id}/accept`, request)
+}
+
+// Chỉ nhận khi `DangXuLy`, ngược lại `409`. Không gửi thông báo.
+export async function updateMaintenanceExpectedCompletionDate(
+  id: number,
+  request: MaintenanceExpectedCompletionDateRequest,
+): Promise<void> {
+  await api.patch(`/maintenance-requests/${id}/expected-completion-date`, request)
+}
+
+// `Moi` hoặc `DangXuLy` → `TuChoi`.
+export async function rejectMaintenanceRequest(id: number, request: RejectMaintenanceRequestRequest): Promise<void> {
+  await api.post(`/maintenance-requests/${id}/reject`, request)
+}
+
+// `DangXuLy` → `ChoNguoiThueXacNhan`; mốc 168 giờ tự đóng tính lại từ lần báo này.
+export async function completeMaintenanceRequest(id: number): Promise<void> {
+  await api.post(`/maintenance-requests/${id}/complete`)
 }

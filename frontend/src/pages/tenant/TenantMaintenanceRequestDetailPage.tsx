@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import CountdownText from '@/components/CountdownText'
+import MaintenanceRequestImages from '@/components/MaintenanceRequestImages'
 import MoneyText from '@/components/MoneyText'
 import PageHeader from '@/components/PageHeader'
 import StatusBadge from '@/components/StatusBadge'
@@ -196,7 +197,7 @@ function MaintenanceRequestDetailContent({ maintenanceRequest }: { maintenanceRe
         </dl>
       </div>
 
-      <MaintenanceRequestImages maintenanceRequest={maintenanceRequest} />
+      <MaintenanceRequestImages images={maintenanceRequest.images} />
     </>
   )
 }
@@ -323,38 +324,6 @@ function MaintenanceRequestStatusNotice({
         </Alert>
       )
   }
-}
-
-/** Ảnh riêng tư là URL có chữ ký hết hạn sau 1 giờ; bấm mở ảnh gốc ở tab mới, quá hạn thì tải lại trang. */
-function MaintenanceRequestImages({ maintenanceRequest }: { maintenanceRequest: MaintenanceRequestDetail }) {
-  return (
-    <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-      <h2 className="text-lg font-medium">Ảnh sự cố</h2>
-      {maintenanceRequest.images.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Không có ảnh.</p>
-      ) : (
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
-          {maintenanceRequest.images.map((image, index) => (
-            <li key={image.url} className="aspect-square overflow-hidden rounded-lg border bg-muted">
-              <a
-                href={image.url}
-                target="_blank"
-                rel="noreferrer"
-                className="block size-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-              >
-                <img
-                  src={image.url}
-                  alt={`Ảnh sự cố, ảnh ${index + 1}`}
-                  loading="lazy"
-                  className="size-full object-cover"
-                />
-              </a>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
 }
 
 interface MaintenanceDialogProps {

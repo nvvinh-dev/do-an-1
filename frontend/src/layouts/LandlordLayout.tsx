@@ -1,4 +1,4 @@
-import { Bell, Building2, ClipboardList, FileText, Landmark, LayoutDashboard, Receipt } from 'lucide-react'
+import { Bell, Building2, ClipboardList, FileText, Landmark, LayoutDashboard, Receipt, Wrench } from 'lucide-react'
 import SidebarLayout, { type SidebarNavItem } from '@/layouts/SidebarLayout'
 
 // Mục và thứ tự theo docs/frontend-screens.md mục 1.
@@ -8,6 +8,7 @@ const menuItems: SidebarNavItem[] = [
   { label: 'Yêu cầu thuê', to: '/landlord/rental-requests', icon: ClipboardList },
   { label: 'Hợp đồng', to: '/landlord/contracts', icon: FileText },
   { label: 'Hóa đơn', to: '/landlord/invoices', icon: Receipt },
+  { label: 'Sự cố', to: '/landlord/maintenance-requests', icon: Wrench },
   { label: 'Tài khoản nhận tiền', to: '/landlord/bank-account', icon: Landmark },
   { label: 'Thông báo', to: '/notifications', icon: Bell },
 ]
