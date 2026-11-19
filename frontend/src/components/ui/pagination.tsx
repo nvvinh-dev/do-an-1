@@ -52,7 +52,13 @@ function PaginationLink({
       asChild
       variant={isActive ? "outline" : "ghost"}
       size={size}
-      className={cn(className)}
+      className={cn(
+        // Phân trang giữ kiểu cũ (bo 10px) thay vì nút bo tròn hết cỡ của `Button`.
+        "rounded-lg font-medium focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-offset-0",
+        size === "default" && "px-4 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3",
+        isActive && "border-border hover:border-border hover:bg-muted",
+        className
+      )}
     >
       <Link
         aria-current={isActive ? "page" : undefined}

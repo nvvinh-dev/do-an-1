@@ -109,7 +109,7 @@ export default function SidebarLayout({ homePath, items, showNotificationBell }:
       <SidebarInset>
         <header
           className={cn(
-            'sticky top-0 z-10 flex h-16 items-center gap-2 border-b bg-background px-4 md:px-6 lg:px-8',
+            'sticky top-0 z-10 flex h-16 items-center gap-2 border-b bg-card px-4 md:px-6 lg:px-8',
             // Admin không có chuông nên từ lg thanh trên không còn gì để hiện.
             !showNotificationBell && 'lg:hidden',
           )}

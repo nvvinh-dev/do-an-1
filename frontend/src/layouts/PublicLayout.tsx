@@ -14,7 +14,7 @@ export default function PublicLayout() {
 
   return (
     <div className="flex min-h-svh flex-col">
-      <header className="sticky top-0 z-40 border-b bg-background">
+      <header className="sticky top-0 z-40 border-b bg-card">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-2 px-4 md:px-6 lg:px-8">
           <AppLogo to="/" />
           {!isPending && (

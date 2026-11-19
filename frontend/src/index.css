@@ -7,7 +7,7 @@
 
 @theme inline {
   --font-heading: var(--font-sans);
-  --font-sans: "Be Vietnam Pro", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Reddit Sans", ui-sans-serif, system-ui, sans-serif;
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-info: var(--info);
@@ -53,7 +53,7 @@
 
 /* Giá trị và độ tương phản theo docs/design-system.md mục 2. */
 :root {
-  --background: #ffffff;
+  --background: #f5f6f7;
   --foreground: #0f172a;
   --card: #ffffff;
   --card-foreground: #0f172a;
