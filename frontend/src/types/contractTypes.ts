@@ -18,6 +18,8 @@ export type ContractStatus = (typeof CONTRACT_STATUSES)[number]
 export interface ContractListParams {
   status?: ContractStatus
   page?: number
+  /** Mặc định 20; server đưa giá trị lớn hơn 100 về 100. */
+  pageSize?: number
 }
 
 /** Phòng gắn với hợp đồng. */

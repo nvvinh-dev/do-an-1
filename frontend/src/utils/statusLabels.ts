@@ -82,6 +82,15 @@ const STATUS_DISPLAYS = {
     HoatDong: success('Hoạt động'),
     BiKhoa: danger('Đã khóa'),
   },
+  // Sự cố (Phase 2).
+  maintenanceRequest: {
+    Moi: pending('Mới'),
+    DangXuLy: info('Đang xử lý'),
+    ChoNguoiThueXacNhan: pending('Chờ người thuê xác nhận'),
+    DaDong: success('Đã đóng'),
+    TuChoi: danger('Từ chối'),
+    DaHuy: neutral('Đã hủy'),
+  },
   // Lời mời ở ghép (Phase 2).
   coTenantInvitation: {
     ChoPhanHoi: pending('Chờ phản hồi'),

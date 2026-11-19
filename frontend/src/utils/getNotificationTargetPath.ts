@@ -32,6 +32,8 @@ export function getNotificationTargetPath(
       return relatedEntityId === null ? null : `${rolePath}/invoices/${relatedEntityId}`
     case 'RentalRequest':
       return relatedEntityId === null ? null : `${rolePath}/rental-requests/${relatedEntityId}`
+    case 'MaintenanceRequest':
+      return relatedEntityId === null ? null : `${rolePath}/maintenance-requests/${relatedEntityId}`
     default:
       return null
   }

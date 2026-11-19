@@ -9,6 +9,7 @@ import {
   Menu,
   Receipt,
   Search,
+  Wrench,
 } from 'lucide-react'
 import { useState } from 'react'
 import { NavLink, Outlet } from 'react-router'
@@ -28,6 +29,7 @@ const menuItems = [
   { label: 'Yêu cầu thuê', to: '/tenant/rental-requests', icon: ClipboardList, end: false },
   { label: 'Hợp đồng', to: '/tenant/contracts', icon: FileText, end: false },
   { label: 'Hóa đơn', to: '/tenant/invoices', icon: Receipt, end: false },
+  { label: 'Sự cố', to: '/tenant/maintenance-requests', icon: Wrench, end: false },
   { label: 'Đăng ký làm Chủ trọ', to: '/tenant/landlord-application', icon: BadgeCheck, end: false },
   { label: 'Thông báo', to: '/notifications', icon: Bell, end: false },
 ]
@@ -42,8 +44,8 @@ function menuLinkClass(isActive: boolean) {
 }
 
 /**
- * Khung của Người thuê (docs/design-system.md mục 5): dưới lg menu nằm trong sheet,
- * từ lg menu ngang trên thanh trên.
+ * Khung của Người thuê (docs/design-system.md mục 5): dưới xl menu nằm trong sheet,
+ * từ xl menu ngang trên thanh trên: ở lg tám mục menu không vừa một hàng.
  */
 export default function TenantLayout() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -56,7 +58,7 @@ export default function TenantLayout() {
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-4 px-4 md:px-6 lg:px-8">
           <AppLogo to="/tenant" />
 
-          <nav aria-label="Menu chính" className="hidden items-center gap-1 lg:flex">
+          <nav aria-label="Menu chính" className="hidden items-center gap-1 xl:flex">
             {menuItems.map((item) => (
               <NavLink
                 key={item.to}
@@ -71,13 +73,13 @@ export default function TenantLayout() {
 
           <div className="ml-auto flex items-center gap-1">
             <NotificationBell />
-            <div className="hidden lg:block">
+            <div className="hidden xl:block">
               <AccountMenu />
             </div>
 
             <Sheet open={menuOpen} onOpenChange={setMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Mở menu">
+                <Button variant="ghost" size="icon" className="xl:hidden" aria-label="Mở menu">
                   <Menu className="size-5" />
                 </Button>
               </SheetTrigger>

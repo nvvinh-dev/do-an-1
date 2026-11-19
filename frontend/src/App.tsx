@@ -40,6 +40,8 @@ import LandlordContractListPage from '@/pages/landlord/LandlordContractListPage'
 import LandlordDashboardPage from '@/pages/landlord/LandlordDashboardPage'
 import LandlordInvoiceDetailPage from '@/pages/landlord/LandlordInvoiceDetailPage'
 import LandlordInvoiceListPage from '@/pages/landlord/LandlordInvoiceListPage'
+import LandlordMaintenanceRequestDetailPage from '@/pages/landlord/LandlordMaintenanceRequestDetailPage'
+import LandlordMaintenanceRequestListPage from '@/pages/landlord/LandlordMaintenanceRequestListPage'
 import LandlordRentalRequestDetailPage from '@/pages/landlord/LandlordRentalRequestDetailPage'
 import LandlordRentalRequestListPage from '@/pages/landlord/LandlordRentalRequestListPage'
 import LandlordRoomDetailPage from '@/pages/landlord/LandlordRoomDetailPage'
@@ -54,11 +56,14 @@ import SearchPage from '@/pages/public/SearchPage'
 import AccountPage from '@/pages/shared/AccountPage'
 import NotificationsPage from '@/pages/shared/NotificationsPage'
 import LandlordApplicationPage from '@/pages/tenant/LandlordApplicationPage'
+import ReportMaintenanceRequestPage from '@/pages/tenant/ReportMaintenanceRequestPage'
 import TenantContractDetailPage from '@/pages/tenant/TenantContractDetailPage'
 import TenantContractListPage from '@/pages/tenant/TenantContractListPage'
 import TenantDashboardPage from '@/pages/tenant/TenantDashboardPage'
 import TenantInvoiceDetailPage from '@/pages/tenant/TenantInvoiceDetailPage'
 import TenantInvoiceListPage from '@/pages/tenant/TenantInvoiceListPage'
+import TenantMaintenanceRequestDetailPage from '@/pages/tenant/TenantMaintenanceRequestDetailPage'
+import TenantMaintenanceRequestListPage from '@/pages/tenant/TenantMaintenanceRequestListPage'
 import TenantRentalRequestDetailPage from '@/pages/tenant/TenantRentalRequestDetailPage'
 import TenantRentalRequestListPage from '@/pages/tenant/TenantRentalRequestListPage'
 
@@ -143,6 +148,9 @@ const routes: RouteObject[] = [
               { path: 'contracts/:id', element: <TenantContractDetailPage />, handle: bg(contractSigningDocuments) },
               { path: 'invoices', element: <TenantInvoiceListPage />, handle: bg(invoiceCalculatorMoney) },
               { path: 'invoices/:id', element: <TenantInvoiceDetailPage />, handle: bg(invoiceCalculatorMoney) },
+              { path: 'maintenance-requests', element: <TenantMaintenanceRequestListPage />, handle: bg(propertyApartmentRoofs) },
+              { path: 'maintenance-requests/new', element: <ReportMaintenanceRequestPage />, handle: bg(propertyApartmentRoofs) },
+              { path: 'maintenance-requests/:id', element: <TenantMaintenanceRequestDetailPage />, handle: bg(propertyApartmentRoofs) },
               { path: '*', element: <NotFoundPage /> },
             ],
           },
@@ -184,6 +192,8 @@ const routes: RouteObject[] = [
               { path: 'invoices', element: <LandlordInvoiceListPage />, handle: bg(invoiceCalculatorMoney) },
               { path: 'invoices/:id', element: <LandlordInvoiceDetailPage />, handle: bg(invoiceCalculatorMoney) },
               { path: 'invoices/:id/edit', element: <InvoiceFormPage />, handle: bg(invoiceCalculatorMoney) },
+              { path: 'maintenance-requests', element: <LandlordMaintenanceRequestListPage />, handle: bg(propertyApartmentRoofs) },
+              { path: 'maintenance-requests/:id', element: <LandlordMaintenanceRequestDetailPage />, handle: bg(propertyApartmentRoofs) },
               { path: '*', element: <NotFoundPage /> },
             ],
           },
