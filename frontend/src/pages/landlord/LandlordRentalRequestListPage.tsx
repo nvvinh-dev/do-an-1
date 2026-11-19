@@ -6,6 +6,7 @@ import PageHeader from '@/components/PageHeader'
 import StatusBadge from '@/components/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import EmptyIllustration from '@/components/EmptyIllustration'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import {
@@ -304,9 +305,7 @@ function RentalRequestListEmpty({ status, isPastLastPage, onClearStatus }: Renta
   return (
     <Empty className="border">
       <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <FileText />
-        </EmptyMedia>
+        <EmptyIllustration kind="document" />
         <EmptyTitle>Chưa có yêu cầu thuê nào</EmptyTitle>
         <EmptyDescription>
           Người thuê gửi yêu cầu từ trang chi tiết phòng. Phòng phải đang hiển thị và còn trống thì mới hiện ở tìm kiếm.

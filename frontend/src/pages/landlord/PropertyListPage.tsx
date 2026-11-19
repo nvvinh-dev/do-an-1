@@ -6,7 +6,8 @@ import RoomCountsSummary from '@/components/RoomCountsSummary'
 import StatusBadge from '@/components/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
+import EmptyIllustration from '@/components/EmptyIllustration'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -176,9 +177,7 @@ function PropertyListEmpty({ includeArchived }: { includeArchived: boolean }) {
   return (
     <Empty className="border">
       <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <Building2 />
-        </EmptyMedia>
+        <EmptyIllustration kind="house" />
         <EmptyTitle>{includeArchived ? 'Chưa có khu trọ nào' : 'Chưa có khu trọ nào đang khai thác'}</EmptyTitle>
         <EmptyDescription>Thêm khu trọ để bắt đầu khai báo phòng và đăng tin.</EmptyDescription>
       </EmptyHeader>

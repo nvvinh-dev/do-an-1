@@ -5,6 +5,7 @@ import ApiErrorAlert from '@/components/ApiErrorAlert'
 import PageHeader from '@/components/PageHeader'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import EmptyIllustration from '@/components/EmptyIllustration'
 import {
   Pagination,
   PaginationContent,
@@ -326,9 +327,7 @@ function NotificationListEmpty({ filter, isPastLastPage, searchParams, onShowAll
   return (
     <Empty className="border">
       <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <Bell />
-        </EmptyMedia>
+        <EmptyIllustration kind="bell" />
         <EmptyTitle>Chưa có thông báo nào</EmptyTitle>
         <EmptyDescription>
           Khi yêu cầu thuê, hợp đồng hoặc hóa đơn của bạn có thay đổi, thông báo sẽ hiện ở đây.

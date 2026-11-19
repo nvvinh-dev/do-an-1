@@ -1,3 +1,4 @@
+import searchSaigonStreet from '@/assets/search-saigon-street.jpg'
 import { isAxiosError } from 'axios'
 import { CircleAlert, ImageOff, SearchX, SlidersHorizontal } from 'lucide-react'
 import { useState } from 'react'
@@ -64,7 +65,12 @@ export default function SearchPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <PageHeader title="Tìm phòng trọ" description="Lọc theo khu vực, giá, diện tích và tiện ích bạn cần." />
+      <PageHeader
+        title="Tìm phòng trọ"
+        description="Lọc theo khu vực, giá, diện tích và tiện ích bạn cần."
+        image={searchSaigonStreet}
+        imagePosition="50% 22%"
+      />
 
       {/* Dưới `lg` xếp một cột: thanh công cụ (có nút "Bộ lọc") → bộ lọc khi mở → kết quả. Từ `lg` bộ lọc
           là cột trái chiếm cả hai hàng, thanh công cụ và kết quả ở cột phải. */}

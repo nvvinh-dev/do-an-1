@@ -1,3 +1,4 @@
+import adminHouseKeys from '@/assets/admin-house-keys.jpg'
 import { ChevronRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
@@ -18,7 +19,12 @@ export default function AdminDashboardPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <PageHeader title="Tổng quan" description="Hồ sơ chờ duyệt, tài khoản, khu trọ và phòng trên toàn hệ thống." />
+      <PageHeader
+        title="Tổng quan"
+        description="Hồ sơ chờ duyệt, tài khoản, khu trọ và phòng trên toàn hệ thống."
+        image={adminHouseKeys}
+        imagePosition="50% 60%"
+      />
 
       {dashboardQuery.isPending ? (
         <DashboardSkeleton />

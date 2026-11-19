@@ -5,6 +5,7 @@ import MoneyText from '@/components/MoneyText'
 import StatusBadge from '@/components/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import EmptyIllustration from '@/components/EmptyIllustration'
 import {
   Pagination,
   PaginationContent,
@@ -255,9 +256,7 @@ export function InvoiceListEmpty({
   return (
     <Empty className="border">
       <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <Receipt />
-        </EmptyMedia>
+        <EmptyIllustration kind="receipt" />
         <EmptyTitle>Chưa có hóa đơn nào</EmptyTitle>
         <EmptyDescription>{emptyDescription}</EmptyDescription>
       </EmptyHeader>

@@ -1,4 +1,5 @@
-import { Building2, ChevronRight } from 'lucide-react'
+import landlordApartmentFacade from '@/assets/landlord-apartment-facade.jpg'
+import { ChevronRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
@@ -7,7 +8,8 @@ import PageHeader from '@/components/PageHeader'
 import RevenueBars from '@/components/RevenueBars'
 import RoomCountsSummary from '@/components/RoomCountsSummary'
 import { Button } from '@/components/ui/button'
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
+import EmptyIllustration from '@/components/EmptyIllustration'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLandlordDashboard } from '@/hooks/useLandlordDashboard'
 import { cn } from '@/lib/utils'
@@ -23,7 +25,12 @@ export default function LandlordDashboardPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <PageHeader title="Tổng quan" description="Việc cần xử lý, phòng, hóa đơn và doanh thu của các khu trọ." />
+      <PageHeader
+        title="Tổng quan"
+        description="Việc cần xử lý, phòng, hóa đơn và doanh thu của các khu trọ."
+        image={landlordApartmentFacade}
+        imagePosition="50% 45%"
+      />
 
       {dashboardQuery.isPending ? (
         <DashboardSkeleton />
@@ -145,9 +152,7 @@ function NoRoomsEmpty() {
   return (
     <Empty className="border">
       <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <Building2 />
-        </EmptyMedia>
+        <EmptyIllustration kind="house" />
         <EmptyTitle>Chưa có phòng nào đang khai thác</EmptyTitle>
         <EmptyDescription>Thêm khu trọ và phòng để bắt đầu đăng tin cho thuê.</EmptyDescription>
       </EmptyHeader>

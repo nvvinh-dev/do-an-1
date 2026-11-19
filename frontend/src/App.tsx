@@ -4,6 +4,7 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import RouteErrorFallback from '@/components/RouteErrorFallback'
 import { Toaster } from '@/components/ui/sonner'
 import AdminLayout from '@/layouts/AdminLayout'
+import AuthLayout from '@/layouts/AuthLayout'
 import CurrentRoleLayout from '@/layouts/CurrentRoleLayout'
 import LandlordLayout from '@/layouts/LandlordLayout'
 import PublicLayout from '@/layouts/PublicLayout'
@@ -63,10 +64,16 @@ const routes: RouteObject[] = [
         children: [
           { path: '/', element: <SearchPage /> },
           { path: '/rooms/:id', element: <RoomPublicDetailPage /> },
-          { path: '/login', element: <LoginPage /> },
-          { path: '/register', element: <RegisterPage /> },
-          { path: '/forgot-password', element: <ForgotPasswordPage /> },
-          { path: '/reset-password', element: <ResetPasswordPage /> },
+          {
+            // Bốn màn xác thực có ảnh bên cạnh form.
+            element: <AuthLayout />,
+            children: [
+              { path: '/login', element: <LoginPage /> },
+              { path: '/register', element: <RegisterPage /> },
+              { path: '/forgot-password', element: <ForgotPasswordPage /> },
+              { path: '/reset-password', element: <ResetPasswordPage /> },
+            ],
+          },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

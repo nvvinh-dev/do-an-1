@@ -7,6 +7,7 @@ import PageHeader from '@/components/PageHeader'
 import StatusBadge from '@/components/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import EmptyIllustration from '@/components/EmptyIllustration'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import {
@@ -303,9 +304,7 @@ function ContractListEmpty({ status, isPastLastPage, onClearStatus }: ContractLi
   return (
     <Empty className="border">
       <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <FileText />
-        </EmptyMedia>
+        <EmptyIllustration kind="document" />
         <EmptyTitle>Chưa có hợp đồng nào</EmptyTitle>
         <EmptyDescription>Duyệt một yêu cầu thuê rồi bấm Lập hợp đồng ở trang chi tiết yêu cầu.</EmptyDescription>
       </EmptyHeader>
