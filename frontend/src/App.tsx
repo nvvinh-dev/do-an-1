@@ -9,6 +9,7 @@ import contractSigningDocuments from '@/assets/contract-signing-documents.jpg'
 import invoiceCalculatorMoney from '@/assets/invoice-calculator-money.jpg'
 import landlordApartmentFacade from '@/assets/landlord-apartment-facade.jpg'
 import propertyApartmentRoofs from '@/assets/property-apartment-roofs.jpg'
+import rentalRequestHouseForRent from '@/assets/rental-request-house-for-rent.jpg'
 import searchSaigonStreet from '@/assets/search-saigon-street.jpg'
 import tenantBedroom from '@/assets/tenant-bedroom.jpg'
 import ProtectedRoute from '@/components/ProtectedRoute'
@@ -62,7 +63,7 @@ import TenantRentalRequestDetailPage from '@/pages/tenant/TenantRentalRequestDet
 import TenantRentalRequestListPage from '@/pages/tenant/TenantRentalRequestListPage'
 
 /** Ảnh nền mờ của màn hình, `ScreenBackground` đọc từ `handle` của route sâu nhất (docs/design-system.md mục 11). */
-const bg = (background: string): ScreenHandle => ({ background })
+const bg = (background: string, backgroundPosition?: string): ScreenHandle => ({ background, backgroundPosition })
 
 // Đường dẫn và file trang theo docs/frontend-screens.md mục 2–7; layout theo mục 1.
 // Đường dẫn lạ trong nhóm của một vai trò vẫn qua kiểm tra vai trò trước khi tới NotFoundPage.
@@ -136,8 +137,8 @@ const routes: RouteObject[] = [
             children: [
               { index: true, element: <TenantDashboardPage />, handle: bg(tenantBedroom) },
               { path: 'landlord-application', element: <LandlordApplicationPage /> },
-              { path: 'rental-requests', element: <TenantRentalRequestListPage />, handle: bg(contractSigningDocuments) },
-              { path: 'rental-requests/:id', element: <TenantRentalRequestDetailPage />, handle: bg(contractSigningDocuments) },
+              { path: 'rental-requests', element: <TenantRentalRequestListPage />, handle: bg(rentalRequestHouseForRent, '50% 62%') },
+              { path: 'rental-requests/:id', element: <TenantRentalRequestDetailPage />, handle: bg(rentalRequestHouseForRent, '50% 62%') },
               { path: 'contracts', element: <TenantContractListPage />, handle: bg(contractSigningDocuments) },
               { path: 'contracts/:id', element: <TenantContractDetailPage />, handle: bg(contractSigningDocuments) },
               { path: 'invoices', element: <TenantInvoiceListPage />, handle: bg(invoiceCalculatorMoney) },
@@ -172,8 +173,8 @@ const routes: RouteObject[] = [
               { path: 'rooms/:id', element: <LandlordRoomDetailPage />, handle: bg(propertyApartmentRoofs) },
               { path: 'rooms/:id/edit', element: <RoomFormPage />, handle: bg(propertyApartmentRoofs) },
               { path: 'bank-account', element: <BankAccountPage />, handle: bg(invoiceCalculatorMoney) },
-              { path: 'rental-requests', element: <LandlordRentalRequestListPage />, handle: bg(contractSigningDocuments) },
-              { path: 'rental-requests/:id', element: <LandlordRentalRequestDetailPage />, handle: bg(contractSigningDocuments) },
+              { path: 'rental-requests', element: <LandlordRentalRequestListPage />, handle: bg(rentalRequestHouseForRent, '50% 62%') },
+              { path: 'rental-requests/:id', element: <LandlordRentalRequestDetailPage />, handle: bg(rentalRequestHouseForRent, '50% 62%') },
               { path: 'contracts', element: <LandlordContractListPage />, handle: bg(contractSigningDocuments) },
               { path: 'contracts/new', element: <ContractFormPage />, handle: bg(contractSigningDocuments) },
               { path: 'contracts/:id', element: <LandlordContractDetailPage />, handle: bg(contractSigningDocuments) },

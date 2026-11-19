@@ -4,6 +4,8 @@ import landlordApartmentFacade from '@/assets/landlord-apartment-facade.jpg'
 /** Khai báo trong `handle` của route: ảnh nền mờ của màn hình (đường dẫn ảnh đã import từ `src/assets`). */
 export interface ScreenHandle {
   background?: string
+  /** Vị trí cắt ảnh theo `background-position` của CSS, mặc định lấy giữa ảnh. */
+  backgroundPosition?: string
 }
 
 /** Trang không thuộc nhóm nào (404, lỗi) dùng ảnh mặt tiền tòa nhà. */
@@ -18,14 +20,16 @@ const DEFAULT_BACKGROUND = landlordApartmentFacade
 export default function ScreenBackground() {
   const matches = useMatches()
   const match = [...matches].reverse().find((m) => (m.handle as ScreenHandle | undefined)?.background)
-  const src = (match?.handle as ScreenHandle | undefined)?.background ?? DEFAULT_BACKGROUND
+  const handle = match?.handle as ScreenHandle | undefined
+  const src = handle?.background ?? DEFAULT_BACKGROUND
 
   return (
     <div
       key={src}
       aria-hidden="true"
-      className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center animate-in duration-500 fade-in"
+      className="pointer-events-none fixed inset-0 -z-10 bg-cover animate-in duration-500 fade-in"
       style={{
+        backgroundPosition: handle?.backgroundPosition ?? 'center',
         backgroundImage: `linear-gradient(to bottom, color-mix(in srgb, var(--background) 70%, transparent), color-mix(in srgb, var(--background) 85%, transparent) 55%, color-mix(in srgb, var(--background) 95%, transparent)), url(${src})`,
       }}
     />
