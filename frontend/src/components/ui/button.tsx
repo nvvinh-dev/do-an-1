@@ -18,7 +18,7 @@ const buttonVariants = cva(
         ghost:
           "hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
         destructive:
-          "bg-destructive text-white hover:bg-[color-mix(in_srgb,var(--destructive),black_14%)] focus-visible:ring-destructive",
+          "bg-destructive text-primary-foreground hover:bg-[color-mix(in_srgb,var(--destructive),black_14%)] focus-visible:ring-destructive",
         link: "rounded-md text-primary underline-offset-4 hover:underline",
       },
       // Mọi cỡ cao ít nhất 40px (docs/design-system.md mục 4); cỡ nhỏ chỉ hẹp lề hơn.
