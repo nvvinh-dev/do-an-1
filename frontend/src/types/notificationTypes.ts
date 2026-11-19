@@ -1,4 +1,4 @@
-/** Loại bản ghi gắn với thông báo (docs/database-design.md mục 7.1). `RoommateInvitation` từ Phase 2. */
+/** Loại bản ghi gắn với thông báo (docs/database-design.md mục 7.1). `RoommateInvitation`, `MaintenanceRequest` từ Phase 2. */
 export type NotificationRelatedEntityType =
   | 'Contract'
   | 'Invoice'
@@ -6,6 +6,7 @@ export type NotificationRelatedEntityType =
   | 'LandlordApplication'
   | 'AppUser'
   | 'RoommateInvitation'
+  | 'MaintenanceRequest'
 
 /** Một dòng của `GET /notifications` (docs/api-design.md mục 11). */
 export interface NotificationListItem {
