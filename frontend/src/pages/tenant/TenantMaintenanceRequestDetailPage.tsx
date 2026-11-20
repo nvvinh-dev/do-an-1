@@ -1,4 +1,4 @@
-import { CircleCheck, CircleX, Hammer, RotateCcw, TimerOff, Wrench } from 'lucide-react'
+import { CircleCheck, CircleX, Hammer, RotateCcw, Wrench } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useParams } from 'react-router'
 import { toast } from 'sonner'
@@ -237,14 +237,14 @@ function MaintenanceRequestStatusNotice({
 
     case 'ChoNguoiThueXacNhan':
       if (isAutoCloseOverdue) {
+        // Server vẫn nhận xác nhận khi đã quá hạn nhưng chưa tới lượt tác vụ đóng (FR-143), nên nút Xác nhận vẫn hiện.
         return (
-          <Alert variant="destructive">
-            <TimerOff />
-            <AlertTitle>Đã quá 7 ngày chờ xác nhận</AlertTitle>
-            <AlertDescription>
-              <p>Sự cố sẽ tự đóng. Không báo chưa đạt được nữa; muốn báo hỏng lại thì gửi sự cố mới.</p>
-            </AlertDescription>
-          </Alert>
+          <ActionPanel title="Đã quá 7 ngày chờ xác nhận" actions={confirmActions}>
+            <p>
+              Sự cố sẽ tự đóng. Không báo chưa đạt được nữa; muốn báo hỏng lại thì gửi sự cố mới. Bạn vẫn xác nhận đã
+              khắc phục được.
+            </p>
+          </ActionPanel>
         )
       }
       return (

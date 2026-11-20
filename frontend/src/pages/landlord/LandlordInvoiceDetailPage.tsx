@@ -178,7 +178,7 @@ function InvoiceDetailContent({ invoice }: { invoice: InvoiceDetail }) {
             </Link>
           </>
         }
-        action={buttons.length > 0 && <div className="flex flex-wrap gap-2">{buttons}</div>}
+        action={buttons.length > 0 && <div className="flex flex-wrap gap-2 md:justify-end">{buttons}</div>}
       />
 
       {/* Hộp thoại nằm ngoài nút mở nó để không bị gỡ theo nút khi server trả `409` và trang tải lại sang trạng thái
