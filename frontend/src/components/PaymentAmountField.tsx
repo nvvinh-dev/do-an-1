@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from 'react'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
+import UnitInput from '@/components/UnitInput'
 import { validatePaymentAmount } from '@/utils/invoiceForm'
 import { normalizeRoomMoney } from '@/utils/validateRoomInput'
 
@@ -34,7 +34,8 @@ export default function PaymentAmountField({
       <FieldLabel htmlFor={id}>
         {label} <span aria-hidden="true">*</span>
       </FieldLabel>
-      <Input
+      <UnitInput
+        unit="đ"
         id={id}
         value={display}
         inputMode="numeric"

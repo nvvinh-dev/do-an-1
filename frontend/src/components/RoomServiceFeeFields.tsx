@@ -61,7 +61,8 @@ export default function RoomServiceFeeFields({ form }: { form: UseFormReturn<Roo
             <RoomNumberField
               control={control}
               name={`serviceFees.${index}.amount`}
-              label={`Số tiền phí ${index + 1} (đồng/kỳ)`}
+              label={`Số tiền phí ${index + 1}`}
+              unit="đ/kỳ"
               money
               validate={validateRoomMoney}
             />

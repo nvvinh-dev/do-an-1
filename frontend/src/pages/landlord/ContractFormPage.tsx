@@ -9,6 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import UnitInput from '@/components/UnitInput'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Spinner } from '@/components/ui/spinner'
 import { useContract } from '@/hooks/useContract'
@@ -291,8 +292,8 @@ function ContractForm({
     >
       <FormSection title="Giá thuê và tiền cọc">
         <div className="grid gap-4 md:grid-cols-3">
-          <NumberField control={control} name="rentPrice" label="Giá thuê / tháng (₫)" kind="money" positive />
-          <NumberField control={control} name="depositAmount" label="Tiền cọc (₫)" kind="money" />
+          <NumberField control={control} name="rentPrice" label="Giá thuê / tháng" unit="đ" kind="money" positive />
+          <NumberField control={control} name="depositAmount" label="Tiền cọc" unit="đ" kind="money" />
           <Controller
             name="paymentDueDays"
             control={control}
@@ -317,10 +318,10 @@ function ContractForm({
 
       <FormSection title="Điện nước">
         <div className="grid gap-4 md:grid-cols-2">
-          <NumberField control={control} name="electricityUnitPrice" label="Giá điện / kWh (₫)" kind="money" />
-          <NumberField control={control} name="waterUnitPrice" label="Giá nước / m³ (₫)" kind="money" />
-          <NumberField control={control} name="initialElectricityIndex" label="Chỉ số điện đầu (kWh)" kind="meter" />
-          <NumberField control={control} name="initialWaterIndex" label="Chỉ số nước đầu (m³)" kind="meter" />
+          <NumberField control={control} name="electricityUnitPrice" label="Giá điện / kWh" unit="đ" kind="money" />
+          <NumberField control={control} name="waterUnitPrice" label="Giá nước / m³" unit="đ" kind="money" />
+          <NumberField control={control} name="initialElectricityIndex" label="Chỉ số điện đầu" unit="kWh" kind="meter" />
+          <NumberField control={control} name="initialWaterIndex" label="Chỉ số nước đầu" unit="m³" kind="meter" />
         </div>
         <p className="text-sm text-muted-foreground">
           {hasLatestReading
@@ -393,7 +394,8 @@ function ContractForm({
               control={control}
               name={`serviceFees.${index}.amount`}
               id={`fee-amount-${fee.id}`}
-              label="Số tiền / tháng (₫)"
+              label="Số tiền / tháng"
+              unit="đ"
               kind="money"
             />
             <Button
@@ -524,6 +526,8 @@ interface NumberFieldProps {
   control: Control<ContractFormValues>
   name: FieldPathByValue<ContractFormValues, string>
   label: string
+  /** Đơn vị ghi trong ô ("đ", "kWh", "m³"). */
+  unit: string
   /** `money`: số đồng nguyên, hiện dấu chấm hàng nghìn khi rời ô; `meter`: chỉ số, tối đa 2 số lẻ. */
   kind: 'money' | 'meter'
   /** Tiền phải lớn hơn 0 (giá thuê). */
@@ -536,7 +540,7 @@ interface NumberFieldProps {
  * "1182.5" → "1182,5"); tiền hiện dấu chấm hàng nghìn khi không chọn (design-system mục 8). Chuỗi
  * sai giữ nguyên để người dùng thấy và sửa.
  */
-function NumberField({ control, name, label, kind, positive = false, id = `contract-${name}` }: NumberFieldProps) {
+function NumberField({ control, name, label, unit, kind, positive = false, id = `contract-${name}` }: NumberFieldProps) {
   const [focused, setFocused] = useState(false)
   const validate = (value: string) =>
     kind === 'money' ? validateRoomMoney(value, positive) : validateMeterIndex(value)
@@ -553,8 +557,9 @@ function NumberField({ control, name, label, kind, positive = false, id = `contr
           <FieldLabel htmlFor={id}>
             {label} <span aria-hidden="true">*</span>
           </FieldLabel>
-          <Input
+          <UnitInput
             {...field}
+            unit={unit}
             id={id}
             inputMode={kind === 'money' ? 'numeric' : 'decimal'}
             className="tabular-nums"

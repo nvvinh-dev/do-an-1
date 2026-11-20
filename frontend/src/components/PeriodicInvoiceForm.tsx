@@ -8,6 +8,7 @@ import MoneyText from '@/components/MoneyText'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import UnitInput from '@/components/UnitInput'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Spinner } from '@/components/ui/spinner'
 import { Textarea } from '@/components/ui/textarea'
@@ -152,14 +153,14 @@ const METER_TEXT = {
   electricity: {
     index: 'currentElectricityIndex',
     photo: 'electricityPhoto',
-    label: 'Chỉ số điện mới (kWh)',
+    label: 'Chỉ số điện mới',
     photoLabel: 'Ảnh đồng hồ điện',
     unit: 'kWh',
   },
   water: {
     index: 'currentWaterIndex',
     photo: 'waterPhoto',
-    label: 'Chỉ số nước mới (m³)',
+    label: 'Chỉ số nước mới',
     photoLabel: 'Ảnh đồng hồ nước',
     unit: 'm³',
   },
@@ -200,8 +201,9 @@ function MeterFields({ control, kind, previous, unitPrice, disabled, onUploading
             <FieldLabel htmlFor={id}>
               {text.label} <span aria-hidden="true">*</span>
             </FieldLabel>
-            <Input
+            <UnitInput
               {...field}
+              unit={text.unit}
               id={id}
               inputMode="decimal"
               className="tabular-nums"
