@@ -1,11 +1,12 @@
 import searchSaigonStreet from '@/assets/search-saigon-street.jpg'
 import { isAxiosError } from 'axios'
-import { CircleAlert, ImageOff, SearchX, SlidersHorizontal } from 'lucide-react'
+import { CircleAlert, SearchX, SlidersHorizontal } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import MoneyText from '@/components/MoneyText'
 import PageHeader from '@/components/PageHeader'
+import PropertyCoverImage from '@/components/PropertyCoverImage'
 import RoomSearchFilterForm from '@/components/RoomSearchFilterForm'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -239,19 +240,12 @@ function RoomCard({ room, listSearch }: { room: RoomSearchItem; listSearch: stri
       state={{ listSearch }}
       className="flex h-full flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm outline-none transition-colors hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50"
     >
-      {room.coverImageUrl ? (
-        <img
-          src={room.coverImageUrl}
-          alt={`Ảnh phòng ${room.code}`}
-          loading="lazy"
-          className="aspect-[4/3] w-full bg-muted object-cover"
-        />
-      ) : (
-        <div className="flex aspect-[4/3] w-full items-center justify-center bg-muted text-muted-foreground">
-          <ImageOff aria-hidden className="size-8" />
-          <span className="sr-only">Phòng {room.code} chưa có ảnh</span>
-        </div>
-      )}
+      <PropertyCoverImage
+        src={room.coverImageUrl}
+        alt={`Ảnh phòng ${room.code}`}
+        aspect="photo"
+        missingText="Chủ trọ chưa đăng ảnh"
+      />
       <div className="flex flex-1 flex-col gap-2 p-4">
         <p className="text-lg font-semibold text-primary">
           <MoneyText amount={room.rentPrice} /> <span className="text-sm font-normal text-muted-foreground">/ tháng</span>
