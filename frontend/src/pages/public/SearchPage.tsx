@@ -1,4 +1,3 @@
-import searchSaigonStreet from '@/assets/search-saigon-street.jpg'
 import { isAxiosError } from 'axios'
 import { CircleAlert, Ruler, SearchX, SlidersHorizontal, UsersRound } from 'lucide-react'
 import { useState } from 'react'
@@ -67,12 +66,7 @@ export default function SearchPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <PageHeader
-        title="Tìm phòng trọ"
-        description="Lọc theo khu vực, giá, diện tích và tiện ích bạn cần."
-        image={searchSaigonStreet}
-        imagePosition="50% 22%"
-      />
+      <PageHeader title="Tìm phòng trọ" description="Lọc theo khu vực, giá, diện tích và tiện ích bạn cần." />
 
       {/* Dưới `lg` xếp một cột: thanh công cụ (có nút "Bộ lọc") → bộ lọc khi mở → kết quả. Từ `lg` bộ lọc
           là cột trái chiếm cả hai hàng, thanh công cụ và kết quả ở cột phải. */}
@@ -205,7 +199,7 @@ function FilterPanel({ params, onApply, onClear }: FilterPanelProps) {
 
   if (locationsQuery.isPending || amenitiesQuery.isPending) {
     return (
-      <div className="flex flex-col gap-5 rounded-xl border bg-card p-4" aria-busy="true">
+      <div className="flex flex-col gap-5 rounded-xl border bg-card p-4 shadow-sm md:p-5" aria-busy="true">
         {Array.from({ length: 5 }, (_, index) => (
           <div key={index} className="flex flex-col gap-2">
             <Skeleton className="h-4 w-1/3" />

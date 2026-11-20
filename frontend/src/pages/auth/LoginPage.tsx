@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { CircleCheck, Info } from 'lucide-react'
+import { CircleCheck, Info, LogIn } from 'lucide-react'
 import { Controller, useForm } from 'react-hook-form'
 import { Link, Navigate, useLocation, useSearchParams } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
@@ -66,7 +66,7 @@ export default function LoginPage() {
   })
 
   return (
-    <AuthCard title="Đăng nhập" description="Đăng nhập để quản lý phòng trọ, hợp đồng và hóa đơn.">
+    <AuthCard icon={LogIn} title="Đăng nhập" description="Đăng nhập để quản lý phòng trọ, hợp đồng và hóa đơn.">
 
       <form
         noValidate

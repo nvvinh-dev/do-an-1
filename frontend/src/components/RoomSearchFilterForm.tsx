@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
+import { SlidersHorizontal } from 'lucide-react'
 import { Controller, useForm, useWatch, type Control, type FieldPathByValue } from 'react-hook-form'
+import NavIconChip from '@/components/NavIconChip'
 import SearchCombobox from '@/components/SearchCombobox'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -64,7 +66,15 @@ export default function RoomSearchFilterForm({
   )
 
   return (
-    <form noValidate onSubmit={submit} className="flex flex-col gap-6 rounded-xl border bg-card p-4">
+    <form
+      noValidate
+      onSubmit={submit}
+      className="flex flex-col gap-5 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-5"
+    >
+      <h2 className="flex items-center gap-2.5 text-lg font-bold">
+        <NavIconChip icon={SlidersHorizontal} tint="teal" />
+        Bộ lọc
+      </h2>
       <FieldGroup className="gap-5">
         <Controller
           name="city"

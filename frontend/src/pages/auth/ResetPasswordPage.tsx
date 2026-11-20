@@ -1,3 +1,4 @@
+import { LockKeyhole } from 'lucide-react'
 import { Controller, useForm } from 'react-hook-form'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
@@ -57,7 +58,7 @@ export default function ResetPasswordPage() {
 
   if (!email || !token) {
     return (
-      <AuthCard title="Đặt lại mật khẩu" description="Đặt mật khẩu mới cho tài khoản của bạn.">
+      <AuthCard icon={LockKeyhole} title="Đặt lại mật khẩu" description="Đặt mật khẩu mới cho tài khoản của bạn.">
 
         <div className="flex flex-col gap-4">
           <Alert variant="destructive" className="border-destructive/40">
@@ -87,7 +88,7 @@ export default function ResetPasswordPage() {
   })
 
   return (
-    <AuthCard title="Đặt lại mật khẩu" description={`Đặt mật khẩu mới cho ${email}.`}>
+    <AuthCard icon={LockKeyhole} title="Đặt lại mật khẩu" description={`Đặt mật khẩu mới cho ${email}.`}>
 
       <form
         noValidate

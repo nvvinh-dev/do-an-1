@@ -52,7 +52,7 @@ export default function AuthLayout() {
           className="absolute inset-0 size-full object-cover"
           style={{ objectPosition: picture.position }}
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-foreground/65 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/20 to-transparent" />
         <p className="absolute right-6 bottom-6 left-6 text-lg font-semibold text-primary-foreground">{picture.caption}</p>
       </div>
       <div className="flex items-center">
