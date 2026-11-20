@@ -24,8 +24,11 @@ import { useUnreadNotificationCount } from '@/hooks/useUnreadNotificationCount'
 import { cn } from '@/lib/utils'
 import type { UserRole } from '@/types/authTypes'
 import type { NotificationListItem } from '@/types/notificationTypes'
-import { formatDate } from '@/utils/formatDate'
+import { formatDateTime } from '@/utils/formatDateTime'
+import { getNotificationEntityStyle } from '@/utils/getNotificationEntityStyle'
 import { getNotificationTargetPath } from '@/utils/getNotificationTargetPath'
+import { groupNotificationsByDay } from '@/utils/groupNotificationsByDay'
+import { tintClasses } from '@/utils/tintClasses'
 
 const READ_FILTERS = ['all', 'unread', 'read'] as const
 type ReadFilter = (typeof READ_FILTERS)[number]
@@ -166,22 +169,37 @@ interface NotificationListProps {
 }
 
 /**
- * Mỗi thông báo một dòng ở mọi cỡ màn hình, cả dòng bấm được. Thông báo chỉ có tiêu đề, nội dung
- * và ngày nên không dựng bảng; chưa đọc thì chữ đậm kèm chấm, không chỉ dựa vào màu nền.
+ * Thông báo của trang đang xem chia nhóm theo ngày giờ Việt Nam ("Hôm nay", "Hôm qua", "Trước đó"); mỗi
+ * thông báo một dòng ở mọi cỡ màn hình, cả dòng bấm được. Chưa đọc thì chữ đậm, nền teal nhạt và chấm
+ * màu nhấn kèm chữ ẩn "Chưa đọc", không chỉ dựa vào màu (docs/design-system.md mục 9).
  */
 function NotificationList({ notifications, role, onOpen }: NotificationListProps) {
+  const groups = groupNotificationsByDay(notifications)
+
   return (
-    <ul className="flex flex-col divide-y overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm">
-      {notifications.map((notification) => (
-        <li key={notification.id}>
-          <NotificationRow
-            notification={notification}
-            targetPath={role ? getNotificationTargetPath(notification, role) : null}
-            onOpen={() => onOpen(notification)}
-          />
-        </li>
+    <div className="flex flex-col gap-5">
+      {groups.map((group) => (
+        <section key={group.key} aria-labelledby={`notification-group-${group.key}`} className="flex flex-col gap-2">
+          <h2
+            id={`notification-group-${group.key}`}
+            className="px-1 text-xs font-semibold tracking-wider text-muted-foreground uppercase"
+          >
+            {group.label}
+          </h2>
+          <ul className="flex flex-col divide-y overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm">
+            {group.items.map((notification) => (
+              <li key={notification.id}>
+                <NotificationRow
+                  notification={notification}
+                  targetPath={role ? getNotificationTargetPath(notification, role) : null}
+                  onOpen={() => onOpen(notification)}
+                />
+              </li>
+            ))}
+          </ul>
+        </section>
       ))}
-    </ul>
+    </div>
   )
 }
 
@@ -193,27 +211,29 @@ interface NotificationRowProps {
 
 function NotificationRow({ notification, targetPath, onOpen }: NotificationRowProps) {
   const { isRead } = notification
+  const { icon: Icon, tint } = getNotificationEntityStyle(notification.relatedEntityType)
   const content = (
     <>
-      <span
-        aria-hidden="true"
-        className={cn('mt-1.5 size-2 shrink-0 rounded-full', isRead ? 'bg-transparent' : 'bg-primary')}
-      />
+      <span aria-hidden="true" className={cn('grid size-9 shrink-0 place-items-center rounded-[10px]', tintClasses[tint])}>
+        <Icon className="size-[18px]" strokeWidth={1.75} />
+      </span>
       <span className="flex min-w-0 flex-1 flex-col gap-1">
-        <span className={cn('wrap-anywhere', isRead ? 'font-medium' : 'font-semibold')}>
+        <span className={cn('wrap-anywhere', isRead ? 'font-medium' : 'font-bold')}>
           {!isRead && <span className="sr-only">Chưa đọc: </span>}
           {notification.title}
         </span>
         <span className="text-sm text-muted-foreground wrap-anywhere">{notification.content}</span>
-        <span className="text-xs text-muted-foreground">{formatDate(notification.createdAt)}</span>
+        <span className="text-xs text-muted-foreground">{formatDateTime(notification.createdAt)}</span>
       </span>
+      {!isRead && <span aria-hidden="true" className="mt-2 size-2 shrink-0 rounded-full bg-highlight" />}
     </>
   )
 
-  const rowClassName = cn('flex w-full gap-3 p-4 text-left md:px-6', !isRead && 'bg-primary/5')
+  const rowClassName = cn('flex w-full gap-3 p-4 text-left md:px-6', !isRead && 'bg-primary-soft')
   const interactiveClassName = cn(
     rowClassName,
-    'outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+    'outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+    isRead ? 'hover:bg-accent' : 'hover:bg-primary-soft/70',
   )
 
   if (targetPath) {
@@ -342,7 +362,7 @@ function NotificationListSkeleton() {
     <div className="flex flex-col divide-y rounded-xl border bg-card" aria-busy="true">
       {Array.from({ length: 4 }, (_, index) => (
         <div key={index} className="flex gap-3 p-4 md:px-6">
-          <Skeleton className="mt-1.5 size-2 rounded-full" />
+          <Skeleton className="size-9 shrink-0 rounded-[10px]" />
           <div className="flex flex-1 flex-col gap-2">
             <Skeleton className="h-4 w-1/2" />
             <Skeleton className="h-4 w-5/6" />
