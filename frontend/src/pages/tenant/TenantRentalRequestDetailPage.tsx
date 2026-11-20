@@ -7,8 +7,9 @@ import BackLink from '@/components/BackLink'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import CountdownText from '@/components/CountdownText'
 import DetailHeader from '@/components/DetailHeader'
+import DetailCard from '@/components/DetailCard'
 import DetailLayout from '@/components/DetailLayout'
-import { Fact, FactList } from '@/components/FactList'
+import { Fact } from '@/components/FactList'
 import StatusBadge from '@/components/StatusBadge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -109,34 +110,28 @@ function RentalRequestDetailContent({ rentalRequest }: { rentalRequest: RentalRe
 
       <DetailLayout
         aside={
-          <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-5">
-            <h2 className="text-lg font-bold">Phòng muốn thuê</h2>
-            <FactList stacked>
-              <Fact label="Phòng">
-                Phòng {rentalRequest.room.code} · {rentalRequest.room.propertyName}
-              </Fact>
-              <Fact label="Ngày dự kiến vào ở">{formatDate(rentalRequest.expectedMoveInDate)}</Fact>
-              <Fact label="Số người ở">
-                <span className="tabular-nums">{rentalRequest.expectedOccupants} người</span>
-              </Fact>
-            </FactList>
-          </div>
+          <DetailCard title="Phòng muốn thuê" stacked>
+            <Fact label="Phòng">
+              Phòng {rentalRequest.room.code} · {rentalRequest.room.propertyName}
+            </Fact>
+            <Fact label="Ngày dự kiến vào ở">{formatDate(rentalRequest.expectedMoveInDate)}</Fact>
+            <Fact label="Số người ở">
+              <span className="tabular-nums">{rentalRequest.expectedOccupants} người</span>
+            </Fact>
+          </DetailCard>
         }
       >
         <RentalRequestStatusNotice rentalRequest={rentalRequest} isOverdue={isOverdue} />
 
-        <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-          <h2 className="text-lg font-bold">Thông tin yêu cầu</h2>
-          <FactList>
-            <Fact label="Ghi chú">
-              <span className="font-normal whitespace-pre-line">
-                {rentalRequest.note ?? <span className="text-muted-foreground">Không có ghi chú</span>}
-              </span>
-            </Fact>
-            <Fact label="Ngày gửi">{formatDate(rentalRequest.submittedAt)}</Fact>
-            {rentalRequest.processedAt && <Fact label="Ngày xử lý">{formatDate(rentalRequest.processedAt)}</Fact>}
-          </FactList>
-        </div>
+        <DetailCard title="Thông tin yêu cầu">
+          <Fact label="Ghi chú">
+            <span className="font-normal whitespace-pre-line">
+              {rentalRequest.note ?? <span className="text-muted-foreground">Không có ghi chú</span>}
+            </span>
+          </Fact>
+          <Fact label="Ngày gửi">{formatDate(rentalRequest.submittedAt)}</Fact>
+          {rentalRequest.processedAt && <Fact label="Ngày xử lý">{formatDate(rentalRequest.processedAt)}</Fact>}
+        </DetailCard>
       </DetailLayout>
     </>
   )

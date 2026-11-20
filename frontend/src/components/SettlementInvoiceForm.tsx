@@ -399,10 +399,11 @@ function LineFields({
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={`line-amount-${id}`}>
-                Số tiền (₫) <span aria-hidden="true">*</span>
+                Số tiền <span aria-hidden="true">*</span>
               </FieldLabel>
-              <Input
+              <UnitInput
                 {...field}
+                unit="đ"
                 id={`line-amount-${id}`}
                 inputMode={category === 'DieuChinhKhac' ? 'text' : 'numeric'}
                 className="tabular-nums"

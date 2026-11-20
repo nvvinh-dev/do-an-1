@@ -285,13 +285,14 @@ public class ContractService
             return ServiceResult.Fail(StatusCodes.Status409Conflict, HoldExpiredMessage);
         }
 
-        contract.RequestChanges(now);
+        var trimmedReason = reason.Trim();
+        contract.RequestChanges(trimmedReason, now);
 
         _notifier.Notify(
             contract.Room.Property.LandlordUserId,
             "HopDongCanChinhSua",
             "Người thuê yêu cầu chỉnh sửa hợp đồng",
-            $"Người thuê yêu cầu chỉnh sửa hợp đồng thuê phòng {RoomLabel(contract)}. Lý do: {reason.Trim()}",
+            $"Người thuê yêu cầu chỉnh sửa hợp đồng thuê phòng {RoomLabel(contract)}. Lý do: {trimmedReason}",
             nameof(Contract),
             contract.Id);
 
@@ -771,6 +772,8 @@ public class ContractService
             contract.CancelReason,
             cancelledBy,
             contract.CancelledAt,
+            contract.ChangeRequestReason,
+            contract.ChangeRequestedAt,
             contract.HoldDeadline,
             paymentQr,
             depositRefund,
