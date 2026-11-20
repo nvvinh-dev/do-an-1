@@ -1,9 +1,10 @@
-import { ChevronLeft, ImageOff, LogIn, Send } from 'lucide-react'
+import { ChevronLeft, Droplets, LogIn, Ruler, Send, UsersRound, Zap } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import MoneyText from '@/components/MoneyText'
 import PageHeader from '@/components/PageHeader'
+import PropertyCoverImage from '@/components/PropertyCoverImage'
 import RentalRequestForm from '@/components/RentalRequestForm'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -149,19 +150,24 @@ function RoomGallery({ images, roomCode }: { images: string[]; roomCode: string 
 
   if (images.length === 0) {
     return (
-      <div className="flex aspect-4/3 w-full items-center justify-center rounded-xl bg-muted text-muted-foreground lg:col-start-1">
-        <ImageOff aria-hidden className="size-10" />
-        <span className="sr-only">Phòng {roomCode} chưa có ảnh</span>
-      </div>
+      <PropertyCoverImage
+        src={null}
+        alt=""
+        aspect="photo"
+        missingText="Chủ trọ chưa đăng ảnh phòng này"
+        className="rounded-xl lg:col-start-1"
+      />
     )
   }
 
   return (
     <div className="flex min-w-0 flex-col gap-3 lg:col-start-1">
-      <img
+      <PropertyCoverImage
         src={images[shownIndex]}
         alt={`Ảnh phòng ${roomCode}, ảnh ${shownIndex + 1}`}
-        className="aspect-4/3 w-full rounded-xl bg-muted object-cover"
+        aspect="photo"
+        missingText=""
+        className="rounded-xl"
       />
       {images.length > 1 && (
         <ul className="grid grid-cols-4 gap-2 sm:grid-cols-6">
@@ -191,21 +197,39 @@ function RoomGallery({ images, roomCode }: { images: string[]; roomCode: string 
 function PriceSummary({ room }: { room: PublicRoom }) {
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-2xl font-semibold text-primary">
-        <MoneyText amount={room.rentPrice} /> <span className="text-sm font-normal text-muted-foreground">/ tháng</span>
-      </p>
+      <div className="flex flex-col gap-2">
+        <p className="text-2xl font-bold text-primary">
+          <MoneyText amount={room.rentPrice} /> <span className="text-sm font-normal text-muted-foreground">/ tháng</span>
+        </p>
+        <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm tabular-nums">
+          <span className="inline-flex items-center gap-1.5">
+            <Ruler aria-hidden="true" className="size-4 text-muted-foreground" strokeWidth={1.75} />
+            {room.area.toLocaleString('vi-VN')} m²
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <UsersRound aria-hidden="true" className="size-4 text-muted-foreground" strokeWidth={1.75} />
+            Tối đa {room.maxOccupants} người
+          </span>
+        </p>
+      </div>
       <dl className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 text-sm">
-        <dt className="text-muted-foreground">Điện / kWh</dt>
+        <dt className="inline-flex items-center gap-1.5 text-muted-foreground">
+          <Zap aria-hidden="true" className="size-4" strokeWidth={1.75} />
+          Điện / kWh
+        </dt>
         <dd className="text-right">
           <MoneyText amount={room.electricityUnitPrice} />
         </dd>
-        <dt className="text-muted-foreground">Nước / m³</dt>
+        <dt className="inline-flex items-center gap-1.5 text-muted-foreground">
+          <Droplets aria-hidden="true" className="size-4" strokeWidth={1.75} />
+          Nước / m³
+        </dt>
         <dd className="text-right">
           <MoneyText amount={room.waterUnitPrice} />
         </dd>
       </dl>
       <div className="flex flex-col gap-2">
-        <h2 className="text-sm font-medium">Phí dịch vụ mỗi tháng</h2>
+        <h2 className="text-sm font-semibold">Phí dịch vụ mỗi tháng</h2>
         {room.serviceFees.length === 0 ? (
           <p className="text-sm text-muted-foreground">Không có phí dịch vụ cố định.</p>
         ) : (
