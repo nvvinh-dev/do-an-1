@@ -1,7 +1,8 @@
-import { Building2, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import PageHeader from '@/components/PageHeader'
+import PropertyCoverImage from '@/components/PropertyCoverImage'
 import RoomCountsSummary from '@/components/RoomCountsSummary'
 import StatusBadge from '@/components/StatusBadge'
 import { Button } from '@/components/ui/button'
@@ -155,20 +156,13 @@ function PropertyTable({ properties }: { properties: PropertyListItem[] }) {
 }
 
 function CoverImage({ property }: { property: PropertyListItem }) {
-  if (property.coverImageUrl === null) {
-    return (
-      <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-        <Building2 className="size-5" aria-hidden="true" />
-      </div>
-    )
-  }
-
   return (
-    <img
+    <PropertyCoverImage
       src={property.coverImageUrl}
       alt={`Ảnh đại diện khu trọ ${property.name}`}
-      className="size-14 shrink-0 rounded-lg object-cover"
-      loading="lazy"
+      aspect="square"
+      missingText={`Khu trọ ${property.name} chưa có ảnh`}
+      className="size-14 shrink-0 rounded-lg"
     />
   )
 }

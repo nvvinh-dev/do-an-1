@@ -1,4 +1,5 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query'
+import { adminDashboardQueryKey } from '@/hooks/useAdminDashboard'
 import { adminLandlordApplicationsQueryKey } from '@/hooks/useLandlordApplicationList'
 import { getApiErrorInfo } from '@/lib/apiError'
 import { approveLandlordApplication } from '@/services/landlordApplicationService'
@@ -14,11 +15,20 @@ export function useApproveLandlordApplication(id: number) {
 
   return useMutation({
     mutationFn: (request: ApproveLandlordApplicationRequest) => approveLandlordApplication(id, request),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: adminLandlordApplicationsQueryKey }),
+    onSuccess: () => invalidateReviewQueries(queryClient),
     onError: (error) => {
       if (getApiErrorInfo(error).status === 409) {
-        void queryClient.invalidateQueries({ queryKey: adminLandlordApplicationsQueryKey })
+        void invalidateReviewQueries(queryClient)
       }
     },
   })
+}
+
+/** Duyệt hay từ chối đều đổi danh sách hồ sơ và số hồ sơ chờ duyệt trên dashboard, menu của Admin. */
+export function invalidateReviewQueries(queryClient: QueryClient) {
+  return Promise.all(
+    [adminLandlordApplicationsQueryKey, adminDashboardQueryKey].map((queryKey) =>
+      queryClient.invalidateQueries({ queryKey }),
+    ),
+  )
 }
