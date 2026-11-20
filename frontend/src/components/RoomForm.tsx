@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { Link } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
+import FormSection from '@/components/FormSection'
 import ImageUploader from '@/components/ImageUploader'
 import RoomNumberField from '@/components/RoomNumberField'
 import RoomServiceFeeFields from '@/components/RoomServiceFeeFields'
@@ -77,8 +78,9 @@ export default function RoomForm({
   })
 
   return (
-    <form noValidate onSubmit={submit} className="flex flex-col gap-6 rounded-xl border bg-card p-4 md:p-6">
-      <fieldset disabled={isPending} className="min-w-0">
+    <form noValidate onSubmit={submit} className="flex flex-col gap-6">
+      <fieldset disabled={isPending} className="flex min-w-0 flex-col gap-6">
+        <FormSection title="Thông tin phòng" description="Mã phòng, diện tích và số người ở tối đa.">
         <FieldGroup>
           <Controller
             name="code"
@@ -110,38 +112,55 @@ export default function RoomForm({
           />
 
           <div className="grid gap-5 md:grid-cols-2">
-            <RoomNumberField control={control} name="area" label="Diện tích (m²)" decimal validate={validateRoomArea} />
+            <RoomNumberField control={control} name="area" label="Diện tích" unit="m²" decimal validate={validateRoomArea} />
             <RoomNumberField
               control={control}
               name="maxOccupants"
               label="Số người tối đa"
               validate={validateRoomOccupants}
             />
+          </div>
+        </FieldGroup>
+        </FormSection>
+
+        <FormSection
+          title="Giá thuê và chi phí"
+          description="Giá và phí này dùng khi lập hợp đồng mới; hợp đồng hiện tại giữ nguyên mức đã chốt."
+        >
+        <FieldGroup>
+          <div className="grid gap-5 md:grid-cols-2">
             <RoomNumberField
               control={control}
               name="rentPrice"
-              label="Giá thuê (đồng/tháng)"
+              label="Giá thuê"
+              unit="đ/tháng"
               money
               validate={(value) => validateRoomMoney(value, true)}
             />
             <RoomNumberField
               control={control}
               name="electricityUnitPrice"
-              label="Đơn giá điện (đồng/kWh)"
+              label="Đơn giá điện"
+              unit="đ/kWh"
               money
               validate={validateRoomMoney}
             />
             <RoomNumberField
               control={control}
               name="waterUnitPrice"
-              label="Đơn giá nước (đồng/m³)"
+              label="Đơn giá nước"
+              unit="đ/m³"
               money
               validate={validateRoomMoney}
             />
           </div>
 
           <RoomServiceFeeFields form={form} />
+        </FieldGroup>
+        </FormSection>
 
+        <FormSection title="Mô tả, tiện ích và ảnh" description="Giúp người thuê hiểu về phòng trước khi gửi yêu cầu.">
+        <FieldGroup>
           <Controller
             name="description"
             control={control}
@@ -220,6 +239,7 @@ export default function RoomForm({
             )}
           />
         </FieldGroup>
+        </FormSection>
       </fieldset>
       <ApiErrorAlert
         error={error}

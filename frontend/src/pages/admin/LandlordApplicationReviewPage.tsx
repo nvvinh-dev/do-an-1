@@ -260,7 +260,7 @@ function DocumentPreview({ url, alt, onReload }: DocumentPreviewProps) {
   if (failed) {
     return (
       <div className={`${frameClass} text-center text-sm text-muted-foreground`}>
-        <ImageOff className="size-6" />
+        <ImageOff className="size-7" strokeWidth={1.75} />
         <p>Không hiện được ảnh. Đường dẫn xem ảnh chỉ dùng được 15 phút, có thể đã hết hạn.</p>
         <Button type="button" variant="outline" size="sm" onClick={onReload}>
           Tải lại ảnh

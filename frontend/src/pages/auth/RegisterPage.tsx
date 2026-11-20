@@ -1,7 +1,7 @@
 import { Controller, useForm } from 'react-hook-form'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
-import PageHeader from '@/components/PageHeader'
+import AuthCard from '@/components/AuthCard'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
@@ -70,13 +70,12 @@ export default function RegisterPage() {
   })
 
   return (
-    <section className="mx-auto flex w-full max-w-md flex-col gap-6 py-4 md:py-10">
-      <PageHeader title="Đăng ký" description="Đăng ký để quản lý phòng trọ, hợp đồng và hóa đơn." />
+    <AuthCard title="Đăng ký" description="Đăng ký để quản lý phòng trọ, hợp đồng và hóa đơn.">
 
       <form
         noValidate
         onSubmit={onSubmit}
-        className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground md:p-6"
+        className="flex flex-col gap-4"
       >
         <ApiErrorAlert error={registerMutation.error} />
 
@@ -227,11 +226,11 @@ export default function RegisterPage() {
 
         <p className="text-center text-sm text-muted-foreground">
           Đã có tài khoản?{' '}
-          <Link to={loginPath} className="text-primary underline-offset-4 hover:underline">
+          <Link to={loginPath} className="font-semibold text-primary underline-offset-4 hover:underline">
             Đăng nhập
           </Link>
         </p>
       </form>
-    </section>
+    </AuthCard>
   )
 }

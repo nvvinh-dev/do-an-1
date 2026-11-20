@@ -82,7 +82,7 @@ function PropertyDetailContent({ property }: { property: PropertyDetail }) {
         </Alert>
       )}
 
-      <RoomCountsSummary counts={property.roomCounts} variant="tiles" />
+      <RoomCountsSummary counts={property.roomCounts} />
 
       <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
         <h2 className="text-lg font-bold">Thông tin khu trọ</h2>

@@ -29,7 +29,7 @@ const DEFAULT_PICTURE: AuthSidePicture = {
 
 /**
  * Khung của bốn màn xác thực (đăng nhập, đăng ký, quên và đặt lại mật khẩu), đặt trong `PublicLayout`.
- * Từ `lg` ảnh nằm bên trái form; dưới `lg` ẩn ảnh để form vẫn gọn từ màn hình 360px
+ * Từ `lg` ảnh nằm bên trái, form trong `AuthCard` căn giữa theo chiều dọc; dưới `lg` ẩn ảnh để form vẫn gọn từ màn hình 360px
  * (docs/design-system.md mục 5).
  */
 export default function AuthLayout() {
@@ -55,7 +55,9 @@ export default function AuthLayout() {
         <div className="absolute inset-0 bg-gradient-to-t from-foreground/65 via-transparent to-transparent" />
         <p className="absolute right-6 bottom-6 left-6 text-lg font-semibold text-primary-foreground">{picture.caption}</p>
       </div>
-      <Outlet />
+      <div className="flex items-center">
+        <Outlet />
+      </div>
     </div>
   )
 }

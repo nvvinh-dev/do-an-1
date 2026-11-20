@@ -1,7 +1,7 @@
 import { Controller, useForm } from 'react-hook-form'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
-import PageHeader from '@/components/PageHeader'
+import AuthCard from '@/components/AuthCard'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
@@ -57,10 +57,9 @@ export default function ResetPasswordPage() {
 
   if (!email || !token) {
     return (
-      <section className="mx-auto flex w-full max-w-md flex-col gap-6 py-4 md:py-10">
-        <PageHeader title="Đặt lại mật khẩu" description="Đặt mật khẩu mới cho tài khoản của bạn." />
+      <AuthCard title="Đặt lại mật khẩu" description="Đặt mật khẩu mới cho tài khoản của bạn.">
 
-        <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground md:p-6">
+        <div className="flex flex-col gap-4">
           <Alert variant="destructive" className="border-destructive/40">
             <AlertTitle>Đường dẫn không hợp lệ</AlertTitle>
             <AlertDescription>
@@ -72,7 +71,7 @@ export default function ResetPasswordPage() {
             <Link to="/forgot-password">Gửi lại yêu cầu</Link>
           </Button>
         </div>
-      </section>
+      </AuthCard>
     )
   }
 
@@ -88,20 +87,19 @@ export default function ResetPasswordPage() {
   })
 
   return (
-    <section className="mx-auto flex w-full max-w-md flex-col gap-6 py-4 md:py-10">
-      <PageHeader title="Đặt lại mật khẩu" description={`Đặt mật khẩu mới cho ${email}.`} />
+    <AuthCard title="Đặt lại mật khẩu" description={`Đặt mật khẩu mới cho ${email}.`}>
 
       <form
         noValidate
         onSubmit={onSubmit}
-        className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground md:p-6"
+        className="flex flex-col gap-4"
       >
         <ApiErrorAlert error={resetPasswordMutation.error} trust400Detail />
 
         {isInvalidLinkError && (
           <p className="text-sm text-muted-foreground">
             Cần đường dẫn mới?{' '}
-            <Link to="/forgot-password" className="text-primary underline-offset-4 hover:underline">
+            <Link to="/forgot-password" className="font-semibold text-primary underline-offset-4 hover:underline">
               Gửi lại yêu cầu
             </Link>
           </p>
@@ -177,6 +175,6 @@ export default function ResetPasswordPage() {
           Đặt lại mật khẩu
         </Button>
       </form>
-    </section>
+    </AuthCard>
   )
 }

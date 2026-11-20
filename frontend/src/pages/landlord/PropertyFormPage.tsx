@@ -4,6 +4,7 @@ import { Controller, useForm, useWatch } from 'react-hook-form'
 import { Link, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
+import FormSection from '@/components/FormSection'
 import ImageUploader from '@/components/ImageUploader'
 import PageHeader from '@/components/PageHeader'
 import SearchCombobox from '@/components/SearchCombobox'
@@ -291,8 +292,9 @@ function PropertyForm({
     <form
       noValidate
       onSubmit={submit}
-      className="flex flex-col gap-6 rounded-xl border bg-card p-4 text-card-foreground md:p-6"
+      className="flex flex-col gap-6"
     >
+      <FormSection title="Thông tin khu trọ" description="Tên, địa chỉ và mô tả hiển thị cho người thuê.">
       <FieldGroup>
         <Controller
           name="name"
@@ -419,6 +421,11 @@ function PropertyForm({
           )}
         />
 
+      </FieldGroup>
+      </FormSection>
+
+      <FormSection title="Tiện ích và ảnh" description="Giúp người thuê hình dung khu trọ trước khi gửi yêu cầu.">
+      <FieldGroup>
         {propertyAmenities.length > 0 && (
           <Controller
             name="amenityIds"
@@ -474,6 +481,7 @@ function PropertyForm({
           )}
         />
       </FieldGroup>
+      </FormSection>
 
       {/* 409, 422 hiện `detail` ngay trên nút vừa bấm, dữ liệu đã nhập giữ nguyên (docs/frontend-screens.md mục 1). */}
       <ApiErrorAlert error={error} />

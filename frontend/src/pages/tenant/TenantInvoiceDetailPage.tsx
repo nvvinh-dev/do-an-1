@@ -282,7 +282,7 @@ function ReportPaymentBody({ invoice, isPending, error, onSubmit }: ReportPaymen
     >
       <PaymentAmountField
         id={amountId}
-        label="Số tiền đã trả (₫)"
+        label="Số tiền đã trả"
         value={amount}
         onChange={setAmount}
         description="Trả một phần cũng được; không vượt phần còn phải trả."

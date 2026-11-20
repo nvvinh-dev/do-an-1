@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Controller, type Control, type FieldPathByValue } from 'react-hook-form'
 import { Field, FieldError, FieldLabel } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
+import UnitInput from '@/components/UnitInput'
 import type { RoomFormValues } from '@/types/roomTypes'
 import { normalizeRoomMoney, toRoomAreaInput } from '@/utils/validateRoomInput'
 
@@ -11,6 +11,8 @@ interface RoomNumberFieldProps {
   label: string
   money?: boolean
   decimal?: boolean
+  /** Đơn vị ghi trong ô ("đ", "m²"); có thì nhãn không cần ghi lại đơn vị. */
+  unit?: string
   validate: (value: string) => true | string
 }
 
@@ -20,7 +22,7 @@ interface RoomNumberFieldProps {
  * phân ("20.5" → "20,5"). Chuỗi sai giữ nguyên để người dùng thấy và sửa. Form đổi sang dạng API
  * nhận lúc gửi (RoomForm).
  */
-export default function RoomNumberField({ control, name, label, money, decimal, validate }: RoomNumberFieldProps) {
+export default function RoomNumberField({ control, name, label, money, decimal, unit, validate }: RoomNumberFieldProps) {
   const [focused, setFocused] = useState(false)
   const id = `room-${name}`
   const normalize = money ? normalizeRoomMoney : decimal ? toRoomAreaInput : (value: string) => value.trim()
@@ -36,8 +38,9 @@ export default function RoomNumberField({ control, name, label, money, decimal, 
           <FieldLabel htmlFor={id}>
             {label} <span aria-hidden="true">*</span>
           </FieldLabel>
-          <Input
+          <UnitInput
             {...field}
+            unit={unit}
             id={id}
             inputMode={decimal ? 'decimal' : 'numeric'}
             className="tabular-nums"
