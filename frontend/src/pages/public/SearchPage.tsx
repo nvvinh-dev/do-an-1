@@ -1,6 +1,6 @@
 import searchSaigonStreet from '@/assets/search-saigon-street.jpg'
 import { isAxiosError } from 'axios'
-import { CircleAlert, SearchX, SlidersHorizontal } from 'lucide-react'
+import { CircleAlert, Ruler, SearchX, SlidersHorizontal, UsersRound } from 'lucide-react'
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
@@ -27,6 +27,7 @@ import { useLocations } from '@/hooks/useLocations'
 import { useRoomSearch } from '@/hooks/useRoomSearch'
 import { cn } from '@/lib/utils'
 import type { RoomSearchItem, RoomSearchParams } from '@/types/roomSearchTypes'
+import { formatRentPriceShort } from '@/utils/formatRentPriceShort'
 import {
   countActiveRoomSearchFilters,
   getRoomSearchErrorMessages,
@@ -238,31 +239,47 @@ function RoomCard({ room, listSearch }: { room: RoomSearchItem; listSearch: stri
     <Link
       to={`/rooms/${room.id}`}
       state={{ listSearch }}
-      className="flex h-full flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm outline-none transition-colors hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50"
+      className="flex h-full flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
     >
-      <PropertyCoverImage
-        src={room.coverImageUrl}
-        alt={`Ảnh phòng ${room.code}`}
-        aspect="photo"
-        missingText="Chủ trọ chưa đăng ảnh"
-      />
+      {/* Giá đè góc dưới trái ảnh để quét nhanh (docs/design-system.md mục 11); trình đọc màn hình đọc giá đầy đủ ở dưới. */}
+      <div className="relative">
+        <PropertyCoverImage
+          src={room.coverImageUrl}
+          alt={`Ảnh phòng ${room.code}`}
+          aspect="photo"
+          missingText="Chủ trọ chưa đăng ảnh"
+        />
+        <span
+          aria-hidden="true"
+          className="absolute bottom-2.5 left-2.5 rounded-full bg-card px-3 py-1 text-[0.9375rem] font-bold text-primary tabular-nums shadow-sm"
+        >
+          {formatRentPriceShort(room.rentPrice)}/tháng
+        </span>
+      </div>
       <div className="flex flex-1 flex-col gap-2 p-4">
-        <p className="text-lg font-semibold text-primary">
-          <MoneyText amount={room.rentPrice} /> <span className="text-sm font-normal text-muted-foreground">/ tháng</span>
+        <p className="sr-only">
+          Giá thuê <MoneyText amount={room.rentPrice} /> một tháng
         </p>
         <div className="flex min-w-0 flex-col gap-0.5">
-          <p className="font-medium wrap-anywhere">
+          <p className="font-semibold wrap-anywhere">
             Phòng {room.code} · {room.propertyName}
           </p>
           <p className="text-sm text-muted-foreground wrap-anywhere">
             {room.address}, {room.ward}, {room.city}
           </p>
         </div>
-        <p className="text-sm tabular-nums">
-          {room.area.toLocaleString('vi-VN')} m² · Tối đa {room.maxOccupants} người
+        <p className="flex flex-wrap gap-x-4 gap-y-1 text-sm tabular-nums">
+          <span className="inline-flex items-center gap-1.5">
+            <Ruler aria-hidden="true" className="size-4 text-muted-foreground" strokeWidth={1.75} />
+            {room.area.toLocaleString('vi-VN')} m²
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <UsersRound aria-hidden="true" className="size-4 text-muted-foreground" strokeWidth={1.75} />
+            Tối đa {room.maxOccupants} người
+          </span>
         </p>
         {room.amenities.length > 0 && (
-          <ul className="mt-auto flex flex-wrap gap-1.5 pt-1">
+          <ul className="mt-auto flex flex-wrap gap-1.5 pt-1" aria-label="Tiện ích">
             {shownAmenities.map((amenity) => (
               <li key={amenity}>
                 <Badge variant="secondary">{amenity}</Badge>
@@ -270,7 +287,10 @@ function RoomCard({ room, listSearch }: { room: RoomSearchItem; listSearch: stri
             ))}
             {hiddenAmenityCount > 0 && (
               <li>
-                <Badge variant="outline">+{hiddenAmenityCount} tiện ích</Badge>
+                <Badge variant="secondary">
+                  +{hiddenAmenityCount}
+                  <span className="sr-only"> tiện ích khác</span>
+                </Badge>
               </li>
             )}
           </ul>
