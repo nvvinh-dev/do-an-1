@@ -94,7 +94,7 @@ function PropertyCards({ properties }: { properties: PropertyListItem[] }) {
         <li key={property.id}>
           <Link
             to={propertyPath(property.id)}
-            className="flex gap-3 rounded-xl border bg-card p-4 text-card-foreground shadow-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="flex gap-3 rounded-xl border bg-card p-4 text-card-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <CoverImage property={property} />
             <div className="flex min-w-0 flex-1 flex-col gap-2">
@@ -115,7 +115,7 @@ function PropertyCards({ properties }: { properties: PropertyListItem[] }) {
 /** Từ `md`: bảng; tên khu trọ là liên kết tới chi tiết. */
 function PropertyTable({ properties }: { properties: PropertyListItem[] }) {
   return (
-    <div className="hidden rounded-xl border bg-card shadow-sm md:block">
+    <div className="hidden overflow-hidden rounded-xl border bg-card shadow-sm md:block">
       <Table>
         <TableHeader>
           <TableRow>

@@ -213,7 +213,7 @@ function NotificationRow({ notification, targetPath, onOpen }: NotificationRowPr
   const rowClassName = cn('flex w-full gap-3 p-4 text-left md:px-6', !isRead && 'bg-primary/5')
   const interactiveClassName = cn(
     rowClassName,
-    'outline-none hover:bg-muted/60 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset',
+    'outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
   )
 
   if (targetPath) {

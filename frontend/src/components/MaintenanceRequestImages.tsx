@@ -18,7 +18,7 @@ export default function MaintenanceRequestImages({ images }: { images: Maintenan
                 href={image.url}
                 target="_blank"
                 rel="noreferrer"
-                className="block size-full outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                className="block size-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <img src={image.url} alt={`Ảnh sự cố, ảnh ${index + 1}`} loading="lazy" className="size-full object-cover" />
               </a>

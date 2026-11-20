@@ -249,7 +249,7 @@ function DocumentPreview({ url, alt, onReload }: DocumentPreviewProps) {
         href={url}
         target="_blank"
         rel="noopener noreferrer"
-        className={`${frameClass} text-sm text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-3 focus-visible:ring-ring/50`}
+        className={`${frameClass} text-sm text-primary underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring`}
       >
         <FileText className="size-8" />
         <span>Mở file PDF</span>
@@ -274,7 +274,7 @@ function DocumentPreview({ url, alt, onReload }: DocumentPreviewProps) {
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="group relative block rounded-lg outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+      className="group relative block rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <img
         src={url}

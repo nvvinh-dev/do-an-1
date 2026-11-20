@@ -173,7 +173,7 @@ function RoomGallery({ images, roomCode }: { images: string[]; roomCode: string 
                 aria-pressed={index === shownIndex}
                 onClick={() => setSelectedIndex(index)}
                 className={cn(
-                  'block w-full overflow-hidden rounded-lg border-2 outline-none focus-visible:ring-3 focus-visible:ring-ring/50',
+                  'block w-full overflow-hidden rounded-lg border-2 outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   index === shownIndex ? 'border-primary' : 'border-transparent opacity-80 hover:opacity-100',
                 )}
               >

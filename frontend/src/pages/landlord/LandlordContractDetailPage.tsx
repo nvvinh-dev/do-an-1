@@ -696,7 +696,7 @@ function ContractInvoicesSection({ invoices, isPending, error, onRetry }: Contra
             <li key={invoice.id}>
               <Link
                 to={`/landlord/invoices/${invoice.id}`}
-                className="flex flex-col gap-1 py-3 outline-none hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50 md:flex-row md:items-center md:justify-between md:gap-4"
+                className="flex flex-col gap-1 py-3 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring md:flex-row md:items-center md:justify-between md:gap-4"
               >
                 <span className="flex flex-col gap-0.5">
                   <span className="font-medium">

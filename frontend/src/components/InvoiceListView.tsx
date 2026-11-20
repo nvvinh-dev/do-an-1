@@ -62,10 +62,10 @@ function InvoiceCards({ invoices, basePath, listSearch, showTenant }: InvoiceLis
           <Link
             to={`${basePath}/${invoice.id}`}
             state={{ listSearch }}
-            className="flex flex-col gap-2 rounded-xl border bg-card p-4 text-card-foreground shadow-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="flex flex-col gap-2 rounded-xl border bg-card p-4 text-card-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="font-medium wrap-anywhere">Phòng {invoice.roomCode}</span>
+              <span className="font-semibold wrap-anywhere">Phòng {invoice.roomCode}</span>
               <StatusBadge kind="invoice" status={invoice.status} />
             </div>
             <p className="text-sm text-muted-foreground wrap-anywhere">{invoice.propertyName}</p>
@@ -86,7 +86,7 @@ function InvoiceCards({ invoices, basePath, listSearch, showTenant }: InvoiceLis
 
 function InvoiceTable({ invoices, basePath, listSearch, showTenant }: InvoiceListViewProps) {
   return (
-    <div className="hidden rounded-xl border bg-card shadow-sm md:block">
+    <div className="hidden overflow-hidden rounded-xl border bg-card shadow-sm md:block">
       <Table>
         <TableHeader>
           <TableRow>
@@ -105,7 +105,7 @@ function InvoiceTable({ invoices, basePath, listSearch, showTenant }: InvoiceLis
                   <Link
                     to={`${basePath}/${invoice.id}`}
                     state={{ listSearch }}
-                    className="font-medium wrap-anywhere underline-offset-4 hover:underline"
+                    className="font-semibold wrap-anywhere underline-offset-4 hover:underline"
                   >
                     Phòng {invoice.roomCode}
                   </Link>
