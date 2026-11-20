@@ -12,8 +12,8 @@ interface AuthCardProps {
 
 /**
  * Khung của một màn xác thực (A1–A4): thẻ trắng bo góc, ô icon của màn, tiêu đề, một dòng mô tả rồi tới
- * form (docs/design-system.md mục 5, 6.2). Logo đã có ở thanh trên của `PublicLayout` nên không lặp trong thẻ. Đặt trong `AuthLayout`; `wrap-anywhere` vì mô tả của A4 có
- * email người dùng, không để tràn ngang ở 360px.
+ * form (docs/design-system.md mục 5, 6.2). Logo đã có ở thanh trên của `PublicLayout` nên không lặp trong thẻ.
+ * Đặt trong `AuthLayout`; `wrap-anywhere` vì mô tả của A4 có email người dùng, không để tràn ngang ở 360px.
  */
 export default function AuthCard({ icon: Icon, title, description, children }: AuthCardProps) {
   return (
