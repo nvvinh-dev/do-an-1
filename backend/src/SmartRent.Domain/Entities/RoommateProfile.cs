@@ -8,6 +8,24 @@ namespace SmartRent.Domain.Entities;
 /// </summary>
 public class RoommateProfile
 {
+    /// <summary>Độ dài tối đa của tên trường hoặc công ty (FR-112).</summary>
+    public const int MaxOrganizationNameLength = 200;
+
+    /// <summary>
+    /// Người thuê có hợp đồng ở trạng thái này không tạo, sửa hồ sơ, không xem ứng viên, không gửi hay chấp nhận
+    /// lời mời; hồ sơ của họ không xuất hiện trong danh sách ứng viên (FR-107). Sắp hết hạn, Đang thanh lý vẫn dùng được.
+    /// </summary>
+    public const ContractStatus BlockingContractStatus = ContractStatus.DangHieuLuc;
+
+    public static bool BlocksRoommateFeatures(ContractStatus status) => status == BlockingContractStatus;
+
+    /// <summary>Hồ sơ mới của Người thuê, đang tìm; service điền các tiêu chí rồi lưu.</summary>
+    public static RoommateProfile CreateFor(long tenantUserId) => new()
+    {
+        TenantUserId = tenantUserId,
+        IsSearching = true
+    };
+
     public long Id { get; set; }
 
     public long TenantUserId { get; set; }
