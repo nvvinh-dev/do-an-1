@@ -3,7 +3,7 @@ import { CircleCheck, Info } from 'lucide-react'
 import { Controller, useForm } from 'react-hook-form'
 import { Link, Navigate, useLocation, useSearchParams } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
-import PageHeader from '@/components/PageHeader'
+import AuthCard from '@/components/AuthCard'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
@@ -66,13 +66,12 @@ export default function LoginPage() {
   })
 
   return (
-    <section className="mx-auto flex w-full max-w-md flex-col gap-6 py-4 md:py-10">
-      <PageHeader title="Đăng nhập" description="Đăng nhập để quản lý phòng trọ, hợp đồng và hóa đơn." />
+    <AuthCard title="Đăng nhập" description="Đăng nhập để quản lý phòng trọ, hợp đồng và hóa đơn.">
 
       <form
         noValidate
         onSubmit={onSubmit}
-        className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground md:p-6"
+        className="flex flex-col gap-4"
       >
         {roleChanged && (
           <Alert>
@@ -154,17 +153,17 @@ export default function LoginPage() {
         </Button>
 
         <div className="flex flex-col items-center gap-1 text-sm">
-          <Link to="/forgot-password" className="text-primary underline-offset-4 hover:underline">
+          <Link to="/forgot-password" className="font-semibold text-primary underline-offset-4 hover:underline">
             Quên mật khẩu?
           </Link>
           <p className="text-muted-foreground">
             Chưa có tài khoản?{' '}
-            <Link to={registerPath} className="text-primary underline-offset-4 hover:underline">
+            <Link to={registerPath} className="font-semibold text-primary underline-offset-4 hover:underline">
               Đăng ký
             </Link>
           </p>
         </div>
       </form>
-    </section>
+    </AuthCard>
   )
 }

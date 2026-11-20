@@ -3,7 +3,7 @@ import { MailCheck } from 'lucide-react'
 import { Controller, useForm } from 'react-hook-form'
 import { Link, Navigate } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
-import PageHeader from '@/components/PageHeader'
+import AuthCard from '@/components/AuthCard'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
@@ -44,10 +44,9 @@ export default function ForgotPasswordPage() {
 
   if (submittedEmail) {
     return (
-      <section className="mx-auto flex w-full max-w-md flex-col gap-6 py-4 md:py-10">
-        <PageHeader title="Quên mật khẩu" description="Lấy lại quyền truy cập vào tài khoản của bạn." />
+      <AuthCard title="Quên mật khẩu" description="Lấy lại quyền truy cập vào tài khoản của bạn.">
 
-        <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground md:p-6">
+        <div className="flex flex-col gap-4">
           <Alert className="border-success/40 text-success">
             <MailCheck />
             <AlertTitle>Đã gửi yêu cầu</AlertTitle>
@@ -60,7 +59,7 @@ export default function ForgotPasswordPage() {
             <Link to="/login">Về trang đăng nhập</Link>
           </Button>
         </div>
-      </section>
+      </AuthCard>
     )
   }
 
@@ -70,13 +69,12 @@ export default function ForgotPasswordPage() {
   })
 
   return (
-    <section className="mx-auto flex w-full max-w-md flex-col gap-6 py-4 md:py-10">
-      <PageHeader title="Quên mật khẩu" description="Nhập email đã đăng ký để nhận hướng dẫn đặt lại mật khẩu." />
+    <AuthCard title="Quên mật khẩu" description="Nhập email đã đăng ký để nhận hướng dẫn đặt lại mật khẩu.">
 
       <form
         noValidate
         onSubmit={onSubmit}
-        className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground md:p-6"
+        className="flex flex-col gap-4"
       >
         <ApiErrorAlert error={forgotPasswordMutation.error} />
 
@@ -113,11 +111,11 @@ export default function ForgotPasswordPage() {
         </Button>
 
         <p className="text-center text-sm text-muted-foreground">
-          <Link to="/login" className="text-primary underline-offset-4 hover:underline">
+          <Link to="/login" className="font-semibold text-primary underline-offset-4 hover:underline">
             Về trang đăng nhập
           </Link>
         </p>
       </form>
-    </section>
+    </AuthCard>
   )
 }
