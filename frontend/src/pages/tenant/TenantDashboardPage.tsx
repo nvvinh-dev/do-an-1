@@ -1,34 +1,52 @@
-import tenantBedroom from '@/assets/tenant-bedroom.jpg'
-import { ChevronRight } from 'lucide-react'
-import type { ReactNode } from 'react'
+import { CalendarRange, ReceiptText, Search, Wallet, Wrench } from 'lucide-react'
 import { Link } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
+import CompactMoneyText from '@/components/CompactMoneyText'
+import EmptyIllustration from '@/components/EmptyIllustration'
 import MoneyText from '@/components/MoneyText'
 import PageHeader from '@/components/PageHeader'
+import PendingActionList, { type PendingActionItem } from '@/components/PendingActionList'
+import QuickActionList, { type QuickAction } from '@/components/QuickActionList'
+import StatCard from '@/components/StatCard'
 import StatusBadge from '@/components/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
-import EmptyIllustration from '@/components/EmptyIllustration'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useTenantDashboard } from '@/hooks/useTenantDashboard'
-import { cn } from '@/lib/utils'
 import type { TenantDashboard, TenantDashboardContract } from '@/types/dashboardTypes'
 import { formatDate } from '@/utils/formatDate'
+import { formatGreetingDate } from '@/utils/formatGreetingDate'
+
+/** Lối tắt tới các màn đã có của Người thuê (docs/frontend-screens.md mục 5, T1). */
+const QUICK_ACTIONS: QuickAction[] = [
+  { label: 'Tìm phòng', to: '/', icon: Search },
+  { label: 'Xem hóa đơn', to: '/tenant/invoices', icon: ReceiptText },
+  { label: 'Báo sự cố', to: '/tenant/maintenance-requests/new', icon: Wrench },
+]
 
 /**
- * T1 — Tổng quan của Người thuê (docs/frontend-screens.md mục 5): việc cần xử lý, hợp đồng hiện tại,
- * hóa đơn chưa thanh toán và tổng đã thanh toán. Mọi số do server tính (docs/api-design.md mục 12).
+ * T1 — Tổng quan của Người thuê (docs/frontend-screens.md mục 5; bố cục ở docs/design-system.md mục 5):
+ * lời chào, tiền chưa thanh toán và đã thanh toán, việc cần xử lý, hợp đồng hiện tại và thao tác nhanh.
+ * Mọi số do server tính (docs/api-design.md mục 12).
  */
 export default function TenantDashboardPage() {
   const dashboardQuery = useTenantDashboard()
+  const { data: user } = useCurrentUser()
+  const pendingTotal = dashboardQuery.data ? sumPendingActions(dashboardQuery.data) : null
 
   return (
     <section className="flex flex-col gap-6">
       <PageHeader
-        title="Tổng quan"
-        description="Việc cần xử lý, hợp đồng và hóa đơn của bạn."
-        image={tenantBedroom}
-        imagePosition="50% 45%"
+        greeting={formatGreetingDate()}
+        title={user ? `Chào ${user.fullName}` : 'Tổng quan'}
+        description={
+          pendingTotal === null
+            ? 'Việc cần xử lý, hợp đồng và hóa đơn của bạn.'
+            : pendingTotal === 0
+              ? 'Không có việc nào đang chờ bạn.'
+              : `Hôm nay có ${pendingTotal} việc cần bạn xử lý.`
+        }
       />
 
       {dashboardQuery.isPending ? (
@@ -48,90 +66,76 @@ export default function TenantDashboardPage() {
   )
 }
 
+function sumPendingActions({ pendingActions }: TenantDashboard): number {
+  return pendingActions.contractsToConfirm + pendingActions.settlementsToConfirm
+}
+
 function DashboardContent({ dashboard }: { dashboard: TenantDashboard }) {
   const { pendingActions, contracts, unpaidInvoices, totalPaid } = dashboard
 
+  // Bộ lọc nằm trên query của URL để danh sách mở đúng trạng thái (docs/frontend-screens.md mục 8.2).
+  const pendingItems: PendingActionItem[] = [
+    {
+      to: '/tenant/contracts?status=ChoNguoiThueXacNhan',
+      count: pendingActions.contractsToConfirm,
+      title: 'Hợp đồng chờ bạn xác nhận',
+      hint: 'Đọc kỹ điều khoản rồi xác nhận hoặc yêu cầu sửa',
+      emptyHint: 'Không có hợp đồng nào chờ bạn xác nhận',
+      verb: 'Xem',
+    },
+    {
+      to: '/tenant/invoices?type=ThanhLy&status=ChoNguoiThueXacNhan',
+      count: pendingActions.settlementsToConfirm,
+      title: 'Bảng thanh lý chờ bạn đồng ý',
+      hint: 'Kiểm tra các khoản khấu trừ trước khi đồng ý',
+      emptyHint: 'Không có bảng thanh lý nào chờ bạn',
+      verb: 'Xem',
+    },
+  ]
+
   return (
     <>
-      <DashboardSection title="Việc cần xử lý">
-        {/* Bộ lọc nằm trên query của URL để danh sách mở đúng trạng thái (docs/frontend-screens.md mục 8.2). */}
-        <ul className="grid gap-3 sm:grid-cols-2">
-          <PendingActionLink
-            to="/tenant/contracts?status=ChoNguoiThueXacNhan"
-            label="Hợp đồng chờ bạn xác nhận"
-            count={pendingActions.contractsToConfirm}
-          />
-          <PendingActionLink
-            to="/tenant/invoices?type=ThanhLy&status=ChoNguoiThueXacNhan"
-            label="Bảng thanh lý chờ bạn đồng ý"
-            count={pendingActions.settlementsToConfirm}
-          />
-        </ul>
-      </DashboardSection>
-
-      <DashboardSection title="Hợp đồng hiện tại" description="Không gồm hợp đồng đã thanh lý hoặc đã hủy.">
-        {contracts.length === 0 ? <NoContractsEmpty /> : <ContractList contracts={contracts} />}
-      </DashboardSection>
-
-      <DashboardSection title="Hóa đơn">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <Link
+      <ul className="grid grid-cols-2 gap-3" aria-label="Chỉ số chính">
+        <li>
+          <StatCard
+            label="Chưa thanh toán"
+            icon={ReceiptText}
+            tint="highlight"
+            value={<CompactMoneyText amount={unpaidInvoices.amount} />}
+            footnote={
+              unpaidInvoices.count === 0
+                ? 'Không có hóa đơn nào còn phải trả'
+                : `${unpaidInvoices.count} hóa đơn còn phải trả`
+            }
             to="/tenant/invoices"
-            className="flex items-center justify-between gap-4 rounded-xl border bg-card p-4 shadow-sm transition-colors hover:bg-muted/50 md:p-6"
-          >
-            <div className="flex min-w-0 flex-col gap-1">
-              <span className="text-sm text-muted-foreground">Chưa thanh toán</span>
-              <MoneyText amount={unpaidInvoices.amount} className="text-2xl font-semibold" />
-              <span className="text-sm text-muted-foreground tabular-nums">
-                {unpaidInvoices.count === 0
-                  ? 'Không có hóa đơn nào còn phải trả'
-                  : `${unpaidInvoices.count} hóa đơn còn phải trả`}
-              </span>
+          />
+        </li>
+        <li>
+          <StatCard
+            label="Đã thanh toán"
+            icon={Wallet}
+            tint="emerald"
+            value={<CompactMoneyText amount={totalPaid} />}
+            footnote="Chủ trọ đã xác nhận thu, không gồm tiền cọc"
+          />
+        </li>
+      </ul>
+
+      {/* Từ `xl` hai cột: cột chính là việc cần xử lý và hợp đồng, cột phụ là thao tác nhanh. */}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem] xl:items-start">
+        <div className="flex min-w-0 flex-col gap-6">
+          <PendingActionList items={pendingItems} />
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1">
+              <h2 className="text-lg font-bold">Hợp đồng hiện tại</h2>
+              <p className="text-sm text-muted-foreground">Không gồm hợp đồng đã thanh lý hoặc đã hủy.</p>
             </div>
-            <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-primary">
-              Xem hóa đơn
-              <ChevronRight className="size-4" />
-            </span>
-          </Link>
-          <div className="flex flex-col gap-1 rounded-xl border bg-card p-4 shadow-sm md:p-6">
-            <span className="text-sm text-muted-foreground">Đã thanh toán</span>
-            <MoneyText amount={totalPaid} className="text-2xl font-semibold" />
-            <span className="text-sm text-muted-foreground">Tổng Chủ trọ đã xác nhận thu, không gồm tiền cọc.</span>
+            {contracts.length === 0 ? <NoContractsEmpty /> : <ContractList contracts={contracts} />}
           </div>
         </div>
-      </DashboardSection>
-    </>
-  )
-}
-
-function DashboardSection({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-medium">{title}</h2>
-        {description && <p className="text-sm text-muted-foreground">{description}</p>}
+        <QuickActionList actions={QUICK_ACTIONS} />
       </div>
-      {children}
-    </div>
-  )
-}
-
-function PendingActionLink({ to, label, count }: { to: string; label: string; count: number }) {
-  return (
-    <li>
-      <Link
-        to={to}
-        className="flex h-full items-center justify-between gap-3 rounded-xl border bg-card p-4 shadow-sm transition-colors hover:bg-muted/50"
-      >
-        <div className="flex min-w-0 flex-col gap-1">
-          <span className={cn('text-2xl font-semibold tabular-nums', count === 0 && 'text-muted-foreground')}>
-            {count}
-          </span>
-          <span className="text-sm text-muted-foreground">{label}</span>
-        </div>
-        <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
-      </Link>
-    </li>
+    </>
   )
 }
 
@@ -143,17 +147,19 @@ function ContractList({ contracts }: { contracts: TenantDashboardContract[] }) {
         <li key={contract.id}>
           <Link
             to={`/tenant/contracts/${contract.id}`}
-            className="flex h-full flex-col gap-2 rounded-xl border bg-card p-4 text-card-foreground shadow-sm transition-colors outline-none hover:bg-muted/50 focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="flex h-full flex-col gap-2 rounded-xl border bg-card p-4 text-card-foreground shadow-sm outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="font-medium wrap-anywhere">Phòng {contract.roomCode}</span>
+              <span className="font-semibold wrap-anywhere">Phòng {contract.roomCode}</span>
               <StatusBadge kind="contract" status={contract.status} />
             </div>
             <p className="text-sm text-muted-foreground wrap-anywhere">{contract.propertyName}</p>
-            <p className="text-sm">
-              <MoneyText amount={contract.rentPrice} /> / tháng
+            <p className="font-bold text-primary">
+              <MoneyText amount={contract.rentPrice} />{' '}
+              <span className="text-sm font-normal text-muted-foreground">/ tháng</span>
             </p>
-            <p className="text-sm text-muted-foreground tabular-nums">
+            <p className="flex items-center gap-1.5 text-sm text-muted-foreground tabular-nums">
+              <CalendarRange aria-hidden="true" className="size-4" strokeWidth={1.75} />
               {formatDate(contract.startDate)} – {formatDate(contract.endDate)}
             </p>
           </Link>
@@ -165,7 +171,7 @@ function ContractList({ contracts }: { contracts: TenantDashboardContract[] }) {
 
 function NoContractsEmpty() {
   return (
-    <Empty className="border">
+    <Empty className="border bg-card">
       <EmptyHeader>
         <EmptyIllustration kind="document" />
         <EmptyTitle>Bạn chưa có hợp đồng nào đang mở</EmptyTitle>
@@ -173,7 +179,10 @@ function NoContractsEmpty() {
       </EmptyHeader>
       <EmptyContent>
         <Button asChild>
-          <Link to="/">Tìm phòng</Link>
+          <Link to="/">
+            <Search />
+            Tìm phòng
+          </Link>
         </Button>
       </EmptyContent>
     </Empty>
@@ -183,20 +192,20 @@ function NoContractsEmpty() {
 function DashboardSkeleton() {
   return (
     <div className="flex flex-col gap-6" aria-busy="true" aria-label="Đang tải tổng quan">
-      <div className="grid gap-3 sm:grid-cols-2">
-        {Array.from({ length: 2 }, (_, index) => (
-          <Skeleton key={index} className="h-22 rounded-xl" />
-        ))}
-      </div>
-      <div className="grid gap-3 md:grid-cols-2">
+      <div className="grid grid-cols-2 gap-3">
         {Array.from({ length: 2 }, (_, index) => (
           <Skeleton key={index} className="h-32 rounded-xl" />
         ))}
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {Array.from({ length: 2 }, (_, index) => (
-          <Skeleton key={index} className="h-28 rounded-xl" />
-        ))}
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="flex flex-col gap-6">
+          <Skeleton className="h-44 rounded-xl" />
+          <div className="grid gap-3 md:grid-cols-2">
+            <Skeleton className="h-36 rounded-xl" />
+            <Skeleton className="h-36 rounded-xl" />
+          </div>
+        </div>
+        <Skeleton className="h-48 rounded-xl" />
       </div>
     </div>
   )
