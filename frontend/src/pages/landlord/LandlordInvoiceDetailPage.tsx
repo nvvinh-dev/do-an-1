@@ -376,7 +376,7 @@ function ConfirmPaymentBody({ invoice, report, isPending, error, onSubmit }: Con
     >
       <PaymentAmountField
         id={id}
-        label="Số tiền thực thu (₫)"
+        label="Số tiền thực thu"
         value={amount}
         onChange={setAmount}
         description={

@@ -373,15 +373,16 @@ cd backend
 dotnet test
 ```
 
-Frontend: `npm test` chạy unit test bằng Vitest cho các hàm trong `utils/`; kiểm thử đầu-cuối bằng Playwright, sau khi dựng:
+Frontend: `npm test` chạy unit test bằng Vitest cho các hàm trong `utils/`; `npx playwright test` chạy kiểm thử đầu-cuối bằng Playwright. Lần đầu trên một máy phải tải trình duyệt cho Playwright:
 
 ```bash
 cd frontend
 npm test
+npx playwright install chromium   # chỉ lần đầu
 npx playwright test
 ```
 
-Kiểm thử đầu-cuối cần backend và frontend đang chạy, cùng biến môi trường chứa mật khẩu các tài khoản mẫu (`docs/testing-strategy.md` mục 4.3).
+Kiểm thử đầu-cuối cần backend và frontend đang chạy, cùng biến môi trường chứa mật khẩu các tài khoản mẫu (`E2E_LANDLORD_PASSWORD`, `E2E_TENANT_PASSWORD`, `E2E_ADMIN_PASSWORD`). Dữ liệu mẫu tạo một lần bằng `frontend/e2e/seed.sql`, chạy trong Supabase SQL Editor (`docs/testing-strategy.md` mục 4.3).
 
 ---
 

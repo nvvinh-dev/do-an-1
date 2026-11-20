@@ -14,6 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import UnitInput from '@/components/UnitInput'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { useMaintenanceRequest } from '@/hooks/useMaintenanceRequest'
@@ -610,8 +611,9 @@ function RejectBody({ isPending, error, onSubmit }: RejectBodyProps) {
       </Field>
 
       <Field data-invalid={showErrors && compensationError !== null}>
-        <FieldLabel htmlFor={compensationId}>Bồi thường dự kiến (đồng)</FieldLabel>
-        <Input
+        <FieldLabel htmlFor={compensationId}>Bồi thường dự kiến</FieldLabel>
+        <UnitInput
+          unit="đ"
           id={compensationId}
           value={compensationDisplay}
           inputMode="numeric"

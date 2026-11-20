@@ -7,7 +7,7 @@ interface DetailHeaderProps {
   status?: ReactNode
   /** Một dòng thông tin chính: khu trọ, người thuê, kỳ, hạn. */
   subtitle?: ReactNode
-  /** Nút hành động phụ của trang (rút, hủy); nút chính nằm trong `ActionPanel`. Rộng hết hàng dưới `md`. */
+  /** Nút hành động phụ của trang (rút, hủy); nút chính nằm trong `ActionPanel`. Dùng cỡ gọn, không rộng hết hàng trên điện thoại (design-system mục 5). */
   action?: ReactNode
 }
 
@@ -19,7 +19,7 @@ interface DetailHeaderProps {
 export default function DetailHeader({ title, status, subtitle, action }: DetailHeaderProps) {
   return (
     <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-      <div className="flex min-w-0 flex-col gap-2">
+      <div className="flex min-w-0 flex-col gap-2 md:min-w-48 md:flex-1">
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           {/* `wrap-anywhere`: mã phòng tới 50 ký tự, tên khu trọ dài, không để tràn ngang ở 360px. */}
           <h1 className="text-2xl font-bold tracking-tight wrap-anywhere">{title}</h1>
@@ -27,7 +27,7 @@ export default function DetailHeader({ title, status, subtitle, action }: Detail
         </div>
         {subtitle && <p className="text-sm text-muted-foreground wrap-anywhere">{subtitle}</p>}
       </div>
-      {action && <div className="md:shrink-0">{action}</div>}
+      {action && <div className="md:max-w-[60%]">{action}</div>}
     </header>
   )
 }
