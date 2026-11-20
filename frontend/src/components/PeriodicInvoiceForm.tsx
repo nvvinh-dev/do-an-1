@@ -7,7 +7,6 @@ import ImageUploader from '@/components/ImageUploader'
 import MoneyText from '@/components/MoneyText'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field'
-import { Input } from '@/components/ui/input'
 import UnitInput from '@/components/UnitInput'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Spinner } from '@/components/ui/spinner'
@@ -306,10 +305,11 @@ function AdjustmentLineFields({ id, index, control, relatedInvoices, disabled, o
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel htmlFor={`adjustment-amount-${id}`}>
-                Số tiền (₫) <span aria-hidden="true">*</span>
+                Số tiền <span aria-hidden="true">*</span>
               </FieldLabel>
-              <Input
+              <UnitInput
                 {...field}
+                unit="đ"
                 id={`adjustment-amount-${id}`}
                 className="tabular-nums"
                 disabled={disabled}

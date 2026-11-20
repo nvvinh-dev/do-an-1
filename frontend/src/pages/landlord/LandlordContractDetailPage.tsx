@@ -29,6 +29,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import UnitInput from '@/components/UnitInput'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
@@ -931,7 +932,8 @@ function InitialMeterBody({ contract, isPending, error, onSubmit }: DialogBodyPr
     >
       <TextField
         id={ids.time}
-        label="Chỉ số điện đầu (kWh)"
+        label="Chỉ số điện đầu"
+        unit="kWh"
         value={electricity}
         onChange={setElectricity}
         inputMode="decimal"
@@ -940,7 +942,8 @@ function InitialMeterBody({ contract, isPending, error, onSubmit }: DialogBodyPr
       />
       <TextField
         id={ids.method}
-        label="Chỉ số nước đầu (m³)"
+        label="Chỉ số nước đầu"
+        unit="m³"
         value={water}
         onChange={setWater}
         inputMode="decimal"
@@ -1042,7 +1045,8 @@ function RefundBody({ contract, isPending, error, onSubmit }: DialogBodyProps<Re
         <>
           <TextField
             id={ids.amount}
-            label="Số tiền đã hoàn (₫)"
+            label="Số tiền đã hoàn"
+            unit="đ"
             value={amount}
             onChange={setAmount}
             inputMode="numeric"
@@ -1157,14 +1161,16 @@ function TextField({
   error,
   disabled,
   inputMode,
-}: InputFieldProps<string> & { inputMode: 'decimal' | 'numeric' }) {
+  unit,
+}: InputFieldProps<string> & { inputMode: 'decimal' | 'numeric'; unit: string }) {
   return (
     <Field data-invalid={error !== null}>
       <FieldLabel htmlFor={id}>
         {label} <span aria-hidden="true">*</span>
       </FieldLabel>
-      <Input
+      <UnitInput
         id={id}
+        unit={unit}
         value={value}
         inputMode={inputMode}
         className="tabular-nums"
