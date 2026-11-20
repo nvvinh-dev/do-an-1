@@ -140,17 +140,16 @@ public class RoommateProfileService
             return ServiceResult.Fail(StatusCodes.Status404NotFound, NoProfileMessage);
         }
 
-        var pendingInvitations = await _db.RoommateInvitations
-            .Where(i => (i.SenderUserId == tenantUserId || i.RecipientUserId == tenantUserId)
-                        && i.Status == RoommateInvitationStatus.ChoPhanHoi)
-            .ToListAsync(cancellationToken);
-
+        // Cập nhật có điều kiện trạng thái ngay trong câu UPDATE: roommate_invitations không có row version, nên
+        // nạp vào bộ nhớ rồi lưu sẽ ghi đè lời mời bên kia vừa chấp nhận cùng lúc (FR-117 giữ kết nối).
         var now = DateTimeOffset.UtcNow;
 
-        foreach (var invitation in pendingInvitations)
-        {
-            invitation.Withdraw(now);
-        }
+        await _db.RoommateInvitations
+            .Where(i => (i.SenderUserId == tenantUserId || i.RecipientUserId == tenantUserId)
+                        && i.Status == RoommateInvitationStatus.ChoPhanHoi)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(i => i.Status, RoommateInvitationStatus.DaRut)
+                .SetProperty(i => i.RespondedAt, now), cancellationToken);
 
         _db.RoommateProfiles.Remove(profile);
 
