@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MailCheck } from 'lucide-react'
+import { KeyRound, MailCheck } from 'lucide-react'
 import { Controller, useForm } from 'react-hook-form'
 import { Link, Navigate } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
@@ -44,7 +44,7 @@ export default function ForgotPasswordPage() {
 
   if (submittedEmail) {
     return (
-      <AuthCard title="Quên mật khẩu" description="Lấy lại quyền truy cập vào tài khoản của bạn.">
+      <AuthCard icon={KeyRound} title="Quên mật khẩu" description="Lấy lại quyền truy cập vào tài khoản của bạn.">
 
         <div className="flex flex-col gap-4">
           <Alert className="border-success/40 text-success">
@@ -69,7 +69,7 @@ export default function ForgotPasswordPage() {
   })
 
   return (
-    <AuthCard title="Quên mật khẩu" description="Nhập email đã đăng ký để nhận hướng dẫn đặt lại mật khẩu.">
+    <AuthCard icon={KeyRound} title="Quên mật khẩu" description="Nhập email đã đăng ký để nhận hướng dẫn đặt lại mật khẩu.">
 
       <form
         noValidate

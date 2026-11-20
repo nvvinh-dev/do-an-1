@@ -1,3 +1,4 @@
+import { UserPlus } from 'lucide-react'
 import { Controller, useForm } from 'react-hook-form'
 import { Link, Navigate, useNavigate, useSearchParams } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
@@ -70,7 +71,7 @@ export default function RegisterPage() {
   })
 
   return (
-    <AuthCard title="Đăng ký" description="Đăng ký để quản lý phòng trọ, hợp đồng và hóa đơn.">
+    <AuthCard icon={UserPlus} title="Đăng ký" description="Đăng ký để quản lý phòng trọ, hợp đồng và hóa đơn.">
 
       <form
         noValidate
