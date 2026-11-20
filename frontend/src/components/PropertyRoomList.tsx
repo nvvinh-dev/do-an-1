@@ -1,7 +1,8 @@
-import { DoorOpen, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import MoneyText from '@/components/MoneyText'
+import PropertyCoverImage from '@/components/PropertyCoverImage'
 import StatusBadge from '@/components/StatusBadge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -167,16 +168,13 @@ function RoomStatuses({ room }: { room: RoomListItem }) {
 }
 
 function RoomCover({ room }: { room: RoomListItem }) {
-  return room.coverImageUrl ? (
-    <img
+  return (
+    <PropertyCoverImage
       src={room.coverImageUrl}
       alt={`Ảnh đại diện phòng ${room.code}`}
-      className="size-14 shrink-0 rounded-lg object-cover"
-      loading="lazy"
+      aspect="square"
+      missingText={`Phòng ${room.code} chưa có ảnh`}
+      className="size-14 shrink-0 rounded-lg"
     />
-  ) : (
-    <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-      <DoorOpen className="size-5" aria-hidden="true" />
-    </div>
   )
 }

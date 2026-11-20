@@ -13,38 +13,21 @@ const COUNT_FIELDS = [
 
 interface RoomCountsSummaryProps {
   counts: RoomCounts
-  /** `inline`: một dòng chữ cho danh sách; `tiles`: các ô số cho trang chi tiết. */
-  variant?: 'inline' | 'tiles'
   className?: string
 }
 
-/** Số phòng của khu trọ theo trạng thái khai thác; không tính phòng đã lưu trữ (docs/api-design.md mục 5.1). */
-export default function RoomCountsSummary({ counts, variant = 'inline', className }: RoomCountsSummaryProps) {
-  if (variant === 'tiles') {
-    return (
-      <dl className={cn('grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5', className)}>
-        <CountTile label="Tổng số phòng" value={counts.total} />
-        {COUNT_FIELDS.map(({ key, status }) => (
-          <CountTile key={key} label={getStatusDisplay('roomOccupancy', status).label} value={counts[key]} />
-        ))}
-      </dl>
-    )
-  }
-
-  if (counts.total === 0) {
-    return <p className={cn('text-sm text-muted-foreground', className)}>Chưa có phòng</p>
-  }
-
-  // Chỉ kể các trạng thái đang có phòng để dòng chữ ngắn, vừa màn 360px.
-  const parts = COUNT_FIELDS.filter(({ key }) => counts[key] > 0).map(
-    ({ key, status }) => `${getStatusDisplay('roomOccupancy', status).label} ${counts[key]}`,
-  )
-
+/**
+ * Các ô số phòng của khu trọ theo trạng thái khai thác ở trang chi tiết khu trọ; không tính phòng đã lưu
+ * trữ (docs/api-design.md mục 5.1). Danh sách khu trọ dùng `PropertyCard` với thanh tỷ lệ thay cho dòng chữ.
+ */
+export default function RoomCountsSummary({ counts, className }: RoomCountsSummaryProps) {
   return (
-    <div className={cn('flex flex-col gap-0.5 text-sm', className)}>
-      <p className="font-medium tabular-nums">{counts.total} phòng</p>
-      <p className="text-muted-foreground tabular-nums">{parts.join(' · ')}</p>
-    </div>
+    <dl className={cn('grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5', className)}>
+      <CountTile label="Tổng số phòng" value={counts.total} />
+      {COUNT_FIELDS.map(({ key, status }) => (
+        <CountTile key={key} label={getStatusDisplay('roomOccupancy', status).label} value={counts[key]} />
+      ))}
+    </dl>
   )
 }
 
