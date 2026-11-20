@@ -1,11 +1,15 @@
-import { ChevronLeft, CircleCheck, CircleX, FilePlus, FileText, Phone, TimerOff, Undo2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { CircleCheck, CircleX, FilePlus, FileText, Phone, TimerOff, Undo2 } from 'lucide-react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { toast } from 'sonner'
+import ActionPanel from '@/components/ActionPanel'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
+import BackLink from '@/components/BackLink'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import CountdownText from '@/components/CountdownText'
-import PageHeader from '@/components/PageHeader'
+import DetailHeader from '@/components/DetailHeader'
+import DetailLayout from '@/components/DetailLayout'
+import { Fact, FactList } from '@/components/FactList'
 import StatusBadge from '@/components/StatusBadge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -45,12 +49,7 @@ export default function LandlordRentalRequestDetailPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <Button asChild variant="ghost" size="sm" className="-ml-3 self-start">
-        <Link to={{ pathname: '/landlord/rental-requests', search: listSearch }}>
-          <ChevronLeft />
-          Yêu cầu thuê
-        </Link>
-      </Button>
+      <BackLink to={{ pathname: '/landlord/rental-requests', search: listSearch }}>Yêu cầu thuê</BackLink>
 
       {rentalRequestQuery.isPending ? (
         <RentalRequestDetailSkeleton />
@@ -92,35 +91,37 @@ function RentalRequestDetailContent({ rentalRequest }: { rentalRequest: RentalRe
   const isPending = rentalRequest.status === 'ChoDuyet' && !isOverdue
   const isHolding = rentalRequest.status === 'DaDuyet' && !isOverdue
 
+  // Nút theo trạng thái như trước: chờ duyệt có Duyệt và Từ chối; đã duyệt có Lập hợp đồng và Hủy duyệt.
+  const actions =
+    isPending || isHolding ? (
+      <>
+        {isPending && (
+          <Button type="button" size="page" onClick={() => setOpenDialog('approve')}>
+            <CircleCheck />
+            Duyệt
+          </Button>
+        )}
+        {isHolding && (
+          <Button asChild size="page">
+            <Link to={`/landlord/contracts/new?rentalRequestId=${rentalRequest.id}`}>
+              <FilePlus />
+              Lập hợp đồng
+            </Link>
+          </Button>
+        )}
+        <Button type="button" variant="destructive" size="page" onClick={() => setOpenDialog('reject')}>
+          {isHolding ? <Undo2 /> : <CircleX />}
+          {isHolding ? 'Hủy duyệt' : 'Từ chối'}
+        </Button>
+      </>
+    ) : null
+
   return (
     <>
-      <PageHeader
+      <DetailHeader
         title={`Yêu cầu thuê phòng ${rentalRequest.room.code}`}
-        description={`${rentalRequest.room.propertyName} · Người thuê: ${rentalRequest.tenantName}`}
-        action={
-          (isPending || isHolding) && (
-            <div className="flex flex-col gap-2 md:flex-row">
-              {isPending && (
-                <Button type="button" size="page" onClick={() => setOpenDialog('approve')}>
-                  <CircleCheck />
-                  Duyệt
-                </Button>
-              )}
-              {isHolding && (
-                <Button asChild size="page">
-                  <Link to={`/landlord/contracts/new?rentalRequestId=${rentalRequest.id}`}>
-                    <FilePlus />
-                    Lập hợp đồng
-                  </Link>
-                </Button>
-              )}
-              <Button type="button" variant="destructive" size="page" onClick={() => setOpenDialog('reject')}>
-                {isHolding ? <Undo2 /> : <CircleX />}
-                {isHolding ? 'Hủy duyệt' : 'Từ chối'}
-              </Button>
-            </div>
-          )
-        }
+        status={<StatusBadge kind="rentalRequest" status={rentalRequest.status} />}
+        subtitle={`${rentalRequest.room.propertyName} · Người thuê: ${rentalRequest.tenantName}`}
       />
 
       {/* Hộp thoại nằm ngoài nút mở nó: gặp `409` thì trang tải lại sang trạng thái mới, nút có thể biến mất
@@ -136,46 +137,38 @@ function RentalRequestDetailContent({ rentalRequest }: { rentalRequest: RentalRe
         onOpenChange={(open) => setOpenDialog(open ? 'reject' : null)}
       />
 
-      <RentalRequestStatusNotice rentalRequest={rentalRequest} isOverdue={isOverdue} />
+      <DetailLayout
+        aside={
+          <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-5">
+            <h2 className="text-lg font-bold">Người thuê và phòng</h2>
+            <FactList stacked>
+              <Fact label="Người thuê">{rentalRequest.tenantName}</Fact>
+              <Fact label="Phòng">
+                Phòng {rentalRequest.room.code} · {rentalRequest.room.propertyName}
+              </Fact>
+              <Fact label="Ngày dự kiến vào ở">{formatDate(rentalRequest.expectedMoveInDate)}</Fact>
+              <Fact label="Số người ở">
+                <span className="tabular-nums">{rentalRequest.expectedOccupants} người</span>
+              </Fact>
+            </FactList>
+          </div>
+        }
+      >
+        <RentalRequestStatusNotice rentalRequest={rentalRequest} isOverdue={isOverdue} actions={actions} />
 
-      <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-        <h2 className="text-lg font-bold">Thông tin yêu cầu</h2>
-        <dl className="grid gap-4 text-sm md:grid-cols-[12rem_1fr]">
-          <dt className="text-muted-foreground">Trạng thái</dt>
-          <dd>
-            <StatusBadge kind="rentalRequest" status={rentalRequest.status} />
-          </dd>
-
-          <dt className="text-muted-foreground">Phòng</dt>
-          <dd className="wrap-anywhere">
-            Phòng {rentalRequest.room.code} · {rentalRequest.room.propertyName}
-          </dd>
-
-          <dt className="text-muted-foreground">Người thuê</dt>
-          <dd className="wrap-anywhere">{rentalRequest.tenantName}</dd>
-
-          <dt className="text-muted-foreground">Ngày dự kiến vào ở</dt>
-          <dd>{formatDate(rentalRequest.expectedMoveInDate)}</dd>
-
-          <dt className="text-muted-foreground">Số người ở</dt>
-          <dd className="tabular-nums">{rentalRequest.expectedOccupants} người</dd>
-
-          <dt className="text-muted-foreground">Ghi chú của người thuê</dt>
-          <dd className="whitespace-pre-line wrap-anywhere">
-            {rentalRequest.note ?? <span className="text-muted-foreground">Không có ghi chú</span>}
-          </dd>
-
-          <dt className="text-muted-foreground">Ngày gửi</dt>
-          <dd>{formatDate(rentalRequest.submittedAt)}</dd>
-
-          {rentalRequest.processedAt && (
-            <>
-              <dt className="text-muted-foreground">Ngày xử lý</dt>
-              <dd>{formatDate(rentalRequest.processedAt)}</dd>
-            </>
-          )}
-        </dl>
-      </div>
+        <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
+          <h2 className="text-lg font-bold">Thông tin yêu cầu</h2>
+          <FactList>
+            <Fact label="Ghi chú của người thuê">
+              <span className="font-normal whitespace-pre-line">
+                {rentalRequest.note ?? <span className="text-muted-foreground">Không có ghi chú</span>}
+              </span>
+            </Fact>
+            <Fact label="Ngày gửi">{formatDate(rentalRequest.submittedAt)}</Fact>
+            {rentalRequest.processedAt && <Fact label="Ngày xử lý">{formatDate(rentalRequest.processedAt)}</Fact>}
+          </FactList>
+        </div>
+      </DetailLayout>
     </>
   )
 }
@@ -184,10 +177,12 @@ interface RentalRequestStatusNoticeProps {
   rentalRequest: RentalRequestDetail
   /** Đã qua `expiresAt` hoặc `holdExpiresAt` (`isRentalRequestOverdue`). */
   isOverdue: boolean
+  /** Nút hành động theo trạng thái, đặt trong khối "Cần bạn làm gì" khi yêu cầu còn chờ Chủ trọ. */
+  actions: ReactNode
 }
 
 /** Khối đầu trang nói rõ yêu cầu đang ở đâu và Chủ trọ cần làm gì tiếp, theo bảng L5. */
-function RentalRequestStatusNotice({ rentalRequest, isOverdue }: RentalRequestStatusNoticeProps) {
+function RentalRequestStatusNotice({ rentalRequest, isOverdue, actions }: RentalRequestStatusNoticeProps) {
   if (isOverdue) {
     return (
       <Alert variant="destructive">
@@ -214,44 +209,38 @@ function RentalRequestStatusNotice({ rentalRequest, isOverdue }: RentalRequestSt
   switch (rentalRequest.status) {
     case 'ChoDuyet':
       return (
-        <Alert className="border-warning/40">
-          <AlertTitle>Yêu cầu đang chờ bạn duyệt</AlertTitle>
-          <AlertDescription>
-            {rentalRequest.expiresAt && (
-              <p>
-                Hạn duyệt: <CountdownText expiresAt={rentalRequest.expiresAt} className="font-medium" />. Quá hạn thì
-                yêu cầu tự hết hạn.
-              </p>
-            )}
-            <p>Duyệt thì phòng được giữ cho người thuê 72 giờ và các yêu cầu đang chờ khác của phòng bị từ chối.</p>
-          </AlertDescription>
-        </Alert>
+        <ActionPanel title="Yêu cầu đang chờ bạn duyệt" actions={actions}>
+          {rentalRequest.expiresAt && (
+            <p>
+              Hạn duyệt: <CountdownText expiresAt={rentalRequest.expiresAt} className="font-medium" />. Quá hạn thì
+              yêu cầu tự hết hạn.
+            </p>
+          )}
+          <p>Duyệt thì phòng được giữ cho người thuê 72 giờ và các yêu cầu đang chờ khác của phòng bị từ chối.</p>
+        </ActionPanel>
       )
 
     case 'DaDuyet':
       return (
-        <Alert className="border-success/40">
-          <AlertTitle>Đã duyệt, phòng đang được giữ cho người thuê</AlertTitle>
-          <AlertDescription className="flex flex-col items-start gap-2">
-            {rentalRequest.holdExpiresAt && (
-              <p>
-                Giữ chỗ: <CountdownText expiresAt={rentalRequest.holdExpiresAt} className="font-medium" />. Lập hợp
-                đồng và nhận cọc trong hạn này; quá hạn mà hợp đồng chưa có hiệu lực thì phòng trở lại Trống.
-              </p>
-            )}
-            {rentalRequest.otherPartyPhoneNumber && (
-              <>
-                <p>Liên hệ người thuê để thống nhất hợp đồng:</p>
-                <Button asChild variant="outline">
-                  <a href={`tel:${rentalRequest.otherPartyPhoneNumber}`}>
-                    <Phone />
-                    {rentalRequest.otherPartyPhoneNumber}
-                  </a>
-                </Button>
-              </>
-            )}
-          </AlertDescription>
-        </Alert>
+        <ActionPanel title="Đã duyệt, phòng đang được giữ cho người thuê" actions={actions}>
+          {rentalRequest.holdExpiresAt && (
+            <p>
+              Giữ chỗ: <CountdownText expiresAt={rentalRequest.holdExpiresAt} className="font-medium" />. Lập hợp đồng
+              và nhận cọc trong hạn này; quá hạn mà hợp đồng chưa có hiệu lực thì phòng trở lại Trống.
+            </p>
+          )}
+          {rentalRequest.otherPartyPhoneNumber && (
+            <>
+              <p>Liên hệ người thuê để thống nhất hợp đồng:</p>
+              <Button asChild variant="outline">
+                <a href={`tel:${rentalRequest.otherPartyPhoneNumber}`}>
+                  <Phone />
+                  {rentalRequest.otherPartyPhoneNumber}
+                </a>
+              </Button>
+            </>
+          )}
+        </ActionPanel>
       )
 
     case 'DaLapHopDong':
