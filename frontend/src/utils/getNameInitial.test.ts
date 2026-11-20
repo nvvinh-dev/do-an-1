@@ -20,6 +20,15 @@ describe('getNameInitial', () => {
     expect(getNameInitial('An')).toBe('A')
   })
 
+  it('từ cuối là số hoặc ký hiệu thì lùi về từ trước', () => {
+    expect(getNameInitial('Chủ trọ Dev 1')).toBe('D')
+    expect(getNameInitial('Lan (2)')).toBe('L')
+  })
+
+  it('không có chữ cái nào thì trả dấu hỏi', () => {
+    expect(getNameInitial('123')).toBe('?')
+  })
+
   it('tên rỗng thì trả dấu hỏi', () => {
     expect(getNameInitial('')).toBe('?')
     expect(getNameInitial('   ')).toBe('?')
