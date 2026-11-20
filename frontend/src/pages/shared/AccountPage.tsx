@@ -12,8 +12,10 @@ import { Spinner } from '@/components/ui/spinner'
 import { useChangePassword } from '@/hooks/useChangePassword'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useUpdateProfile } from '@/hooks/useUpdateProfile'
-import type { UpdateProfileRequest } from '@/types/authTypes'
+import type { UpdateProfileRequest, UserRole } from '@/types/authTypes'
+import { getNameInitial } from '@/utils/getNameInitial'
 import { PHONE_PATTERN } from '@/utils/phonePattern'
+import { getUserRoleLabel } from '@/utils/userRoleLabels'
 import { validatePassword } from '@/utils/validatePassword'
 
 interface ChangePasswordFormValues {
@@ -34,9 +36,35 @@ export default function AccountPage() {
   return (
     <section className="mx-auto flex w-full max-w-md flex-col gap-6 py-4 md:py-10">
       <PageHeader title="Tài khoản" description="Xem và cập nhật thông tin cá nhân, đổi mật khẩu." />
+      {user && <AccountSummary fullName={user.fullName} email={user.email} role={user.roles[0]} />}
       {user && <ProfileForm email={user.email} fullName={user.fullName} phoneNumber={user.phoneNumber} />}
       <ChangePasswordForm />
     </section>
+  )
+}
+
+interface AccountSummaryProps {
+  fullName: string
+  email: string
+  role: UserRole | undefined
+}
+
+/** Ô chữ cái đầu của tên, tên, email và vai trò (docs/frontend-screens.md mục 4, S1). */
+function AccountSummary({ fullName, email, role }: AccountSummaryProps) {
+  return (
+    <div className="flex items-center gap-4">
+      <span
+        aria-hidden="true"
+        className="grid size-14 shrink-0 place-items-center rounded-2xl bg-primary-soft text-2xl font-bold text-primary-soft-foreground"
+      >
+        {getNameInitial(fullName)}
+      </span>
+      <div className="flex min-w-0 flex-col">
+        <p className="text-lg font-bold wrap-anywhere">{fullName}</p>
+        <p className="text-sm text-muted-foreground wrap-anywhere">{email}</p>
+        {role && <p className="text-sm font-semibold text-primary">{getUserRoleLabel(role)}</p>}
+      </div>
+    </div>
   )
 }
 
@@ -99,7 +127,10 @@ function ProfileForm({ email, fullName, phoneNumber }: ProfileFormProps) {
       onSubmit={onSubmit}
       className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground md:p-6"
     >
-      <h2 className="text-lg font-bold">Thông tin cá nhân</h2>
+      <div className="flex flex-col gap-1">
+        <h2 className="text-lg font-bold">Thông tin cá nhân</h2>
+        <p className="text-sm text-muted-foreground">Cập nhật họ tên và số điện thoại của bạn.</p>
+      </div>
 
       {saved && !isDirty && (
         <Alert className="border-success/40 text-success">
@@ -222,7 +253,10 @@ function ChangePasswordForm() {
       onSubmit={onSubmit}
       className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground md:p-6"
     >
-      <h2 className="text-lg font-bold">Đổi mật khẩu</h2>
+      <div className="flex flex-col gap-1">
+        <h2 className="text-lg font-bold">Đổi mật khẩu</h2>
+        <p className="text-sm text-muted-foreground">Dùng mật khẩu hiện tại để đặt mật khẩu mới cho tài khoản.</p>
+      </div>
 
       {saved && !isDirty && (
         <Alert className="border-success/40 text-success">
