@@ -1,15 +1,21 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { ChevronLeft, CircleCheckBig, Lock, Pencil, Send, TriangleAlert } from 'lucide-react'
+import { CircleCheckBig, Lock, Pencil, Send, TriangleAlert } from 'lucide-react'
 import { useEffect, useId, useState, type ReactNode } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { toast } from 'sonner'
+import ActionPanel from '@/components/ActionPanel'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
+import BackLink from '@/components/BackLink'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import DetailCard from '@/components/DetailCard'
+import DetailHeader from '@/components/DetailHeader'
+import DetailLayout from '@/components/DetailLayout'
+import { Fact } from '@/components/FactList'
 import FormDialog, { FormDialogBody } from '@/components/FormDialog'
 import MoneyText from '@/components/MoneyText'
-import PageHeader from '@/components/PageHeader'
 import SettlementInvoiceForm from '@/components/SettlementInvoiceForm'
 import SettlementInvoiceSummary from '@/components/SettlementInvoiceSummary'
+import StatusBadge from '@/components/StatusBadge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
@@ -67,12 +73,7 @@ export default function SettlementPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <Button asChild variant="ghost" size="sm" className="-ml-3 self-start">
-        <Link to={`/landlord/contracts/${id}`}>
-          <ChevronLeft />
-          Hợp đồng
-        </Link>
-      </Button>
+      <BackLink to={`/landlord/contracts/${id}`}>Hợp đồng</BackLink>
 
       {contractQuery.isPending || (hasInvoice && invoiceQuery.isPending) ? (
         <SettlementSkeleton />
@@ -115,6 +116,7 @@ function SettlementContent({ contract, invoice }: { contract: ContractDetail; in
     onOpenChange: (open: boolean) => setOpenDialog(open ? dialog : null),
   })
 
+  // Mọi thao tác của bảng thanh lý đều là việc đang chờ Chủ trọ, nên nằm trong khối "Cần bạn làm gì".
   const buttons: ReactNode[] = []
   if (actions.canSend && !editing) {
     buttons.push(
@@ -149,12 +151,20 @@ function SettlementContent({ contract, invoice }: { contract: ContractDetail; in
     )
   }
 
+  const actionButtons = buttons.length > 0 ? <>{buttons}</> : null
+
   return (
     <>
-      <PageHeader
+      <DetailHeader
         title={`Thanh lý phòng ${contract.room.code}`}
-        description={`${contract.room.propertyName} · Người thuê: ${contract.tenant.fullName}`}
-        action={buttons.length > 0 && <div className="flex flex-col flex-wrap gap-2 md:flex-row">{buttons}</div>}
+        status={
+          invoice ? (
+            <StatusBadge kind="invoice" status={invoice.status} />
+          ) : (
+            <StatusBadge kind="contract" status={contract.status} />
+          )
+        }
+        subtitle={`${contract.room.propertyName} · Người thuê: ${contract.tenant.fullName}`}
       />
 
       {/* Hộp thoại nằm ngoài nút mở nó để không bị gỡ theo nút khi server trả `409` và trang tải lại sang trạng
@@ -180,10 +190,25 @@ function SettlementContent({ contract, invoice }: { contract: ContractDetail; in
       ) : editing ? (
         <EditSection contract={contract} invoice={invoice} onDone={() => setIsEditing(false)} />
       ) : (
-        <>
-          <SettlementStatusNotice contract={contract} invoice={invoice} actions={actions} />
+        <DetailLayout
+          aside={
+            <DetailCard title="Hợp đồng" stacked>
+              <Fact label="Người thuê">{contract.tenant.fullName}</Fact>
+              <Fact label="Phòng">
+                Phòng {contract.room.code} · {contract.room.propertyName}
+              </Fact>
+              <Fact label="Tiền cọc">
+                {contract.depositAmount > 0 ? <MoneyText amount={contract.depositAmount} /> : 'Không đặt cọc'}
+              </Fact>
+              {contract.moveOutNotice && (
+                <Fact label="Ngày trả phòng dự kiến">{formatDate(contract.moveOutNotice.expectedMoveOutDate)}</Fact>
+              )}
+            </DetailCard>
+          }
+        >
+          <SettlementStatusNotice contract={contract} invoice={invoice} actions={actions} actionButtons={actionButtons} />
           <SettlementInvoiceSummary invoice={invoice} invoicePath={(invoiceId) => `/landlord/invoices/${invoiceId}`} />
-        </>
+        </DetailLayout>
       )}
     </>
   )
@@ -327,10 +352,12 @@ interface SettlementStatusNoticeProps {
   contract: ContractDetail
   invoice: InvoiceDetail
   actions: SettlementActions
+  /** Nút thao tác theo trạng thái; có nút thì khối đầu trang là "Cần bạn làm gì", không thì là thông báo. */
+  actionButtons: ReactNode
 }
 
 /** Khối đầu trang nói rõ bảng đang ở đâu và Chủ trọ cần làm gì tiếp, theo bảng L9. */
-function SettlementStatusNotice({ contract, invoice, actions }: SettlementStatusNoticeProps) {
+function SettlementStatusNotice({ contract, invoice, actions, actionButtons }: SettlementStatusNoticeProps) {
   if (contract.status === 'DaThanhLy') {
     const refund = contract.depositRefund
     return (
@@ -359,32 +386,42 @@ function SettlementStatusNotice({ contract, invoice, actions }: SettlementStatus
 
   if (invoice.status === 'Nhap') {
     if (invoice.changeRequestReason) {
-      return <ChangeRequestAlert reason={invoice.changeRequestReason} />
+      return (
+        <ActionPanel title="Người thuê chưa đồng ý bảng thanh lý" actions={actionButtons}>
+          <p className="whitespace-pre-line wrap-anywhere">Lý do: {invoice.changeRequestReason}</p>
+          <p>Sửa bảng theo góp ý rồi gửi lại; mốc 7 ngày tự chốt tính lại từ lần gửi mới.</p>
+        </ActionPanel>
+      )
     }
     return (
-      <Alert>
-        <AlertTitle>Bảng thanh lý nháp</AlertTitle>
-        <AlertDescription>
-          <p>Người thuê chưa thấy bảng. Kiểm tra số tiền hệ thống tính, sửa nếu cần rồi bấm Gửi cho người thuê.</p>
-        </AlertDescription>
-      </Alert>
+      <ActionPanel title="Bảng thanh lý nháp" actions={actionButtons}>
+        <p>Người thuê chưa thấy bảng. Kiểm tra số tiền hệ thống tính, sửa nếu cần rồi bấm Gửi cho người thuê.</p>
+      </ActionPanel>
     )
   }
 
   if (invoice.status === 'ChoNguoiThueXacNhan') {
-    return (
+    const body = (
+      <>
+        {invoice.sentAt && <p>Gửi lúc {formatDateTime(invoice.sentAt)}.</p>}
+        <p>
+          {actions.canFinalize
+            ? 'Đã quá 7 ngày người thuê không phản hồi: bạn được tự chốt bảng, kèm ghi chú.'
+            : actions.finalizeAllowedAfter
+              ? `Người thuê đồng ý hoặc yêu cầu sửa. Không phản hồi thì sau ${formatDateTime(actions.finalizeAllowedAfter.toISOString())} bạn được tự chốt bảng.`
+              : 'Người thuê đồng ý hoặc yêu cầu sửa.'}
+        </p>
+      </>
+    )
+    // Chưa tới mốc tự chốt thì chưa có việc gì cho Chủ trọ: chỉ báo đang chờ.
+    return actionButtons ? (
+      <ActionPanel title="Đã gửi, chờ người thuê xác nhận" actions={actionButtons}>
+        {body}
+      </ActionPanel>
+    ) : (
       <Alert>
         <AlertTitle>Đã gửi, chờ người thuê xác nhận</AlertTitle>
-        <AlertDescription>
-          {invoice.sentAt && <p>Gửi lúc {formatDateTime(invoice.sentAt)}.</p>}
-          <p>
-            {actions.canFinalize
-              ? 'Đã quá 7 ngày người thuê không phản hồi: bạn được tự chốt bảng, kèm ghi chú.'
-              : actions.finalizeAllowedAfter
-                ? `Người thuê đồng ý hoặc yêu cầu sửa. Không phản hồi thì sau ${formatDateTime(actions.finalizeAllowedAfter.toISOString())} bạn được tự chốt bảng.`
-                : 'Người thuê đồng ý hoặc yêu cầu sửa.'}
-          </p>
-        </AlertDescription>
+        <AlertDescription>{body}</AlertDescription>
       </Alert>
     )
   }
@@ -396,7 +433,12 @@ function SettlementStatusNotice({ contract, invoice, actions }: SettlementStatus
     <p>Người thuê đồng ý lúc {formatDateTime(invoice.tenantConfirmedAt)}.</p>
   ) : null
 
-  return (
+  return actionButtons ? (
+    <ActionPanel title="Bảng thanh lý đã khóa" actions={actionButtons}>
+      {lockedBy}
+      <p>{lockedNextStep(invoice)}</p>
+    </ActionPanel>
+  ) : (
     <Alert className="border-success/40">
       <Lock />
       <AlertTitle>Bảng thanh lý đã khóa</AlertTitle>

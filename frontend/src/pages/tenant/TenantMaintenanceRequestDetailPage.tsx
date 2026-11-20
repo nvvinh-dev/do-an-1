@@ -1,13 +1,18 @@
-import { CircleCheck, CircleX, ChevronLeft, Hammer, RotateCcw, TimerOff, Wrench } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { Link, useLocation, useParams } from 'react-router'
+import { CircleCheck, CircleX, Hammer, RotateCcw, Wrench } from 'lucide-react'
+import { useEffect, useState, type ReactNode } from 'react'
+import { useLocation, useParams } from 'react-router'
 import { toast } from 'sonner'
+import ActionPanel from '@/components/ActionPanel'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
+import BackLink from '@/components/BackLink'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import CountdownText from '@/components/CountdownText'
+import DetailCard from '@/components/DetailCard'
+import DetailHeader from '@/components/DetailHeader'
+import DetailLayout from '@/components/DetailLayout'
+import { Fact } from '@/components/FactList'
 import MaintenanceRequestImages from '@/components/MaintenanceRequestImages'
 import MoneyText from '@/components/MoneyText'
-import PageHeader from '@/components/PageHeader'
 import StatusBadge from '@/components/StatusBadge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -58,12 +63,7 @@ export default function TenantMaintenanceRequestDetailPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <Button asChild variant="ghost" size="sm" className="-ml-3 self-start">
-        <Link to={{ pathname: '/tenant/maintenance-requests', search: listSearch }}>
-          <ChevronLeft />
-          Sự cố
-        </Link>
-      </Button>
+      <BackLink to={{ pathname: '/tenant/maintenance-requests', search: listSearch }}>Sự cố</BackLink>
 
       {maintenanceRequestQuery.isPending ? (
         <MaintenanceRequestDetailSkeleton />
@@ -104,35 +104,37 @@ function MaintenanceRequestDetailContent({ maintenanceRequest }: { maintenanceRe
     if (!open) setOpenDialog(null)
   }
 
-  const hasActions = actions.canCancel || actions.canConfirm || actions.canReportNotFixed
+  // Xác nhận và Chưa đạt là việc chính, nằm trong khối "Cần bạn làm gì"; Hủy sự cố ở đầu trang.
+  const confirmActions =
+    actions.canConfirm || actions.canReportNotFixed ? (
+      <>
+        {actions.canConfirm && (
+          <Button type="button" size="page" onClick={() => setOpenDialog('confirm')}>
+            <CircleCheck />
+            Xác nhận đã khắc phục
+          </Button>
+        )}
+        {actions.canReportNotFixed && (
+          <Button type="button" variant="outline" size="page" onClick={() => setOpenDialog('notFixed')}>
+            <RotateCcw />
+            Chưa đạt
+          </Button>
+        )}
+      </>
+    ) : null
 
   return (
     <>
-      <PageHeader
+      <DetailHeader
         title={maintenanceRequest.title}
-        description={`Sự cố #${maintenanceRequest.id} · Phòng ${maintenanceRequest.roomCode} · ${maintenanceRequest.propertyName}`}
+        status={<StatusBadge kind="maintenanceRequest" status={maintenanceRequest.status} />}
+        subtitle={`Sự cố #${maintenanceRequest.id} · Phòng ${maintenanceRequest.roomCode} · ${maintenanceRequest.propertyName} · Mức khẩn cấp: ${getMaintenanceUrgencyLabel(maintenanceRequest.urgency)}`}
         action={
-          hasActions && (
-            <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row">
-              {actions.canReportNotFixed && (
-                <Button type="button" variant="outline" size="page" onClick={() => setOpenDialog('notFixed')}>
-                  <RotateCcw />
-                  Chưa đạt
-                </Button>
-              )}
-              {actions.canConfirm && (
-                <Button type="button" size="page" onClick={() => setOpenDialog('confirm')}>
-                  <CircleCheck />
-                  Xác nhận đã khắc phục
-                </Button>
-              )}
-              {actions.canCancel && (
-                <Button type="button" variant="destructive" size="page" onClick={() => setOpenDialog('cancel')}>
-                  <CircleX />
-                  Hủy sự cố
-                </Button>
-              )}
-            </div>
+          actions.canCancel && (
+            <Button type="button" variant="destructive" onClick={() => setOpenDialog('cancel')}>
+              <CircleX />
+              Hủy sự cố
+            </Button>
           )
         }
       />
@@ -146,58 +148,41 @@ function MaintenanceRequestDetailContent({ maintenanceRequest }: { maintenanceRe
       />
       <NotFixedDialog maintenanceRequest={maintenanceRequest} open={openDialog === 'notFixed'} onOpenChange={closeDialog} />
 
-      <MaintenanceRequestStatusNotice
-        maintenanceRequest={maintenanceRequest}
-        autoCloseAt={autoCloseAt}
-        isAutoCloseOverdue={actions.isAutoCloseOverdue}
-      />
+      <DetailLayout
+        aside={
+          <DetailCard title="Thời gian xử lý" stacked>
+            <Fact label="Phòng">
+              Phòng {maintenanceRequest.roomCode} · {maintenanceRequest.propertyName}
+            </Fact>
+            <Fact label="Ngày gửi">{formatDateTime(maintenanceRequest.createdAt)}</Fact>
+            {maintenanceRequest.acceptedAt && (
+              <Fact label="Ngày tiếp nhận">{formatDateTime(maintenanceRequest.acceptedAt)}</Fact>
+            )}
+            {maintenanceRequest.expectedCompletionDate && (
+              <Fact label="Dự kiến sửa xong">{formatDate(maintenanceRequest.expectedCompletionDate)}</Fact>
+            )}
+            {maintenanceRequest.completedAt && (
+              <Fact label="Báo sửa xong">{formatDateTime(maintenanceRequest.completedAt)}</Fact>
+            )}
+          </DetailCard>
+        }
+      >
+        <MaintenanceRequestStatusNotice
+          maintenanceRequest={maintenanceRequest}
+          autoCloseAt={autoCloseAt}
+          isAutoCloseOverdue={actions.isAutoCloseOverdue}
+          confirmActions={confirmActions}
+        />
 
-      <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-        <h2 className="text-lg font-bold">Thông tin sự cố</h2>
-        <dl className="grid gap-4 text-sm md:grid-cols-[12rem_1fr]">
-          <dt className="text-muted-foreground">Trạng thái</dt>
-          <dd>
-            <StatusBadge kind="maintenanceRequest" status={maintenanceRequest.status} />
-          </dd>
+        <DetailCard title="Thông tin sự cố">
+          <Fact label="Mức khẩn cấp">{getMaintenanceUrgencyLabel(maintenanceRequest.urgency)}</Fact>
+          <Fact label="Mô tả">
+            <span className="font-normal whitespace-pre-line">{maintenanceRequest.description}</span>
+          </Fact>
+        </DetailCard>
 
-          <dt className="text-muted-foreground">Phòng</dt>
-          <dd className="wrap-anywhere">
-            Phòng {maintenanceRequest.roomCode} · {maintenanceRequest.propertyName}
-          </dd>
-
-          <dt className="text-muted-foreground">Mức khẩn cấp</dt>
-          <dd>{getMaintenanceUrgencyLabel(maintenanceRequest.urgency)}</dd>
-
-          <dt className="text-muted-foreground">Mô tả</dt>
-          <dd className="whitespace-pre-line wrap-anywhere">{maintenanceRequest.description}</dd>
-
-          <dt className="text-muted-foreground">Ngày gửi</dt>
-          <dd>{formatDateTime(maintenanceRequest.createdAt)}</dd>
-
-          {maintenanceRequest.acceptedAt && (
-            <>
-              <dt className="text-muted-foreground">Ngày tiếp nhận</dt>
-              <dd>{formatDateTime(maintenanceRequest.acceptedAt)}</dd>
-            </>
-          )}
-
-          {maintenanceRequest.expectedCompletionDate && (
-            <>
-              <dt className="text-muted-foreground">Dự kiến sửa xong</dt>
-              <dd>{formatDate(maintenanceRequest.expectedCompletionDate)}</dd>
-            </>
-          )}
-
-          {maintenanceRequest.completedAt && (
-            <>
-              <dt className="text-muted-foreground">Báo sửa xong</dt>
-              <dd>{formatDateTime(maintenanceRequest.completedAt)}</dd>
-            </>
-          )}
-        </dl>
-      </div>
-
-      <MaintenanceRequestImages images={maintenanceRequest.images} />
+        <MaintenanceRequestImages images={maintenanceRequest.images} />
+      </DetailLayout>
     </>
   )
 }
@@ -207,6 +192,8 @@ interface MaintenanceRequestStatusNoticeProps {
   /** `completedAt` + 168 giờ, chỉ có khi chờ người thuê xác nhận. */
   autoCloseAt: Date | null
   isAutoCloseOverdue: boolean
+  /** Nút xác nhận, chưa đạt, đặt trong khối "Cần bạn làm gì" khi Chủ trọ đã báo sửa xong. */
+  confirmActions: ReactNode
 }
 
 /** Khối đầu trang nói rõ sự cố đang ở đâu và người thuê cần làm gì tiếp, theo bảng T10. */
@@ -214,6 +201,7 @@ function MaintenanceRequestStatusNotice({
   maintenanceRequest,
   autoCloseAt,
   isAutoCloseOverdue,
+  confirmActions,
 }: MaintenanceRequestStatusNoticeProps) {
   switch (maintenanceRequest.status) {
     case 'Moi':
@@ -249,30 +237,26 @@ function MaintenanceRequestStatusNotice({
 
     case 'ChoNguoiThueXacNhan':
       if (isAutoCloseOverdue) {
+        // Server vẫn nhận xác nhận khi đã quá hạn nhưng chưa tới lượt tác vụ đóng (FR-143), nên nút Xác nhận vẫn hiện.
         return (
-          <Alert variant="destructive">
-            <TimerOff />
-            <AlertTitle>Đã quá 7 ngày chờ xác nhận</AlertTitle>
-            <AlertDescription>
-              <p>Sự cố sẽ tự đóng. Không báo chưa đạt được nữa; muốn báo hỏng lại thì gửi sự cố mới.</p>
-            </AlertDescription>
-          </Alert>
+          <ActionPanel title="Đã quá 7 ngày chờ xác nhận" actions={confirmActions}>
+            <p>
+              Sự cố sẽ tự đóng. Không báo chưa đạt được nữa; muốn báo hỏng lại thì gửi sự cố mới. Bạn vẫn xác nhận đã
+              khắc phục được.
+            </p>
+          </ActionPanel>
         )
       }
       return (
-        <Alert className="border-success/40">
-          <CircleCheck />
-          <AlertTitle>Chủ trọ báo đã sửa xong</AlertTitle>
-          <AlertDescription>
-            <p>Kiểm tra lại rồi bấm Xác nhận đã khắc phục, hoặc Chưa đạt kèm lý do nếu vẫn còn hỏng.</p>
-            {autoCloseAt && (
-              <p>
-                Không phản hồi thì sự cố tự đóng:{' '}
-                <CountdownText expiresAt={autoCloseAt.toISOString()} className="font-medium" />.
-              </p>
-            )}
-          </AlertDescription>
-        </Alert>
+        <ActionPanel title="Chủ trọ báo đã sửa xong" actions={confirmActions}>
+          <p>Kiểm tra lại rồi bấm Xác nhận đã khắc phục, hoặc Chưa đạt kèm lý do nếu vẫn còn hỏng.</p>
+          {autoCloseAt && (
+            <p>
+              Không phản hồi thì sự cố tự đóng:{' '}
+              <CountdownText expiresAt={autoCloseAt.toISOString()} className="font-medium" />.
+            </p>
+          )}
+        </ActionPanel>
       )
 
     case 'DaDong':

@@ -1,11 +1,15 @@
-import { ChevronLeft, CircleCheck, CircleX, ExternalLink, FileText, ImageOff, Phone } from 'lucide-react'
+import { CircleCheck, CircleX, ExternalLink, FileText, ImageOff, Phone } from 'lucide-react'
 import { useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { Link, useLocation, useParams } from 'react-router'
+import { useLocation, useParams } from 'react-router'
 import { toast } from 'sonner'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
+import BackLink from '@/components/BackLink'
 import ConfirmDialog from '@/components/ConfirmDialog'
-import PageHeader from '@/components/PageHeader'
+import DetailCard from '@/components/DetailCard'
+import DetailHeader from '@/components/DetailHeader'
+import DetailLayout from '@/components/DetailLayout'
+import { Fact } from '@/components/FactList'
 import StatusBadge from '@/components/StatusBadge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -48,12 +52,7 @@ export default function LandlordApplicationReviewPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <Button asChild variant="ghost" size="sm" className="-ml-3 self-start">
-        <Link to={{ pathname: '/admin/landlord-applications', search: listSearch }}>
-          <ChevronLeft />
-          Hồ sơ Chủ trọ
-        </Link>
-      </Button>
+      <BackLink to={{ pathname: '/admin/landlord-applications', search: listSearch }}>Hồ sơ Chủ trọ</BackLink>
 
       {applicationQuery.isPending ? (
         <ReviewSkeleton />
@@ -86,26 +85,26 @@ function ReviewContent({ application, onReloadDocuments }: ReviewContentProps) {
 
   return (
     <>
-      <PageHeader title={application.applicantFullName} description={application.applicantEmail} />
+      <DetailHeader
+        title={application.applicantFullName}
+        status={<StatusBadge kind="landlordApplication" status={application.status} />}
+        subtitle={application.applicantEmail}
+      />
 
-      <ReviewStatusNotice application={application} />
+      {/* Thông tin và giấy tờ ở cột chính để đối chiếu; khối xử lý ở cột phụ, dưới `xl` nằm cuối trang như trước. */}
+      <DetailLayout
+        aside={
+          application.status === 'ChoDuyet' ? (
+            <ReviewActions application={application} onReject={() => setRejectOpen(true)} />
+          ) : null
+        }
+      >
+        <ReviewStatusNotice application={application} />
 
-      <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-        <h2 className="text-lg font-bold">Thông tin hồ sơ</h2>
-        <dl className="grid gap-4 text-sm md:grid-cols-[12rem_1fr]">
-          <dt className="text-muted-foreground">Trạng thái</dt>
-          <dd>
-            <StatusBadge kind="landlordApplication" status={application.status} />
-          </dd>
-
-          <dt className="text-muted-foreground">Họ tên</dt>
-          <dd className="wrap-anywhere">{application.applicantFullName}</dd>
-
-          <dt className="text-muted-foreground">Email</dt>
-          <dd className="wrap-anywhere">{application.applicantEmail}</dd>
-
-          <dt className="text-muted-foreground">Số điện thoại</dt>
-          <dd>
+        <DetailCard title="Thông tin hồ sơ">
+          <Fact label="Họ tên">{application.applicantFullName}</Fact>
+          <Fact label="Email">{application.applicantEmail}</Fact>
+          <Fact label="Số điện thoại">
             {application.applicantPhoneNumber ? (
               <a
                 href={`tel:${application.applicantPhoneNumber}`}
@@ -115,30 +114,18 @@ function ReviewContent({ application, onReloadDocuments }: ReviewContentProps) {
                 {application.applicantPhoneNumber}
               </a>
             ) : (
-              <span className="text-muted-foreground">Chưa có số điện thoại</span>
+              <span className="font-normal text-muted-foreground">Chưa có số điện thoại</span>
             )}
-          </dd>
+          </Fact>
+          <Fact label="Số CCCD">
+            <span className="tabular-nums">{application.idCardNumber}</span>
+          </Fact>
+          <Fact label="Ngày nộp">{formatDate(application.submittedAt)}</Fact>
+          {application.reviewedAt && <Fact label="Ngày xử lý">{formatDate(application.reviewedAt)}</Fact>}
+        </DetailCard>
 
-          <dt className="text-muted-foreground">Số CCCD</dt>
-          <dd className="tabular-nums">{application.idCardNumber}</dd>
-
-          <dt className="text-muted-foreground">Ngày nộp</dt>
-          <dd>{formatDate(application.submittedAt)}</dd>
-
-          {application.reviewedAt && (
-            <>
-              <dt className="text-muted-foreground">Ngày xử lý</dt>
-              <dd>{formatDate(application.reviewedAt)}</dd>
-            </>
-          )}
-        </dl>
-      </div>
-
-      <DocumentsSection application={application} onReloadDocuments={onReloadDocuments} />
-
-      {application.status === 'ChoDuyet' && (
-        <ReviewActions application={application} onReject={() => setRejectOpen(true)} />
-      )}
+        <DocumentsSection application={application} onReloadDocuments={onReloadDocuments} />
+      </DetailLayout>
 
       <RejectDialog application={application} open={rejectOpen} onOpenChange={setRejectOpen} />
     </>
@@ -323,7 +310,7 @@ function ReviewActions({ application, onReject }: ReviewActionsProps) {
 
       <Separator />
 
-      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-3">
         <p className="text-sm text-muted-foreground">
           Giấy tờ không khớp hoặc không xác minh được thì từ chối, người nộp được nộp lại hồ sơ mới.
         </p>
@@ -386,7 +373,7 @@ function ApproveForm({ application, phoneNumber }: ApproveFormProps) {
           },
         }}
         render={({ field, fieldState }) => (
-          <Field data-invalid={fieldState.invalid} className="md:max-w-sm">
+          <Field data-invalid={fieldState.invalid}>
             <FieldLabel htmlFor="verifiedPhoneNumber">
               Số điện thoại đã gọi xác minh <span aria-hidden="true">*</span>
             </FieldLabel>
@@ -413,7 +400,7 @@ function ApproveForm({ application, phoneNumber }: ApproveFormProps) {
 
       <ApiErrorAlert error={approveMutation.error} />
 
-      <Button type="submit" size="page" className="md:self-start" disabled={approveMutation.isPending}>
+      <Button type="submit" size="page" disabled={approveMutation.isPending}>
         {approveMutation.isPending ? <Spinner /> : <CircleCheck />}
         Duyệt hồ sơ
       </Button>

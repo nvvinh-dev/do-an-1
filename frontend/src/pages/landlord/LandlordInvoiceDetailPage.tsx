@@ -1,16 +1,21 @@
-import { Ban, Check, ChevronLeft, FileSpreadsheet, Pencil, Send, X } from 'lucide-react'
+import { Ban, Check, FileSpreadsheet, Pencil, Send, X } from 'lucide-react'
 import { useId, useState, type ReactNode } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { toast } from 'sonner'
+import ActionPanel from '@/components/ActionPanel'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
+import BackLink from '@/components/BackLink'
+import DetailHeader from '@/components/DetailHeader'
+import DetailLayout from '@/components/DetailLayout'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import FormDialog, { FormDialogBody } from '@/components/FormDialog'
 import InvoiceBreakdown from '@/components/InvoiceBreakdown'
+import InvoicePaymentSummary from '@/components/InvoicePaymentSummary'
 import MoneyText from '@/components/MoneyText'
-import PageHeader from '@/components/PageHeader'
 import PaymentAmountField from '@/components/PaymentAmountField'
 import PaymentReportList from '@/components/PaymentReportList'
 import SettlementInvoiceSummary from '@/components/SettlementInvoiceSummary'
+import StatusBadge from '@/components/StatusBadge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -55,12 +60,7 @@ export default function LandlordInvoiceDetailPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <Button asChild variant="ghost" size="sm" className="-ml-3 self-start">
-        <Link to={{ pathname: '/landlord/invoices', search: listSearch }}>
-          <ChevronLeft />
-          Hóa đơn
-        </Link>
-      </Button>
+      <BackLink to={{ pathname: '/landlord/invoices', search: listSearch }}>Hóa đơn</BackLink>
 
       {invoiceQuery.isPending ? (
         <InvoiceDetailSkeleton />
@@ -124,18 +124,18 @@ function InvoiceDetailContent({ invoice }: { invoice: InvoiceDetail }) {
     />
   )
 
+  // Phát hành là việc chính của hóa đơn nháp, nằm trong khối "Cần bạn làm gì"; các nút còn lại ở đầu trang.
+  const issueAction = actions.canIssue ? (
+    <Button type="button" size="page" onClick={() => setOpenDialog('issue')}>
+      <Send />
+      Phát hành
+    </Button>
+  ) : null
+
   const buttons: ReactNode[] = []
-  if (actions.canIssue) {
-    buttons.push(
-      <Button key="issue" type="button" size="page" onClick={() => setOpenDialog('issue')}>
-        <Send />
-        Phát hành
-      </Button>,
-    )
-  }
   if (actions.canEdit) {
     buttons.push(
-      <Button key="edit" asChild size="page" variant="outline">
+      <Button key="edit" asChild variant="outline">
         <Link to={`/landlord/invoices/${invoice.id}/edit`}>
           <Pencil />
           Sửa
@@ -145,7 +145,7 @@ function InvoiceDetailContent({ invoice }: { invoice: InvoiceDetail }) {
   }
   if (actions.canCancel) {
     buttons.push(
-      <Button key="cancel" type="button" variant="destructive" size="page" onClick={() => setOpenDialog('cancel')}>
+      <Button key="cancel" type="button" variant="destructive" onClick={() => setOpenDialog('cancel')}>
         <Ban />
         Hủy hóa đơn
       </Button>,
@@ -153,7 +153,7 @@ function InvoiceDetailContent({ invoice }: { invoice: InvoiceDetail }) {
   }
   if (actions.isSettlement) {
     buttons.push(
-      <Button key="settlement" asChild size="page" variant="outline">
+      <Button key="settlement" asChild variant="outline">
         <Link to={`/landlord/contracts/${invoice.contractId}/settlement`}>
           <FileSpreadsheet />
           Mở bảng thanh lý
@@ -162,24 +162,24 @@ function InvoiceDetailContent({ invoice }: { invoice: InvoiceDetail }) {
     )
   }
 
+  const typeLabel = getInvoiceTypeLabel(invoice.type)
+
   return (
     <>
-      <PageHeader
+      <DetailHeader
         title={contract ? `Hóa đơn phòng ${contract.room.code}` : `Hóa đơn #${invoice.id}`}
-        description={
-          contract
-            ? `${getInvoiceTypeLabel(invoice.type)} · ${contract.room.propertyName} · Người thuê: ${contract.tenant.fullName}`
-            : getInvoiceTypeLabel(invoice.type)
+        status={<StatusBadge kind="invoice" status={invoice.status} />}
+        subtitle={
+          <>
+            {contract ? `${typeLabel} · ${contract.room.propertyName} · Người thuê: ${contract.tenant.fullName}` : typeLabel}
+            {' · '}
+            <Link to={`/landlord/contracts/${invoice.contractId}`} className="underline underline-offset-4">
+              Xem hợp đồng
+            </Link>
+          </>
         }
-        action={buttons.length > 0 && <div className="flex flex-col flex-wrap gap-2 md:flex-row">{buttons}</div>}
+        action={buttons.length > 0 && <div className="flex flex-wrap gap-2 md:justify-end">{buttons}</div>}
       />
-
-      <Link
-        to={`/landlord/contracts/${invoice.contractId}`}
-        className="-mt-3 self-start text-sm underline underline-offset-4"
-      >
-        Xem hợp đồng
-      </Link>
 
       {/* Hộp thoại nằm ngoài nút mở nó để không bị gỡ theo nút khi server trả `409` và trang tải lại sang trạng thái
           mới (người thuê vừa báo thanh toán, hóa đơn mới hơn vừa lập, lượt báo vừa được xử lý ở tab khác): vẫn mở và
@@ -193,50 +193,59 @@ function InvoiceDetailContent({ invoice }: { invoice: InvoiceDetail }) {
         </>
       )}
 
-      <InvoiceStatusNotice invoice={invoice} hasPendingReport={actions.pendingReport !== null} />
+      <DetailLayout aside={invoice.type === 'ThanhLy' ? null : <InvoicePaymentSummary invoice={invoice} />}>
+        <InvoiceStatusNotice
+          invoice={invoice}
+          hasPendingReport={actions.pendingReport !== null}
+          issueAction={issueAction}
+        />
 
-      {/* Có lượt báo đang chờ thì đưa lịch sử báo lên trước cách tính: trên điện thoại khỏi cuộn qua cả bảng mới
-          tới nút Xác nhận, Từ chối. */}
-      {actions.pendingReport !== null && paymentReports}
+        {/* Có lượt báo đang chờ thì đưa lịch sử báo lên trước cách tính: trên điện thoại khỏi cuộn qua cả bảng mới
+            tới nút Xác nhận, Từ chối. */}
+        {actions.pendingReport !== null && paymentReports}
 
-      {invoice.type === 'ThanhLy' ? (
-        <SettlementInvoiceSummary invoice={invoice} invoicePath={(invoiceId) => `/landlord/invoices/${invoiceId}`} />
-      ) : (
-        <InvoiceBreakdown invoice={invoice} invoicePath={(invoiceId) => `/landlord/invoices/${invoiceId}`} />
-      )}
+        {invoice.type === 'ThanhLy' ? (
+          <SettlementInvoiceSummary invoice={invoice} invoicePath={(invoiceId) => `/landlord/invoices/${invoiceId}`} />
+        ) : (
+          <InvoiceBreakdown invoice={invoice} invoicePath={(invoiceId) => `/landlord/invoices/${invoiceId}`} />
+        )}
 
-      {actions.pendingReport === null && paymentReports}
+        {actions.pendingReport === null && paymentReports}
+      </DetailLayout>
     </>
   )
 }
 
 /** Khối đầu trang nói rõ hóa đơn đang ở đâu và Chủ trọ cần làm gì tiếp. */
-function InvoiceStatusNotice({ invoice, hasPendingReport }: { invoice: InvoiceDetail; hasPendingReport: boolean }) {
+function InvoiceStatusNotice({
+  invoice,
+  hasPendingReport,
+  issueAction,
+}: {
+  invoice: InvoiceDetail
+  hasPendingReport: boolean
+  /** Nút Phát hành, đặt trong khối "Cần bạn làm gì" của hóa đơn nháp. */
+  issueAction: ReactNode
+}) {
   if (hasPendingReport) {
     return (
-      <Alert className="border-warning/40">
-        <AlertTitle>Người thuê báo đã thanh toán</AlertTitle>
-        <AlertDescription>
-          <p>
-            Đối chiếu ảnh minh chứng với tài khoản nhận tiền, rồi xác nhận số tiền thực thu hoặc từ chối kèm lý do ngay
-            bên dưới.
-          </p>
-        </AlertDescription>
-      </Alert>
+      <ActionPanel title="Người thuê báo đã thanh toán">
+        <p>
+          Đối chiếu ảnh minh chứng với tài khoản nhận tiền, rồi xác nhận số tiền thực thu hoặc từ chối kèm lý do ngay
+          bên dưới.
+        </p>
+      </ActionPanel>
     )
   }
 
   if (invoice.type === 'DinhKy' && invoice.status === 'Nhap') {
     return (
-      <Alert>
-        <AlertTitle>Hóa đơn nháp</AlertTitle>
-        <AlertDescription>
-          <p>
-            Người thuê chưa thấy hóa đơn. Kiểm tra tổng tiền và cách tính hệ thống trả về, sửa nếu cần rồi bấm Phát
-            hành.
-          </p>
-        </AlertDescription>
-      </Alert>
+      <ActionPanel title="Hóa đơn nháp" actions={issueAction}>
+        <p>
+          Người thuê chưa thấy hóa đơn. Kiểm tra tổng tiền và cách tính hệ thống trả về, sửa nếu cần rồi bấm Phát
+          hành.
+        </p>
+      </ActionPanel>
     )
   }
 

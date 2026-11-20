@@ -2,10 +2,8 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import MoneyText from '@/components/MoneyText'
 import PrivatePhotoLink from '@/components/PrivatePhotoLink'
-import StatusBadge from '@/components/StatusBadge'
 import type { InvoiceDetail } from '@/types/invoiceTypes'
 import { formatDate } from '@/utils/formatDate'
-import { formatDateTime } from '@/utils/formatDateTime'
 import { formatMeterIndex } from '@/utils/formatMeterIndex'
 
 interface InvoiceBreakdownProps {
@@ -27,53 +25,6 @@ export default function InvoiceBreakdown({ invoice, invoicePath }: InvoiceBreakd
 
   return (
     <div className="flex flex-col gap-6">
-      <BreakdownCard title="Thanh toán">
-        <dl className="grid gap-4 text-sm md:grid-cols-[12rem_1fr]">
-          <dt className="text-muted-foreground">Trạng thái</dt>
-          <dd>
-            <StatusBadge kind="invoice" status={invoice.status} />
-          </dd>
-
-          <dt className="text-muted-foreground">Tổng tiền</dt>
-          <dd>
-            <MoneyText amount={invoice.totalAmount} className="text-2xl font-bold" />
-          </dd>
-
-          {invoice.issuedAt && (
-            <>
-              <dt className="text-muted-foreground">Đã thu</dt>
-              <dd>
-                <MoneyText amount={invoice.paidAmount} />
-              </dd>
-
-              <dt className="text-muted-foreground">Ngày phát hành</dt>
-              <dd>{formatDate(invoice.issuedAt)}</dd>
-            </>
-          )}
-
-          {invoice.dueDate && (
-            <>
-              <dt className="text-muted-foreground">Hạn thanh toán</dt>
-              <dd>{formatDate(invoice.dueDate)}</dd>
-            </>
-          )}
-
-          {invoice.settledAt && invoice.status === 'DaThanhToan' && (
-            <>
-              <dt className="text-muted-foreground">Thanh toán đủ lúc</dt>
-              <dd>{formatDateTime(invoice.settledAt)}</dd>
-            </>
-          )}
-
-          {invoice.cancelReason && (
-            <>
-              <dt className="text-muted-foreground">Lý do hủy</dt>
-              <dd className="whitespace-pre-line wrap-anywhere">{invoice.cancelReason}</dd>
-            </>
-          )}
-        </dl>
-      </BreakdownCard>
-
       <BreakdownCard title="Cách tính">
         <dl className="grid gap-4 text-sm md:grid-cols-[12rem_1fr]">
           <dt className="text-muted-foreground">Kỳ</dt>

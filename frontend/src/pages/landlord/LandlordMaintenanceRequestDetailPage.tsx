@@ -1,14 +1,19 @@
-import { CalendarClock, CircleCheck, CircleX, ChevronLeft, Hammer, TimerOff, TriangleAlert, Wrench } from 'lucide-react'
-import { useEffect, useId, useState } from 'react'
+import { CalendarClock, CircleCheck, CircleX, Hammer, TimerOff } from 'lucide-react'
+import { useEffect, useId, useState, type ReactNode } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { toast } from 'sonner'
+import ActionPanel from '@/components/ActionPanel'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
+import BackLink from '@/components/BackLink'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import CountdownText from '@/components/CountdownText'
+import DetailCard from '@/components/DetailCard'
+import DetailHeader from '@/components/DetailHeader'
+import DetailLayout from '@/components/DetailLayout'
+import { Fact } from '@/components/FactList'
 import FormDialog, { FormDialogBody } from '@/components/FormDialog'
 import MaintenanceRequestImages from '@/components/MaintenanceRequestImages'
 import MoneyText from '@/components/MoneyText'
-import PageHeader from '@/components/PageHeader'
 import StatusBadge from '@/components/StatusBadge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -75,12 +80,7 @@ export default function LandlordMaintenanceRequestDetailPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <Button asChild variant="ghost" size="sm" className="-ml-3 self-start">
-        <Link to={{ pathname: '/landlord/maintenance-requests', search: listSearch }}>
-          <ChevronLeft />
-          Sự cố
-        </Link>
-      </Button>
+      <BackLink to={{ pathname: '/landlord/maintenance-requests', search: listSearch }}>Sự cố</BackLink>
 
       {maintenanceRequestQuery.isPending ? (
         <MaintenanceRequestDetailSkeleton />
@@ -136,44 +136,43 @@ function MaintenanceRequestDetailContent({ maintenanceRequest }: { maintenanceRe
     if (!open) setOpenDialog(null)
   }
 
-  const hasActions =
-    actions.canAccept || actions.canComplete || actions.canChangeExpectedCompletionDate || actions.canReject
+  // Mọi thao tác của Chủ trọ đều là việc đang chờ nên nằm trong khối "Cần bạn làm gì": việc chính trước, từ chối sau.
+  const actionButtons =
+    actions.canAccept || actions.canComplete || actions.canChangeExpectedCompletionDate || actions.canReject ? (
+      <>
+        {actions.canAccept && (
+          <Button type="button" size="page" onClick={() => setOpenDialog('accept')}>
+            <Hammer />
+            Tiếp nhận
+          </Button>
+        )}
+        {actions.canComplete && (
+          <Button type="button" size="page" onClick={() => setOpenDialog('complete')}>
+            <CircleCheck />
+            Báo đã sửa xong
+          </Button>
+        )}
+        {actions.canChangeExpectedCompletionDate && (
+          <Button type="button" variant="outline" size="page" onClick={() => setOpenDialog('changeDate')}>
+            <CalendarClock />
+            Sửa ngày dự kiến
+          </Button>
+        )}
+        {actions.canReject && (
+          <Button type="button" variant="outline" size="page" onClick={() => setOpenDialog('reject')}>
+            <CircleX />
+            Từ chối
+          </Button>
+        )}
+      </>
+    ) : null
 
   return (
     <>
-      <PageHeader
+      <DetailHeader
         title={maintenanceRequest.title}
-        description={`Sự cố #${maintenanceRequest.id} · Phòng ${maintenanceRequest.roomCode} · ${maintenanceRequest.propertyName}`}
-        action={
-          hasActions && (
-            <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row">
-              {actions.canChangeExpectedCompletionDate && (
-                <Button type="button" variant="outline" size="page" onClick={() => setOpenDialog('changeDate')}>
-                  <CalendarClock />
-                  Sửa ngày dự kiến
-                </Button>
-              )}
-              {actions.canReject && (
-                <Button type="button" variant="outline" size="page" onClick={() => setOpenDialog('reject')}>
-                  <CircleX />
-                  Từ chối
-                </Button>
-              )}
-              {actions.canAccept && (
-                <Button type="button" size="page" onClick={() => setOpenDialog('accept')}>
-                  <Hammer />
-                  Tiếp nhận
-                </Button>
-              )}
-              {actions.canComplete && (
-                <Button type="button" size="page" onClick={() => setOpenDialog('complete')}>
-                  <CircleCheck />
-                  Báo đã sửa xong
-                </Button>
-              )}
-            </div>
-          )
-        }
+        status={<StatusBadge kind="maintenanceRequest" status={maintenanceRequest.status} />}
+        subtitle={`Sự cố #${maintenanceRequest.id} · Phòng ${maintenanceRequest.roomCode} · ${maintenanceRequest.propertyName} · Mức khẩn cấp: ${getMaintenanceUrgencyLabel(maintenanceRequest.urgency)}`}
       />
 
       {/* Hộp thoại nằm ngoài nút để không bị gỡ theo nút khi `409` tải lại sang trạng thái mới: vẫn mở và hiện `detail`. */}
@@ -192,72 +191,56 @@ function MaintenanceRequestDetailContent({ maintenanceRequest }: { maintenanceRe
       <CompleteDialog maintenanceRequest={maintenanceRequest} open={openDialog === 'complete'} onOpenChange={closeDialog} />
       <RejectDialog maintenanceRequest={maintenanceRequest} open={openDialog === 'reject'} onOpenChange={closeDialog} />
 
-      <MaintenanceRequestStatusNotice
-        maintenanceRequest={maintenanceRequest}
-        isAcceptOverdue={actions.isAcceptOverdue}
-        autoCloseAt={autoCloseAt}
-        isAutoCloseOverdue={isAutoCloseOverdue}
-      />
+      <DetailLayout
+        aside={
+          <>
+            <DetailCard title="Người thuê và phòng" stacked>
+              <Fact label="Người thuê">{maintenanceRequest.tenantFullName}</Fact>
+              <Fact label="Phòng">
+                Phòng {maintenanceRequest.roomCode} · {maintenanceRequest.propertyName}
+              </Fact>
+              <Fact label="Hợp đồng">
+                <Link
+                  to={`/landlord/contracts/${maintenanceRequest.contractId}`}
+                  className="underline-offset-4 hover:underline"
+                >
+                  Hợp đồng #{maintenanceRequest.contractId}
+                </Link>
+              </Fact>
+            </DetailCard>
 
-      <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-        <h2 className="text-lg font-bold">Thông tin sự cố</h2>
-        <dl className="grid gap-4 text-sm md:grid-cols-[12rem_1fr]">
-          <dt className="text-muted-foreground">Trạng thái</dt>
-          <dd>
-            <StatusBadge kind="maintenanceRequest" status={maintenanceRequest.status} />
-          </dd>
+            <DetailCard title="Thời gian xử lý" stacked>
+              <Fact label="Ngày gửi">{formatDateTime(maintenanceRequest.createdAt)}</Fact>
+              {maintenanceRequest.acceptedAt && (
+                <Fact label="Ngày tiếp nhận">{formatDateTime(maintenanceRequest.acceptedAt)}</Fact>
+              )}
+              {maintenanceRequest.expectedCompletionDate && (
+                <Fact label="Dự kiến sửa xong">{formatDate(maintenanceRequest.expectedCompletionDate)}</Fact>
+              )}
+              {maintenanceRequest.completedAt && (
+                <Fact label="Báo sửa xong">{formatDateTime(maintenanceRequest.completedAt)}</Fact>
+              )}
+            </DetailCard>
+          </>
+        }
+      >
+        <MaintenanceRequestStatusNotice
+          maintenanceRequest={maintenanceRequest}
+          isAcceptOverdue={actions.isAcceptOverdue}
+          autoCloseAt={autoCloseAt}
+          isAutoCloseOverdue={isAutoCloseOverdue}
+          actionButtons={actionButtons}
+        />
 
-          <dt className="text-muted-foreground">Người thuê</dt>
-          <dd className="wrap-anywhere">{maintenanceRequest.tenantFullName}</dd>
+        <DetailCard title="Thông tin sự cố">
+          <Fact label="Mức khẩn cấp">{getMaintenanceUrgencyLabel(maintenanceRequest.urgency)}</Fact>
+          <Fact label="Mô tả">
+            <span className="font-normal whitespace-pre-line">{maintenanceRequest.description}</span>
+          </Fact>
+        </DetailCard>
 
-          <dt className="text-muted-foreground">Phòng</dt>
-          <dd className="wrap-anywhere">
-            Phòng {maintenanceRequest.roomCode} · {maintenanceRequest.propertyName}
-          </dd>
-
-          <dt className="text-muted-foreground">Hợp đồng</dt>
-          <dd>
-            <Link
-              to={`/landlord/contracts/${maintenanceRequest.contractId}`}
-              className="underline-offset-4 hover:underline"
-            >
-              Hợp đồng #{maintenanceRequest.contractId}
-            </Link>
-          </dd>
-
-          <dt className="text-muted-foreground">Mức khẩn cấp</dt>
-          <dd>{getMaintenanceUrgencyLabel(maintenanceRequest.urgency)}</dd>
-
-          <dt className="text-muted-foreground">Mô tả</dt>
-          <dd className="whitespace-pre-line wrap-anywhere">{maintenanceRequest.description}</dd>
-
-          <dt className="text-muted-foreground">Ngày gửi</dt>
-          <dd>{formatDateTime(maintenanceRequest.createdAt)}</dd>
-
-          {maintenanceRequest.acceptedAt && (
-            <>
-              <dt className="text-muted-foreground">Ngày tiếp nhận</dt>
-              <dd>{formatDateTime(maintenanceRequest.acceptedAt)}</dd>
-            </>
-          )}
-
-          {maintenanceRequest.expectedCompletionDate && (
-            <>
-              <dt className="text-muted-foreground">Dự kiến sửa xong</dt>
-              <dd>{formatDate(maintenanceRequest.expectedCompletionDate)}</dd>
-            </>
-          )}
-
-          {maintenanceRequest.completedAt && (
-            <>
-              <dt className="text-muted-foreground">Báo sửa xong</dt>
-              <dd>{formatDateTime(maintenanceRequest.completedAt)}</dd>
-            </>
-          )}
-        </dl>
-      </div>
-
-      <MaintenanceRequestImages images={maintenanceRequest.images} />
+        <MaintenanceRequestImages images={maintenanceRequest.images} />
+      </DetailLayout>
     </>
   )
 }
@@ -268,6 +251,8 @@ interface MaintenanceRequestStatusNoticeProps {
   /** `completedAt` + 168 giờ, chỉ có khi chờ người thuê xác nhận. */
   autoCloseAt: Date | null
   isAutoCloseOverdue: boolean
+  /** Nút thao tác của Chủ trọ, đặt trong khối "Cần bạn làm gì" khi sự cố mới hoặc đang xử lý. */
+  actionButtons: ReactNode
 }
 
 /** Khối đầu trang nói rõ sự cố đang ở đâu và Chủ trọ cần làm gì tiếp, theo bảng L11. */
@@ -276,54 +261,41 @@ function MaintenanceRequestStatusNotice({
   isAcceptOverdue,
   autoCloseAt,
   isAutoCloseOverdue,
+  actionButtons,
 }: MaintenanceRequestStatusNoticeProps) {
   switch (maintenanceRequest.status) {
     case 'Moi':
       if (isAcceptOverdue) {
         return (
-          <Alert className="border-warning/40">
-            <TriangleAlert />
-            <AlertTitle>Đã quá 72 giờ chưa tiếp nhận</AlertTitle>
-            <AlertDescription>
-              <p>
-                Người thuê đã được quyền gửi khiếu nại tới Admin về sự cố này. Bạn vẫn tiếp nhận hoặc từ chối được.
-              </p>
-            </AlertDescription>
-          </Alert>
+          <ActionPanel title="Đã quá 72 giờ chưa tiếp nhận" actions={actionButtons}>
+            <p>Người thuê đã được quyền gửi khiếu nại tới Admin về sự cố này. Bạn vẫn tiếp nhận hoặc từ chối được.</p>
+          </ActionPanel>
         )
       }
       return (
-        <Alert>
-          <Wrench />
-          <AlertTitle>Sự cố mới, chờ bạn tiếp nhận</AlertTitle>
-          <AlertDescription>
-            <p>
-              Tiếp nhận để báo người thuê bạn đang xử lý, kèm ngày dự kiến sửa xong nếu đã hẹn thợ. Hỏng do người thuê
-              hoặc không thuộc trách nhiệm của bạn thì từ chối kèm lý do.
-            </p>
-          </AlertDescription>
-        </Alert>
+        <ActionPanel title="Sự cố mới, chờ bạn tiếp nhận" actions={actionButtons}>
+          <p>
+            Tiếp nhận để báo người thuê bạn đang xử lý, kèm ngày dự kiến sửa xong nếu đã hẹn thợ. Hỏng do người thuê hoặc
+            không thuộc trách nhiệm của bạn thì từ chối kèm lý do.
+          </p>
+        </ActionPanel>
       )
 
     case 'DangXuLy':
       return (
-        <Alert>
-          <Hammer />
-          <AlertTitle>Đang xử lý</AlertTitle>
-          <AlertDescription>
-            <p>
-              {maintenanceRequest.expectedCompletionDate
-                ? `Dự kiến sửa xong ngày ${formatDate(maintenanceRequest.expectedCompletionDate)}.`
-                : 'Chưa ghi ngày dự kiến sửa xong.'}{' '}
-              Sửa xong thì bấm Báo đã sửa xong để người thuê kiểm tra lại.
+        <ActionPanel title="Đang xử lý" actions={actionButtons}>
+          <p>
+            {maintenanceRequest.expectedCompletionDate
+              ? `Dự kiến sửa xong ngày ${formatDate(maintenanceRequest.expectedCompletionDate)}.`
+              : 'Chưa ghi ngày dự kiến sửa xong.'}{' '}
+            Sửa xong thì bấm Báo đã sửa xong để người thuê kiểm tra lại.
+          </p>
+          {maintenanceRequest.notFixedReason && (
+            <p className="whitespace-pre-line wrap-anywhere">
+              Người thuê báo chưa đạt: {maintenanceRequest.notFixedReason}
             </p>
-            {maintenanceRequest.notFixedReason && (
-              <p className="whitespace-pre-line wrap-anywhere">
-                Người thuê báo chưa đạt: {maintenanceRequest.notFixedReason}
-              </p>
-            )}
-          </AlertDescription>
-        </Alert>
+          )}
+        </ActionPanel>
       )
 
     case 'ChoNguoiThueXacNhan':
