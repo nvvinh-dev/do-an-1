@@ -1,11 +1,15 @@
-import { ChevronLeft, CircleX, FileText, Phone, TimerOff } from 'lucide-react'
+import { CircleX, FileText, Phone, TimerOff } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { toast } from 'sonner'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
+import BackLink from '@/components/BackLink'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import CountdownText from '@/components/CountdownText'
-import PageHeader from '@/components/PageHeader'
+import DetailHeader from '@/components/DetailHeader'
+import DetailCard from '@/components/DetailCard'
+import DetailLayout from '@/components/DetailLayout'
+import { Fact } from '@/components/FactList'
 import StatusBadge from '@/components/StatusBadge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -45,12 +49,7 @@ export default function TenantRentalRequestDetailPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <Button asChild variant="ghost" size="sm" className="-ml-3 self-start">
-        <Link to={{ pathname: '/tenant/rental-requests', search: listSearch }}>
-          <ChevronLeft />
-          Yêu cầu thuê
-        </Link>
-      </Button>
+      <BackLink to={{ pathname: '/tenant/rental-requests', search: listSearch }}>Yêu cầu thuê</BackLink>
 
       {rentalRequestQuery.isPending ? (
         <RentalRequestDetailSkeleton />
@@ -93,12 +92,13 @@ function RentalRequestDetailContent({ rentalRequest }: { rentalRequest: RentalRe
 
   return (
     <>
-      <PageHeader
+      <DetailHeader
         title={`Yêu cầu thuê phòng ${rentalRequest.room.code}`}
-        description={rentalRequest.room.propertyName}
+        status={<StatusBadge kind="rentalRequest" status={rentalRequest.status} />}
+        subtitle={rentalRequest.room.propertyName}
         action={
           canCancel && (
-            <Button type="button" variant="destructive" size="page" onClick={() => setCancelOpen(true)}>
+            <Button type="button" variant="destructive" onClick={() => setCancelOpen(true)}>
               <CircleX />
               Rút yêu cầu
             </Button>
@@ -108,43 +108,31 @@ function RentalRequestDetailContent({ rentalRequest }: { rentalRequest: RentalRe
 
       <CancelRentalRequestDialog rentalRequest={rentalRequest} open={cancelOpen} onOpenChange={setCancelOpen} />
 
-      <RentalRequestStatusNotice rentalRequest={rentalRequest} isOverdue={isOverdue} />
+      <DetailLayout
+        aside={
+          <DetailCard title="Phòng muốn thuê" stacked>
+            <Fact label="Phòng">
+              Phòng {rentalRequest.room.code} · {rentalRequest.room.propertyName}
+            </Fact>
+            <Fact label="Ngày dự kiến vào ở">{formatDate(rentalRequest.expectedMoveInDate)}</Fact>
+            <Fact label="Số người ở">
+              <span className="tabular-nums">{rentalRequest.expectedOccupants} người</span>
+            </Fact>
+          </DetailCard>
+        }
+      >
+        <RentalRequestStatusNotice rentalRequest={rentalRequest} isOverdue={isOverdue} />
 
-      <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-        <h2 className="text-lg font-bold">Thông tin yêu cầu</h2>
-        <dl className="grid gap-4 text-sm md:grid-cols-[12rem_1fr]">
-          <dt className="text-muted-foreground">Trạng thái</dt>
-          <dd>
-            <StatusBadge kind="rentalRequest" status={rentalRequest.status} />
-          </dd>
-
-          <dt className="text-muted-foreground">Phòng</dt>
-          <dd className="wrap-anywhere">
-            Phòng {rentalRequest.room.code} · {rentalRequest.room.propertyName}
-          </dd>
-
-          <dt className="text-muted-foreground">Ngày dự kiến vào ở</dt>
-          <dd>{formatDate(rentalRequest.expectedMoveInDate)}</dd>
-
-          <dt className="text-muted-foreground">Số người ở</dt>
-          <dd className="tabular-nums">{rentalRequest.expectedOccupants} người</dd>
-
-          <dt className="text-muted-foreground">Ghi chú</dt>
-          <dd className="whitespace-pre-line wrap-anywhere">
-            {rentalRequest.note ?? <span className="text-muted-foreground">Không có ghi chú</span>}
-          </dd>
-
-          <dt className="text-muted-foreground">Ngày gửi</dt>
-          <dd>{formatDate(rentalRequest.submittedAt)}</dd>
-
-          {rentalRequest.processedAt && (
-            <>
-              <dt className="text-muted-foreground">Ngày xử lý</dt>
-              <dd>{formatDate(rentalRequest.processedAt)}</dd>
-            </>
-          )}
-        </dl>
-      </div>
+        <DetailCard title="Thông tin yêu cầu">
+          <Fact label="Ghi chú">
+            <span className="font-normal whitespace-pre-line">
+              {rentalRequest.note ?? <span className="text-muted-foreground">Không có ghi chú</span>}
+            </span>
+          </Fact>
+          <Fact label="Ngày gửi">{formatDate(rentalRequest.submittedAt)}</Fact>
+          {rentalRequest.processedAt && <Fact label="Ngày xử lý">{formatDate(rentalRequest.processedAt)}</Fact>}
+        </DetailCard>
+      </DetailLayout>
     </>
   )
 }

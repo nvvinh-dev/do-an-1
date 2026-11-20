@@ -1,6 +1,5 @@
 import {
   CalendarX,
-  ChevronLeft,
   CircleCheck,
   CircleX,
   FilePen,
@@ -10,14 +9,20 @@ import {
   Undo2,
 } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
-import { Link, useLocation, useParams } from 'react-router'
+import { useLocation, useParams } from 'react-router'
 import { toast } from 'sonner'
+import ActionPanel from '@/components/ActionPanel'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
+import BackLink from '@/components/BackLink'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import CountdownText from '@/components/CountdownText'
 import MoneyText from '@/components/MoneyText'
+import DetailCard, { DetailRow } from '@/components/DetailCard'
+import DetailHeader from '@/components/DetailHeader'
+import DetailLayout from '@/components/DetailLayout'
+import { Fact } from '@/components/FactList'
 import MoveOutNoticeCard from '@/components/MoveOutNoticeCard'
-import PageHeader from '@/components/PageHeader'
+import PartyText, { PhoneLink } from '@/components/PartyText'
 import SendMoveOutNoticeDialog from '@/components/SendMoveOutNoticeDialog'
 import StatusBadge from '@/components/StatusBadge'
 import VietQrBox from '@/components/VietQrBox'
@@ -31,7 +36,7 @@ import { useContract } from '@/hooks/useContract'
 import { useRequestContractChanges } from '@/hooks/useRequestContractChanges'
 import { isNotFoundError } from '@/lib/apiError'
 import NotFoundPage from '@/pages/public/NotFoundPage'
-import type { ContractDetail, ContractParty } from '@/types/contractTypes'
+import type { ContractDetail } from '@/types/contractTypes'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDate } from '@/utils/formatDate'
 import { formatDateTime } from '@/utils/formatDateTime'
@@ -73,12 +78,7 @@ export default function TenantContractDetailPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <Button asChild variant="ghost" size="sm" className="-ml-3 self-start">
-        <Link to={{ pathname: '/tenant/contracts', search: listSearch }}>
-          <ChevronLeft />
-          Hợp đồng
-        </Link>
-      </Button>
+      <BackLink to={{ pathname: '/tenant/contracts', search: listSearch }}>Hợp đồng</BackLink>
 
       {contractQuery.isPending ? (
         <ContractDetailSkeleton />
@@ -119,12 +119,6 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
   }, [contract.holdExpiresAt])
   const actions = getTenantContractActions(contract, today, now)
   const moveOutActions = getMoveOutNoticeActions(contract, 'Tenant', today)
-  const hasAction =
-    actions.canConfirm ||
-    actions.canRequestChanges ||
-    actions.canCancel ||
-    moveOutActions.canSend ||
-    moveOutActions.canWithdraw
 
   const dialogProps = (dialog: ContractDialog) => ({
     contract,
@@ -132,40 +126,48 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
     onOpenChange: (open: boolean) => setOpenDialog(open ? dialog : null),
   })
 
+  // Nút Đồng ý và Yêu cầu sửa nằm trong khối "Cần bạn làm gì"; nút phụ (trả phòng, hủy) ở đầu trang.
+  const confirmActions =
+    actions.canConfirm || actions.canRequestChanges ? (
+      <>
+        {actions.canConfirm && (
+          <Button type="button" size="page" onClick={() => setOpenDialog('confirm')}>
+            <CircleCheck />
+            Đồng ý
+          </Button>
+        )}
+        {actions.canRequestChanges && (
+          <Button type="button" variant="outline" size="page" onClick={() => setOpenDialog('requestChanges')}>
+            <PencilLine />
+            Yêu cầu sửa
+          </Button>
+        )}
+      </>
+    ) : null
+
   return (
     <>
-      <PageHeader
+      <DetailHeader
         title={`Hợp đồng phòng ${contract.room.code}`}
-        description={contract.room.propertyName}
+        status={<StatusBadge kind="contract" status={contract.status} />}
+        subtitle={contract.room.propertyName}
         action={
-          hasAction && (
-            <div className="flex flex-col gap-2 md:flex-row">
-              {actions.canConfirm && (
-                <Button type="button" size="page" onClick={() => setOpenDialog('confirm')}>
-                  <CircleCheck />
-                  Đồng ý
-                </Button>
-              )}
-              {actions.canRequestChanges && (
-                <Button type="button" variant="outline" size="page" onClick={() => setOpenDialog('requestChanges')}>
-                  <PencilLine />
-                  Yêu cầu sửa
-                </Button>
-              )}
+          (moveOutActions.canSend || moveOutActions.canWithdraw || actions.canCancel) && (
+            <div className="flex flex-wrap gap-2">
               {moveOutActions.canSend && (
-                <Button type="button" size="page" onClick={() => setOpenDialog('sendMoveOutNotice')}>
+                <Button type="button" onClick={() => setOpenDialog('sendMoveOutNotice')}>
                   <CalendarX />
                   Gửi thông báo trả phòng
                 </Button>
               )}
               {moveOutActions.canWithdraw && (
-                <Button type="button" variant="outline" size="page" onClick={() => setOpenDialog('withdrawMoveOutNotice')}>
+                <Button type="button" variant="outline" onClick={() => setOpenDialog('withdrawMoveOutNotice')}>
                   <Undo2 />
                   Rút thông báo
                 </Button>
               )}
               {actions.canCancel && (
-                <Button type="button" variant="destructive" size="page" onClick={() => setOpenDialog('cancel')}>
+                <Button type="button" variant="destructive" onClick={() => setOpenDialog('cancel')}>
                   <CircleX />
                   Hủy hợp đồng
                 </Button>
@@ -181,180 +183,111 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
       <SendMoveOutNoticeDialog viewer="Tenant" {...dialogProps('sendMoveOutNotice')} />
       <WithdrawMoveOutNoticeDialog viewer="Tenant" {...dialogProps('withdrawMoveOutNotice')} />
 
-      <ContractStatusNotice contract={contract} today={today} now={now} />
-
-      {/* Server chỉ trả `paymentQr` cho hợp đồng chờ nhận cọc của người thuê đứng tên. Quá hạn giữ chỗ thì
-          không hiện mã kể cả khi dữ liệu còn `paymentQr` (tải trước mốc hạn, tác vụ định kỳ chưa chạy):
-          xác nhận cọc đã bị chặn, tiền chuyển lúc này không được ghi nhận là cọc. */}
-      <VietQrBox paymentQr={isHoldExpired(contract.holdExpiresAt, now) ? null : contract.paymentQr} />
-
-      {/* Đã thanh lý có số dư âm thì Chủ trọ hoàn phần cọc dư lúc hoàn tất thanh lý; người thuê xem được như khi hủy (FR-86). */}
-      {(contract.status === 'DaHuy' || contract.status === 'DaThanhLy') && <DepositRefundSection contract={contract} />}
-
-      <MoveOutNoticeCard
-        contract={contract}
-        viewer="Tenant"
-        today={today}
-        settlementLink={
-          contract.settlementInvoiceId !== null
-            ? { to: `/tenant/invoices/${contract.settlementInvoiceId}`, label: 'Xem bảng thanh lý' }
-            : null
-        }
-      />
-
-      <DetailCard title="Các bên">
-        <dt className="text-muted-foreground">Chủ trọ</dt>
-        <dd>
-          <PartyText party={contract.landlord} />
-        </dd>
-
-        <dt className="text-muted-foreground">Người thuê</dt>
-        <dd>
-          <PartyText party={contract.tenant} />
-        </dd>
-      </DetailCard>
-
-      <DetailCard title="Điều khoản">
-        <dt className="text-muted-foreground">Trạng thái</dt>
-        <dd>
-          <StatusBadge kind="contract" status={contract.status} />
-        </dd>
-
-        <dt className="text-muted-foreground">Phòng</dt>
-        <dd className="wrap-anywhere">
-          Phòng {contract.room.code} · {contract.room.propertyName}
-        </dd>
-
-        <dt className="text-muted-foreground">Thời hạn</dt>
-        <dd>
-          {formatDate(contract.startDate)} – {formatDate(contract.endDate)}
-        </dd>
-
-        <dt className="text-muted-foreground">Giá thuê</dt>
-        <dd>
-          <MoneyText amount={contract.rentPrice} /> / tháng
-        </dd>
-
-        <dt className="text-muted-foreground">Tiền cọc</dt>
-        <dd>{contract.depositAmount > 0 ? <MoneyText amount={contract.depositAmount} /> : 'Không đặt cọc'}</dd>
-
-        <dt className="text-muted-foreground">Giá điện</dt>
-        <dd>
-          <MoneyText amount={contract.electricityUnitPrice} /> / kWh
-        </dd>
-
-        <dt className="text-muted-foreground">Giá nước</dt>
-        <dd>
-          <MoneyText amount={contract.waterUnitPrice} /> / m³
-        </dd>
-
-        <dt className="text-muted-foreground">Hạn thanh toán</dt>
-        <dd>{contract.paymentDueDays} ngày kể từ ngày phát hành hóa đơn</dd>
-
-        <dt className="text-muted-foreground">Chỉ số đầu</dt>
-        <dd className="tabular-nums">
-          Điện {formatMeterIndex(contract.initialElectricityIndex)} kWh · Nước{' '}
-          {formatMeterIndex(contract.initialWaterIndex)} m³
-        </dd>
-
-        {contract.tenantConfirmedAt && (
+      <DetailLayout
+        aside={
           <>
-            <dt className="text-muted-foreground">Bạn đồng ý ngày</dt>
-            <dd>{formatDate(contract.tenantConfirmedAt)}</dd>
+            <DetailCard title="Giá thuê và thời hạn" stacked>
+              <Fact label="Giá thuê">
+                <MoneyText amount={contract.rentPrice} /> / tháng
+              </Fact>
+              <Fact label="Tiền cọc">
+                {contract.depositAmount > 0 ? <MoneyText amount={contract.depositAmount} /> : 'Không đặt cọc'}
+              </Fact>
+              <Fact label="Thời hạn">
+                {formatDate(contract.startDate)} – {formatDate(contract.endDate)}
+              </Fact>
+            </DetailCard>
+
+            <DetailCard title="Các bên" stacked>
+              <Fact label="Chủ trọ">
+                <PartyText party={contract.landlord} />
+              </Fact>
+              <Fact label="Người thuê">
+                <PartyText party={contract.tenant} />
+              </Fact>
+            </DetailCard>
           </>
+        }
+      >
+        <ContractStatusNotice contract={contract} today={today} now={now} confirmActions={confirmActions} />
+
+        {/* Server chỉ trả `paymentQr` cho hợp đồng chờ nhận cọc của người thuê đứng tên. Quá hạn giữ chỗ thì
+            không hiện mã kể cả khi dữ liệu còn `paymentQr` (tải trước mốc hạn, tác vụ định kỳ chưa chạy):
+            xác nhận cọc đã bị chặn, tiền chuyển lúc này không được ghi nhận là cọc. */}
+        <VietQrBox paymentQr={isHoldExpired(contract.holdExpiresAt, now) ? null : contract.paymentQr} />
+
+        {/* Đã thanh lý có số dư âm thì Chủ trọ hoàn phần cọc dư lúc hoàn tất thanh lý; người thuê xem được như khi hủy (FR-86). */}
+        {(contract.status === 'DaHuy' || contract.status === 'DaThanhLy') && (
+          <DepositRefundSection contract={contract} />
         )}
 
-        {contract.depositReceivedAt && (
-          <>
-            <dt className="text-muted-foreground">Chủ trọ nhận cọc</dt>
-            <dd>
+        <MoveOutNoticeCard
+          contract={contract}
+          viewer="Tenant"
+          today={today}
+          settlementLink={
+            contract.settlementInvoiceId !== null
+              ? { to: `/tenant/invoices/${contract.settlementInvoiceId}`, label: 'Xem bảng thanh lý' }
+              : null
+          }
+        />
+
+        <DetailCard title="Điều khoản">
+          <Fact label="Phòng">
+            Phòng {contract.room.code} · {contract.room.propertyName}
+          </Fact>
+          <Fact label="Giá điện">
+            <MoneyText amount={contract.electricityUnitPrice} /> / kWh
+          </Fact>
+          <Fact label="Giá nước">
+            <MoneyText amount={contract.waterUnitPrice} /> / m³
+          </Fact>
+          <Fact label="Hạn thanh toán">{contract.paymentDueDays} ngày kể từ ngày phát hành hóa đơn</Fact>
+          <Fact label="Chỉ số đầu">
+            <span className="tabular-nums">
+              Điện {formatMeterIndex(contract.initialElectricityIndex)} kWh · Nước{' '}
+              {formatMeterIndex(contract.initialWaterIndex)} m³
+            </span>
+          </Fact>
+          {contract.tenantConfirmedAt && <Fact label="Bạn đồng ý ngày">{formatDate(contract.tenantConfirmedAt)}</Fact>}
+          {contract.depositReceivedAt && (
+            <Fact label="Chủ trọ nhận cọc">
               Ngày {formatDate(contract.depositReceivedAt)}
               {contract.depositReceivedMethod && ` · ${getPaymentMethodLabel(contract.depositReceivedMethod)}`}
-            </dd>
-          </>
+            </Fact>
+          )}
+          {contract.activatedAt && <Fact label="Có hiệu lực ngày">{formatDate(contract.activatedAt)}</Fact>}
+        </DetailCard>
+
+        {contract.serviceFees.length === 0 ? (
+          <DetailCard title="Phí dịch vụ" note="Không có phí dịch vụ." />
+        ) : (
+          <DetailCard title="Phí dịch vụ">
+            {contract.serviceFees.map((fee, index) => (
+              <DetailRow key={index} term={fee.name}>
+                <MoneyText amount={fee.amount} />
+              </DetailRow>
+            ))}
+          </DetailCard>
         )}
 
-        {contract.activatedAt && (
-          <>
-            <dt className="text-muted-foreground">Có hiệu lực ngày</dt>
-            <dd>{formatDate(contract.activatedAt)}</dd>
-          </>
+        {contract.occupants.length === 0 ? (
+          <DetailCard title="Người ở cùng" note="Không có người ở cùng." />
+        ) : (
+          <DetailCard title="Người ở cùng">
+            {contract.occupants.map((occupant, index) => (
+              <DetailRow key={index} term={occupant.fullName}>
+                {occupant.phoneNumber ? (
+                  <PhoneLink phoneNumber={occupant.phoneNumber} />
+                ) : (
+                  <span className="font-normal text-muted-foreground">Không có số điện thoại</span>
+                )}
+              </DetailRow>
+            ))}
+          </DetailCard>
         )}
-      </DetailCard>
-
-      {contract.serviceFees.length === 0 ? (
-        <DetailCard title="Phí dịch vụ" note="Không có phí dịch vụ." />
-      ) : (
-        <DetailCard title="Phí dịch vụ">
-          {contract.serviceFees.map((fee, index) => (
-            <DetailRow key={index} term={fee.name}>
-              <MoneyText amount={fee.amount} />
-            </DetailRow>
-          ))}
-        </DetailCard>
-      )}
-
-      {contract.occupants.length === 0 ? (
-        <DetailCard title="Người ở cùng" note="Không có người ở cùng." />
-      ) : (
-        <DetailCard title="Người ở cùng">
-          {contract.occupants.map((occupant, index) => (
-            <DetailRow key={index} term={occupant.fullName}>
-              {occupant.phoneNumber ? (
-                <PhoneLink phoneNumber={occupant.phoneNumber} />
-              ) : (
-                <span className="text-muted-foreground">Không có số điện thoại</span>
-              )}
-            </DetailRow>
-          ))}
-        </DetailCard>
-      )}
+      </DetailLayout>
     </>
-  )
-}
-
-interface DetailCardProps {
-  title: string
-  /** Các cặp `dt`/`dd`, xếp hai cột từ `md`; bỏ trống khi không có dòng nào. */
-  children?: ReactNode
-  /** Câu ghi chú dưới các dòng, hoặc câu thay cho danh sách rỗng. */
-  note?: string
-}
-
-function DetailCard({ title, children, note }: DetailCardProps) {
-  return (
-    <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-      <h2 className="text-lg font-bold">{title}</h2>
-      {children && <dl className="grid gap-4 text-sm md:grid-cols-[12rem_1fr]">{children}</dl>}
-      {note && <p className="text-sm text-muted-foreground">{note}</p>}
-    </div>
-  )
-}
-
-function DetailRow({ term, children }: { term: string; children: ReactNode }) {
-  return (
-    <>
-      <dt className="text-muted-foreground wrap-anywhere">{term}</dt>
-      <dd>{children}</dd>
-    </>
-  )
-}
-
-function PhoneLink({ phoneNumber }: { phoneNumber: string }) {
-  return (
-    <a href={`tel:${phoneNumber}`} className="tabular-nums underline underline-offset-4">
-      {phoneNumber}
-    </a>
-  )
-}
-
-/** Họ tên kèm số điện thoại khi server cho phép hiện (FR-74). */
-function PartyText({ party }: { party: ContractParty }) {
-  return (
-    <span className="flex flex-col gap-1">
-      <span className="wrap-anywhere">{party.fullName}</span>
-      {party.phoneNumber && <PhoneLink phoneNumber={party.phoneNumber} />}
-    </span>
   )
 }
 
@@ -375,10 +308,12 @@ interface ContractStatusNoticeProps {
   contract: ContractDetail
   today: string
   now: Date
+  /** Nút Đồng ý và Yêu cầu sửa, đặt trong khối "Cần bạn làm gì" khi hợp đồng chờ người thuê xác nhận. */
+  confirmActions: ReactNode
 }
 
 /** Khối đầu trang nói rõ hợp đồng đang ở đâu và người thuê cần làm gì tiếp, theo bảng T4. */
-function ContractStatusNotice({ contract, today, now }: ContractStatusNoticeProps) {
+function ContractStatusNotice({ contract, today, now, confirmActions }: ContractStatusNoticeProps) {
   // `holdExpiresAt` chỉ có ở `Nhap`, `ChoNguoiThueXacNhan`, `ChoNhanCoc`.
   if (isHoldExpired(contract.holdExpiresAt, now)) {
     return <HoldExpiredNotice contract={contract} />
@@ -404,16 +339,13 @@ function ContractStatusNotice({ contract, today, now }: ContractStatusNoticeProp
 
     case 'ChoNguoiThueXacNhan':
       return (
-        <Alert className="border-warning/40">
-          <AlertTitle>Chủ trọ đã gửi hợp đồng, chờ bạn xác nhận</AlertTitle>
-          <AlertDescription>
-            <p>
-              Kiểm tra điều khoản, phí dịch vụ, người ở cùng và chỉ số đầu bên dưới. Đúng thì bấm Đồng ý; cần sửa thì
-              bấm Yêu cầu sửa và ghi rõ chỗ cần sửa.
-            </p>
-            <HoldDeadline holdExpiresAt={contract.holdExpiresAt} />
-          </AlertDescription>
-        </Alert>
+        <ActionPanel title="Chủ trọ đã gửi hợp đồng, chờ bạn xác nhận" actions={confirmActions}>
+          <p>
+            Kiểm tra điều khoản, phí dịch vụ, người ở cùng và chỉ số đầu bên dưới. Đúng thì bấm Đồng ý; cần sửa thì bấm
+            Yêu cầu sửa và ghi rõ chỗ cần sửa.
+          </p>
+          <HoldDeadline holdExpiresAt={contract.holdExpiresAt} />
+        </ActionPanel>
       )
 
     case 'ChoNhanCoc':
