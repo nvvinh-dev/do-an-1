@@ -103,6 +103,12 @@ public class Contract
 
     public DateTimeOffset? CancelledAt { get; set; }
 
+    /// <summary>Lý do người thuê yêu cầu sửa ở lần gần nhất (FR-84); lần sau ghi đè lần trước.</summary>
+    public string? ChangeRequestReason { get; set; }
+
+    /// <summary>Thời điểm người thuê yêu cầu sửa ở lần gần nhất.</summary>
+    public DateTimeOffset? ChangeRequestedAt { get; set; }
+
     public ICollection<ContractServiceFee> ServiceFees { get; set; } = [];
 
     public ICollection<ContractOccupant> Occupants { get; set; } = [];
@@ -235,13 +241,18 @@ public class Contract
         Status = ContractStatus.ChoNguoiThueXacNhan;
     }
 
-    /// <summary>FR-84: người thuê yêu cầu chỉnh sửa; hợp đồng về Nháp để Chủ trọ sửa rồi gửi lại.</summary>
+    /// <summary>
+    /// FR-84: người thuê yêu cầu chỉnh sửa; hợp đồng về Nháp để Chủ trọ sửa rồi gửi lại.
+    /// Lý do và thời điểm gửi ghi đè lần yêu cầu trước.
+    /// </summary>
     /// <exception cref="InvalidOperationException">Gọi khi <see cref="CanRequestChanges"/> sai — lỗi lập trình.</exception>
-    public void RequestChanges(DateTimeOffset now)
+    public void RequestChanges(string reason, DateTimeOffset now)
     {
         EnsureAllowed(CanRequestChanges(now), nameof(RequestChanges));
 
         Status = ContractStatus.Nhap;
+        ChangeRequestReason = reason;
+        ChangeRequestedAt = now;
     }
 
     /// <summary>

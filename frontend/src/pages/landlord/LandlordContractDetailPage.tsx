@@ -34,6 +34,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import UnitInput from '@/components/UnitInput'
 import { NativeSelect, NativeSelectOption } from '@/components/ui/native-select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
@@ -61,6 +62,7 @@ import type { PaymentMethod } from '@/types/paymentTypes'
 import { normalizeMeterIndex, validateMeterIndex } from '@/utils/contractForm'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDate } from '@/utils/formatDate'
+import { formatDateTime } from '@/utils/formatDateTime'
 import { formatMeterIndex } from '@/utils/formatMeterIndex'
 import { canShowContractInvoices, getLandlordContractActions } from '@/utils/getLandlordContractActions'
 import { getMoveOutNoticeActions } from '@/utils/getMoveOutNoticeActions'
@@ -215,7 +217,6 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
         key="moveOutNotice"
         type="button"
         variant="outline"
-       
         onClick={() => setOpenDialog('sendMoveOutNotice')}
       >
         <CalendarX />
@@ -229,7 +230,6 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
         key="withdrawMoveOutNotice"
         type="button"
         variant="outline"
-       
         onClick={() => setOpenDialog('withdrawMoveOutNotice')}
       >
         <Undo2 />
@@ -280,7 +280,7 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
         title={`Hợp đồng phòng ${contract.room.code}`}
         status={<StatusBadge kind="contract" status={contract.status} />}
         subtitle={`${contract.room.propertyName} · Người thuê: ${contract.tenant.fullName}`}
-        action={buttons.length > 0 && <div className="flex flex-wrap gap-2">{buttons}</div>}
+        action={buttons.length > 0 && <div className="flex flex-wrap gap-2 md:justify-end">{buttons}</div>}
       />
 
       {/* Hộp thoại nằm ngoài nút mở nó để không bị gỡ theo nút khi server trả `409` và trang tải lại sang
@@ -454,6 +454,11 @@ function ContractStatusNotice({ contract, today, now, primaryActions }: Contract
     case 'Nhap':
       return (
         <ActionPanel title="Hợp đồng nháp" actions={primaryActions}>
+          {contract.changeRequestReason && contract.changeRequestedAt && (
+            <p className="whitespace-pre-line wrap-anywhere">
+              Người thuê yêu cầu sửa lúc {formatDateTime(contract.changeRequestedAt)}: {contract.changeRequestReason}
+            </p>
+          )}
           <p>Người thuê xem được nhưng chưa đồng ý được. Kiểm tra điều khoản rồi bấm Gửi cho người thuê.</p>
           <HoldDeadline holdExpiresAt={contract.holdExpiresAt} />
         </ActionPanel>
@@ -857,7 +862,8 @@ function InitialMeterBody({ contract, isPending, error, onSubmit }: DialogBodyPr
     >
       <TextField
         id={ids.time}
-        label="Chỉ số điện đầu (kWh)"
+        label="Chỉ số điện đầu"
+        unit="kWh"
         value={electricity}
         onChange={setElectricity}
         inputMode="decimal"
@@ -866,7 +872,8 @@ function InitialMeterBody({ contract, isPending, error, onSubmit }: DialogBodyPr
       />
       <TextField
         id={ids.method}
-        label="Chỉ số nước đầu (m³)"
+        label="Chỉ số nước đầu"
+        unit="m³"
         value={water}
         onChange={setWater}
         inputMode="decimal"
@@ -968,7 +975,8 @@ function RefundBody({ contract, isPending, error, onSubmit }: DialogBodyProps<Re
         <>
           <TextField
             id={ids.amount}
-            label="Số tiền đã hoàn (₫)"
+            label="Số tiền đã hoàn"
+            unit="đ"
             value={amount}
             onChange={setAmount}
             inputMode="numeric"
@@ -1083,14 +1091,16 @@ function TextField({
   error,
   disabled,
   inputMode,
-}: InputFieldProps<string> & { inputMode: 'decimal' | 'numeric' }) {
+  unit,
+}: InputFieldProps<string> & { inputMode: 'decimal' | 'numeric'; unit: string }) {
   return (
     <Field data-invalid={error !== null}>
       <FieldLabel htmlFor={id}>
         {label} <span aria-hidden="true">*</span>
       </FieldLabel>
-      <Input
+      <UnitInput
         id={id}
+        unit={unit}
         value={value}
         inputMode={inputMode}
         className="tabular-nums"

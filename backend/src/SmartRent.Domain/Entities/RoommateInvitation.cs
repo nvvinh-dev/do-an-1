@@ -20,4 +20,22 @@ public class RoommateInvitation
 
     /// <summary>Lúc chấp nhận, từ chối hoặc rút.</summary>
     public DateTimeOffset? RespondedAt { get; set; }
+
+    public bool IsPending => Status == RoommateInvitationStatus.ChoPhanHoi;
+
+    /// <summary>
+    /// Chờ phản hồi → Đã rút: người gửi rút lời mời, hoặc hệ thống rút khi một bên xóa hồ sơ (FR-117) hay chặn
+    /// bên kia (FR-118).
+    /// </summary>
+    /// <exception cref="InvalidOperationException">Gọi khi <see cref="IsPending"/> sai — lỗi lập trình.</exception>
+    public void Withdraw(DateTimeOffset now)
+    {
+        if (!IsPending)
+        {
+            throw new InvalidOperationException($"Lời mời {Id} ở trạng thái {Status}: không rút được.");
+        }
+
+        Status = RoommateInvitationStatus.DaRut;
+        RespondedAt = now;
+    }
 }

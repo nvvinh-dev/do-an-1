@@ -39,6 +39,7 @@ import NotFoundPage from '@/pages/public/NotFoundPage'
 import type { ContractDetail } from '@/types/contractTypes'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDate } from '@/utils/formatDate'
+import { formatDateTime } from '@/utils/formatDateTime'
 import { formatMeterIndex } from '@/utils/formatMeterIndex'
 import { getMoveOutNoticeActions } from '@/utils/getMoveOutNoticeActions'
 import { getTenantContractActions } from '@/utils/getTenantContractActions'
@@ -325,6 +326,11 @@ function ContractStatusNotice({ contract, today, now, confirmActions }: Contract
           <FilePen />
           <AlertTitle>Chủ trọ đang soạn hợp đồng</AlertTitle>
           <AlertDescription>
+            {contract.changeRequestReason && contract.changeRequestedAt && (
+              <p className="whitespace-pre-line wrap-anywhere">
+                Lý do bạn đã gửi lúc {formatDateTime(contract.changeRequestedAt)}: {contract.changeRequestReason}
+              </p>
+            )}
             <p>Hợp đồng chỉ để xem. Chủ trọ gửi xong thì bạn nhận thông báo để kiểm tra và đồng ý.</p>
             <HoldDeadline holdExpiresAt={contract.holdExpiresAt} />
           </AlertDescription>

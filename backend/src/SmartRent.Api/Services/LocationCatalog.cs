@@ -64,6 +64,9 @@ public class LocationCatalog
     public bool Contains(string city, string ward)
         => _wardsByCity.TryGetValue(city, out var wards) && wards.Contains(ward);
 
+    /// <summary>Tỉnh/thành có trong danh mục — dùng khi phường/xã được bỏ trống (hồ sơ ở ghép, FR-109).</summary>
+    public bool ContainsCity(string city) => _wardsByCity.ContainsKey(city);
+
     /// <summary>
     /// Đưa tên về cùng dạng với danh mục: bỏ khoảng trắng hai đầu và chuẩn hóa NFC,
     /// vì cùng một chữ có dấu có thể được gõ ở dạng tổ hợp (NFD).
