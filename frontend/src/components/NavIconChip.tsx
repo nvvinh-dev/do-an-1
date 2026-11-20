@@ -1,20 +1,8 @@
 import type { LucideIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { tintClasses, type NavTint } from '@/utils/tintClasses'
 
-/** Sắc phụ của ô icon (docs/design-system.md mục 2); mỗi mục giữ một sắc ở mọi nơi. */
-export type NavTint = 'teal' | 'sky' | 'violet' | 'indigo' | 'amber' | 'rose' | 'emerald' | 'slate'
-
-// Viết đủ tên class để Tailwind tìm thấy khi quét mã nguồn.
-const tintClasses: Record<NavTint, string> = {
-  teal: 'bg-tint-teal-soft text-tint-teal',
-  sky: 'bg-tint-sky-soft text-tint-sky',
-  violet: 'bg-tint-violet-soft text-tint-violet',
-  indigo: 'bg-tint-indigo-soft text-tint-indigo',
-  amber: 'bg-tint-amber-soft text-tint-amber',
-  rose: 'bg-tint-rose-soft text-tint-rose',
-  emerald: 'bg-tint-emerald-soft text-tint-emerald',
-  slate: 'bg-tint-slate-soft text-tint-slate',
-}
+export type { NavTint } from '@/utils/tintClasses'
 
 interface NavIconChipProps {
   icon: LucideIcon
