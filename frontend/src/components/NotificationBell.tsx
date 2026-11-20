@@ -14,7 +14,7 @@ export default function NotificationBell() {
       <Link to="/notifications" aria-label={count > 0 ? `Thông báo, ${count} chưa đọc` : 'Thông báo'}>
         <Bell className="size-5" />
         {count > 0 && (
-          <Badge className="absolute top-0.5 left-1/2 min-w-5 px-1 tabular-nums">
+          <Badge className="absolute top-0.5 left-1/2 min-w-5 bg-highlight px-1 text-highlight-foreground tabular-nums">
             {count > 99 ? '99+' : count}
           </Badge>
         )}

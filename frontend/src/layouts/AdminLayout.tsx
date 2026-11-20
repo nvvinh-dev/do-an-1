@@ -1,15 +1,33 @@
-import { FileCheck, History, LayoutDashboard, Users } from 'lucide-react'
-import SidebarLayout, { type SidebarNavItem } from '@/layouts/SidebarLayout'
+import { FileUser, History, LayoutGrid, UsersRound } from 'lucide-react'
+import { useAdminDashboard } from '@/hooks/useAdminDashboard'
+import SidebarLayout, { type SidebarNavGroup } from '@/layouts/SidebarLayout'
 
-// Mục và thứ tự theo docs/frontend-screens.md mục 1. Không có chuông và mục Thông báo:
-// Phase 1 không gửi thông báo nào cho Admin.
-const menuItems: SidebarNavItem[] = [
-  { label: 'Tổng quan', to: '/admin', icon: LayoutDashboard, end: true },
-  { label: 'Hồ sơ Chủ trọ', to: '/admin/landlord-applications', icon: FileCheck },
-  { label: 'Tài khoản', to: '/admin/users', icon: Users },
-  { label: 'Nhật ký', to: '/admin/audit-logs', icon: History },
-]
-
+/**
+ * Mục, thứ tự và nhóm theo docs/frontend-screens.md mục 1; icon và sắc theo docs/design-system.md mục 4.
+ * Không có chuông và mục Thông báo: Phase 1 không gửi thông báo nào cho Admin. Số hồ sơ chờ duyệt lấy
+ * từ dashboard (dùng chung query với AD1); lỗi tải thì không hiện số.
+ */
 export default function AdminLayout() {
-  return <SidebarLayout homePath="/admin" items={menuItems} showNotificationBell={false} />
+  const { data: dashboard } = useAdminDashboard()
+
+  const groups: SidebarNavGroup[] = [
+    { items: [{ label: 'Tổng quan', to: '/admin', icon: LayoutGrid, tint: 'teal', end: true }] },
+    {
+      label: 'Quản trị',
+      items: [
+        {
+          label: 'Hồ sơ Chủ trọ',
+          to: '/admin/landlord-applications',
+          icon: FileUser,
+          tint: 'indigo',
+          count: dashboard?.pendingLandlordApplications,
+          countLabel: 'hồ sơ chờ duyệt',
+        },
+        { label: 'Tài khoản', to: '/admin/users', icon: UsersRound, tint: 'emerald' },
+        { label: 'Nhật ký', to: '/admin/audit-logs', icon: History, tint: 'slate' },
+      ],
+    },
+  ]
+
+  return <SidebarLayout homePath="/admin" groups={groups} showNotificationBell={false} />
 }

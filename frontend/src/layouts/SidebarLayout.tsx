@@ -1,6 +1,8 @@
 import { CircleUser, LogOut, type LucideIcon } from 'lucide-react'
 import { Link, matchPath, Outlet, useLocation } from 'react-router'
 import AppLogo from '@/components/AppLogo'
+import NavCountBadge from '@/components/NavCountBadge'
+import NavIconChip, { type NavTint } from '@/components/NavIconChip'
 import NotificationBell from '@/components/NotificationBell'
 import {
   Sidebar,
@@ -8,10 +10,10 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
-  SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
@@ -20,25 +22,45 @@ import {
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useLogout } from '@/hooks/useLogout'
 import { cn } from '@/lib/utils'
+import { getUserRoleLabel } from '@/utils/userRoleLabels'
 
 export interface SidebarNavItem {
   label: string
   to: string
   icon: LucideIcon
+  /** Sắc của ô icon (docs/design-system.md mục 4). */
+  tint: NavTint
   /** Chỉ sáng khi đúng đường dẫn này, không sáng ở trang con (dùng cho Tổng quan). */
   end?: boolean
+  /** Số việc đang chờ ở mục này; không có hoặc bằng 0 thì không hiện. */
+  count?: number
+  /** Đọc kèm số đếm cho trình đọc màn hình. */
+  countLabel?: string
+}
+
+export interface SidebarNavGroup {
+  /** Nhãn nhóm; nhóm đầu (Tổng quan) không có nhãn. */
+  label?: string
+  items: readonly SidebarNavItem[]
 }
 
 interface SidebarLayoutProps {
   homePath: string
-  items: readonly SidebarNavItem[]
+  groups: readonly SidebarNavGroup[]
   showNotificationBell: boolean
 }
 
-// Mục đang chọn dùng màu primary, rê chuột dùng accent (docs/design-system.md mục 2).
-const activeItemClass = 'data-active:text-sidebar-primary'
+// Mục menu cao 44px; mục đang chọn có nền teal nhạt, chữ đậm và vạch trái 4px (docs/design-system.md mục 5).
+const navLinkClass = cn(
+  'relative flex h-11 w-full items-center gap-3 rounded-xl pr-2.5 pl-2 text-sm font-medium text-sidebar-foreground outline-none transition-colors',
+  'hover:bg-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring',
+)
+const activeLinkClass = cn(
+  'bg-sidebar-accent font-semibold text-sidebar-accent-foreground hover:bg-sidebar-accent',
+  'before:absolute before:top-2.5 before:bottom-2.5 before:-left-2 before:w-1 before:rounded-r before:bg-primary',
+)
 
-function SidebarNav({ homePath, items }: Pick<SidebarLayoutProps, 'homePath' | 'items'>) {
+function SidebarNav({ homePath, groups }: Pick<SidebarLayoutProps, 'homePath' | 'groups'>) {
   const { pathname } = useLocation()
   const { setOpenMobile } = useSidebar()
   const { data: user } = useCurrentUser()
@@ -50,47 +72,60 @@ function SidebarNav({ homePath, items }: Pick<SidebarLayoutProps, 'homePath' | '
       <SidebarHeader className="h-16 justify-center px-4">
         <AppLogo to={homePath} />
       </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {items.map((item) => (
-                <SidebarMenuItem key={item.to}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={matchPath({ path: item.to, end: item.end ?? false }, pathname) !== null}
-                    className={activeItemClass}
-                  >
-                    <Link to={item.to} onClick={closeOnMobile}>
-                      <item.icon />
-                      <span>{item.label}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+      <SidebarContent className="gap-1">
+        {groups.map((group, index) => (
+          <SidebarGroup key={group.label ?? index} className="py-1">
+            {group.label && (
+              <SidebarGroupLabel className="h-7 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                {group.label}
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-0.5">
+                {group.items.map((item) => {
+                  const isActive = matchPath({ path: item.to, end: item.end ?? false }, pathname) !== null
+                  return (
+                    <SidebarMenuItem key={item.to}>
+                      <Link
+                        to={item.to}
+                        onClick={closeOnMobile}
+                        aria-current={isActive ? 'page' : undefined}
+                        className={cn(navLinkClass, isActive && activeLinkClass)}
+                      >
+                        <NavIconChip icon={item.icon} tint={item.tint} active={isActive} />
+                        <span className="truncate">{item.label}</span>
+                        <NavCountBadge count={item.count ?? 0} label={item.countLabel ?? ''} />
+                      </Link>
+                    </SidebarMenuItem>
+                  )
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="gap-1 border-t border-sidebar-border">
         <div className="px-2 py-1 text-sm">
-          <p className="truncate font-medium">{user?.fullName}</p>
-          <p className="truncate text-muted-foreground">{user?.email}</p>
+          <p className="truncate font-semibold">{user?.fullName}</p>
+          <p className="truncate text-muted-foreground">{user?.roles[0] ? getUserRoleLabel(user.roles[0]) : null}</p>
         </div>
-        <SidebarMenu>
+        <SidebarMenu className="gap-0.5">
           <SidebarMenuItem>
-            <SidebarMenuButton asChild isActive={pathname === '/account'} className={activeItemClass}>
-              <Link to="/account" onClick={closeOnMobile}>
-                <CircleUser />
-                <span>Tài khoản của tôi</span>
-              </Link>
-            </SidebarMenuButton>
+            <Link
+              to="/account"
+              onClick={closeOnMobile}
+              aria-current={pathname === '/account' ? 'page' : undefined}
+              className={cn(navLinkClass, 'h-10 pl-3', pathname === '/account' && activeLinkClass)}
+            >
+              <CircleUser className="size-5" />
+              <span>Tài khoản của tôi</span>
+            </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={logout}>
-              <LogOut />
+            <button type="button" onClick={logout} className={cn(navLinkClass, 'h-10 pl-3')}>
+              <LogOut className="size-5" />
               <span>Đăng xuất</span>
-            </SidebarMenuButton>
+            </button>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
@@ -102,10 +137,10 @@ function SidebarNav({ homePath, items }: Pick<SidebarLayoutProps, 'homePath' | '
  * Khung có sidebar của Chủ trọ và Admin (docs/design-system.md mục 5): từ lg sidebar cố định
  * bên trái, dưới lg sidebar trượt ra từ nút trên thanh trên.
  */
-export default function SidebarLayout({ homePath, items, showNotificationBell }: SidebarLayoutProps) {
+export default function SidebarLayout({ homePath, groups, showNotificationBell }: SidebarLayoutProps) {
   return (
     <SidebarProvider>
-      <SidebarNav homePath={homePath} items={items} />
+      <SidebarNav homePath={homePath} groups={groups} />
       <SidebarInset>
         <header
           className={cn(

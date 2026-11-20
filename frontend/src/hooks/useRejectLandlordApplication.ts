@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { adminLandlordApplicationsQueryKey } from '@/hooks/useLandlordApplicationList'
+import { invalidateReviewQueries } from '@/hooks/useApproveLandlordApplication'
 import { getApiErrorInfo } from '@/lib/apiError'
 import { rejectLandlordApplication } from '@/services/landlordApplicationService'
 import type { RejectLandlordApplicationRequest } from '@/types/landlordApplicationTypes'
@@ -13,10 +13,10 @@ export function useRejectLandlordApplication(id: number) {
 
   return useMutation({
     mutationFn: (request: RejectLandlordApplicationRequest) => rejectLandlordApplication(id, request),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: adminLandlordApplicationsQueryKey }),
+    onSuccess: () => invalidateReviewQueries(queryClient),
     onError: (error) => {
       if (getApiErrorInfo(error).status === 409) {
-        void queryClient.invalidateQueries({ queryKey: adminLandlordApplicationsQueryKey })
+        void invalidateReviewQueries(queryClient)
       }
     },
   })
