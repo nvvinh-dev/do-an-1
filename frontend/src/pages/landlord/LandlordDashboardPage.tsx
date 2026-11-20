@@ -8,14 +8,16 @@ import {
   ReceiptText,
   Wallet,
   Wrench,
-  type LucideIcon,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
+import CompactMoneyText from '@/components/CompactMoneyText'
 import EmptyIllustration from '@/components/EmptyIllustration'
 import PageHeader from '@/components/PageHeader'
+import PendingActionList, { type PendingActionItem } from '@/components/PendingActionList'
 import PropertyCard from '@/components/PropertyCard'
+import QuickActionList, { type QuickAction } from '@/components/QuickActionList'
 import RevenueBars from '@/components/RevenueBars'
 import StatCard from '@/components/StatCard'
 import { Button } from '@/components/ui/button'
@@ -24,9 +26,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
 import { useLandlordDashboard } from '@/hooks/useLandlordDashboard'
 import { usePropertyList } from '@/hooks/usePropertyList'
-import { cn } from '@/lib/utils'
 import type { LandlordDashboard } from '@/types/dashboardTypes'
-import { formatCompactCurrency } from '@/utils/formatCompactCurrency'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatGreetingDate } from '@/utils/formatGreetingDate'
 import { formatMonth } from '@/utils/formatMonth'
@@ -103,7 +103,7 @@ function DashboardContent({ dashboard }: { dashboard: LandlordDashboard }) {
         </div>
         <div className="flex min-w-0 flex-col gap-6">
           <RevenuePanel dashboard={dashboard} />
-          <QuickActions />
+          <QuickActionList actions={QUICK_ACTIONS} />
         </div>
       </div>
     </>
@@ -149,7 +149,7 @@ function StatCards({ dashboard }: { dashboard: LandlordDashboard }) {
           label="Chưa thu"
           icon={ReceiptText}
           tint="highlight"
-          value={<CompactMoney amount={unpaidInvoices.amount} />}
+          value={<CompactMoneyText amount={unpaidInvoices.amount} />}
           footnote={
             unpaidInvoices.count === 0
               ? 'Không có hóa đơn nào còn phải thu'
@@ -163,7 +163,7 @@ function StatCards({ dashboard }: { dashboard: LandlordDashboard }) {
           label={currentMonth ? `Thu tháng ${Number(currentMonth.month.split('-')[1])}` : 'Thu tháng này'}
           icon={Wallet}
           tint="amber"
-          value={<CompactMoney amount={currentMonth?.amount ?? 0} />}
+          value={<CompactMoneyText amount={currentMonth?.amount ?? 0} />}
           footnote={
             change === null || !previousMonth
               ? 'Tháng trước chưa có khoản thu'
@@ -176,30 +176,10 @@ function StatCards({ dashboard }: { dashboard: LandlordDashboard }) {
   )
 }
 
-/** Số tiền rút gọn cho thẻ chỉ số ("12,5 tr"); trình đọc màn hình đọc số đầy đủ. */
-function CompactMoney({ amount }: { amount: number }) {
-  return (
-    <>
-      <span aria-hidden="true">{formatCompactCurrency(amount)}</span>
-      <span className="sr-only">{formatCurrency(amount)}</span>
-    </>
-  )
-}
-
-interface PendingItem {
-  to: string
-  count: number
-  title: string
-  hint: string
-  emptyHint: string
-  verb: string
-}
-
 /** Việc cần xử lý (docs/design-system.md mục 5); bộ lọc nằm trên query của URL để danh sách mở đúng trạng thái. */
 function PendingActions({ dashboard }: { dashboard: LandlordDashboard }) {
   const { pendingActions } = dashboard
-  const total = sumPendingActions(dashboard)
-  const items: PendingItem[] = [
+  const items: PendingActionItem[] = [
     {
       to: '/landlord/rental-requests?status=ChoDuyet',
       count: pendingActions.rentalRequests,
@@ -226,51 +206,7 @@ function PendingActions({ dashboard }: { dashboard: LandlordDashboard }) {
     },
   ]
 
-  return (
-    <div className="overflow-hidden rounded-xl border border-highlight-soft bg-card">
-      <div className="flex items-center justify-between gap-3 bg-highlight-soft/40 px-4 py-3">
-        <h2 className="text-lg font-bold">Việc cần xử lý</h2>
-        <span className="text-sm text-muted-foreground tabular-nums">{total} việc</span>
-      </div>
-      <ul className="bg-highlight-soft/40">
-        {items.map((item) => {
-          const hasWork = item.count > 0
-          return (
-            <li key={item.to} className="border-t border-highlight-soft">
-              <Link
-                to={item.to}
-                className="grid min-h-14 grid-cols-[2.5rem_minmax(0,1fr)_auto] items-center gap-3 px-4 py-2.5 outline-none transition-colors hover:bg-card focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
-              >
-                <span
-                  className={cn(
-                    'grid size-10 place-items-center rounded-[10px] text-lg tabular-nums',
-                    hasWork
-                      ? 'bg-highlight-soft font-extrabold text-highlight-soft-foreground'
-                      : 'bg-muted font-semibold text-muted-foreground',
-                  )}
-                >
-                  {item.count}
-                </span>
-                <span className="flex min-w-0 flex-col">
-                  <span className="font-semibold">{item.title}</span>
-                  <span className="text-sm text-muted-foreground">{hasWork ? item.hint : item.emptyHint}</span>
-                </span>
-                <span
-                  className={cn(
-                    'flex items-center gap-1 text-sm',
-                    hasWork ? 'font-semibold text-primary' : 'text-muted-foreground',
-                  )}
-                >
-                  <span className="hidden sm:inline">{item.verb}</span>
-                  <ChevronRight aria-hidden="true" className="size-4" />
-                </span>
-              </Link>
-            </li>
-          )
-        })}
-      </ul>
-    </div>
-  )
+  return <PendingActionList items={items} />
 }
 
 function SectionTitle({ title, action }: { title: string; action?: ReactNode }) {
@@ -391,35 +327,13 @@ function RevenuePanel({ dashboard }: { dashboard: LandlordDashboard }) {
   )
 }
 
-const QUICK_ACTIONS: { label: string; to: string; icon: LucideIcon }[] = [
+/** Lối tắt tới các màn đã có; không thêm hành động sản phẩm chưa hỗ trợ. */
+const QUICK_ACTIONS: QuickAction[] = [
   { label: 'Thêm khu trọ', to: NEW_PROPERTY_PATH, icon: Plus },
   { label: 'Duyệt yêu cầu thuê', to: '/landlord/rental-requests?status=ChoDuyet', icon: KeyRound },
   { label: 'Xác nhận thanh toán', to: '/landlord/invoices?status=ChoXacNhan', icon: BadgeCheck },
   { label: 'Xử lý sự cố', to: '/landlord/maintenance-requests', icon: Wrench },
 ]
-
-/** Lối tắt tới các màn đã có (docs/design-system.md mục 5); không thêm hành động sản phẩm chưa hỗ trợ. */
-function QuickActions() {
-  return (
-    <div className="flex flex-col gap-3">
-      <SectionTitle title="Thao tác nhanh" />
-      <ul className="flex flex-col gap-2">
-        {QUICK_ACTIONS.map((action) => (
-          <li key={action.to}>
-            <Link
-              to={action.to}
-              className="flex min-h-11 items-center gap-3 rounded-lg border bg-card px-3 font-medium outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <action.icon aria-hidden="true" className="size-4 text-primary" />
-              <span className="flex-1">{action.label}</span>
-              <ChevronRight aria-hidden="true" className="size-4 text-muted-foreground" />
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
 
 function DashboardSkeleton() {
   return (
