@@ -1,4 +1,5 @@
-import { ChevronRight, FileText } from 'lucide-react'
+import tenantBedroom from '@/assets/tenant-bedroom.jpg'
+import { ChevronRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
@@ -6,7 +7,8 @@ import MoneyText from '@/components/MoneyText'
 import PageHeader from '@/components/PageHeader'
 import StatusBadge from '@/components/StatusBadge'
 import { Button } from '@/components/ui/button'
-import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from '@/components/ui/empty'
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
+import EmptyIllustration from '@/components/EmptyIllustration'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useTenantDashboard } from '@/hooks/useTenantDashboard'
 import { cn } from '@/lib/utils'
@@ -22,7 +24,12 @@ export default function TenantDashboardPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <PageHeader title="Tổng quan" description="Việc cần xử lý, hợp đồng và hóa đơn của bạn." />
+      <PageHeader
+        title="Tổng quan"
+        description="Việc cần xử lý, hợp đồng và hóa đơn của bạn."
+        image={tenantBedroom}
+        imagePosition="50% 45%"
+      />
 
       {dashboardQuery.isPending ? (
         <DashboardSkeleton />
@@ -160,9 +167,7 @@ function NoContractsEmpty() {
   return (
     <Empty className="border">
       <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <FileText />
-        </EmptyMedia>
+        <EmptyIllustration kind="document" />
         <EmptyTitle>Bạn chưa có hợp đồng nào đang mở</EmptyTitle>
         <EmptyDescription>Tìm phòng phù hợp và gửi yêu cầu thuê để Chủ trọ lập hợp đồng.</EmptyDescription>
       </EmptyHeader>

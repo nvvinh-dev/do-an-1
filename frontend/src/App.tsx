@@ -1,9 +1,23 @@
 import { createBrowserRouter, type RouteObject } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
+import adminHouseKeys from '@/assets/admin-house-keys.jpg'
+import adminLaptopDesk from '@/assets/admin-laptop-desk.jpg'
+import authPasswordLocks from '@/assets/auth-password-locks.png'
+import authRegisterLivingRoom from '@/assets/auth-register-living-room.jpg'
+import authStudioRoom from '@/assets/auth-studio-room.jpg'
+import contractSigningDocuments from '@/assets/contract-signing-documents.jpg'
+import invoiceCalculatorMoney from '@/assets/invoice-calculator-money.jpg'
+import landlordApartmentFacade from '@/assets/landlord-apartment-facade.jpg'
+import propertyApartmentRoofs from '@/assets/property-apartment-roofs.jpg'
+import rentalRequestHouseForRent from '@/assets/rental-request-house-for-rent.jpg'
+import searchSaigonStreet from '@/assets/search-saigon-street.jpg'
+import tenantBedroom from '@/assets/tenant-bedroom.jpg'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import RouteErrorFallback from '@/components/RouteErrorFallback'
+import type { ScreenHandle } from '@/components/ScreenBackground'
 import { Toaster } from '@/components/ui/sonner'
 import AdminLayout from '@/layouts/AdminLayout'
+import AuthLayout from '@/layouts/AuthLayout'
 import CurrentRoleLayout from '@/layouts/CurrentRoleLayout'
 import LandlordLayout from '@/layouts/LandlordLayout'
 import PublicLayout from '@/layouts/PublicLayout'
@@ -53,6 +67,9 @@ import TenantMaintenanceRequestListPage from '@/pages/tenant/TenantMaintenanceRe
 import TenantRentalRequestDetailPage from '@/pages/tenant/TenantRentalRequestDetailPage'
 import TenantRentalRequestListPage from '@/pages/tenant/TenantRentalRequestListPage'
 
+/** Ảnh nền mờ của màn hình, `ScreenBackground` đọc từ `handle` của route sâu nhất (docs/design-system.md mục 11). */
+const bg = (background: string, backgroundPosition?: string): ScreenHandle => ({ background, backgroundPosition })
+
 // Đường dẫn và file trang theo docs/frontend-screens.md mục 2–7; layout theo mục 1.
 // Đường dẫn lạ trong nhóm của một vai trò vẫn qua kiểm tra vai trò trước khi tới NotFoundPage.
 const routes: RouteObject[] = [
@@ -66,12 +83,18 @@ const routes: RouteObject[] = [
         // Lỗi khi vẽ một trang chỉ thay phần nội dung, giữ thanh trên để sang trang khác.
         errorElement: <RouteErrorFallback />,
         children: [
-          { path: '/', element: <SearchPage /> },
-          { path: '/rooms/:id', element: <RoomPublicDetailPage /> },
-          { path: '/login', element: <LoginPage /> },
-          { path: '/register', element: <RegisterPage /> },
-          { path: '/forgot-password', element: <ForgotPasswordPage /> },
-          { path: '/reset-password', element: <ResetPasswordPage /> },
+          { path: '/', element: <SearchPage />, handle: bg(searchSaigonStreet) },
+          { path: '/rooms/:id', element: <RoomPublicDetailPage />, handle: bg(searchSaigonStreet) },
+          {
+            // Bốn màn xác thực có ảnh bên cạnh form.
+            element: <AuthLayout />,
+            children: [
+              { path: '/login', element: <LoginPage />, handle: bg(authStudioRoom) },
+              { path: '/register', element: <RegisterPage />, handle: bg(authRegisterLivingRoom) },
+              { path: '/forgot-password', element: <ForgotPasswordPage />, handle: bg(authPasswordLocks) },
+              { path: '/reset-password', element: <ResetPasswordPage />, handle: bg(authPasswordLocks) },
+            ],
+          },
           { path: '*', element: <NotFoundPage /> },
         ],
       },
@@ -91,11 +114,11 @@ const routes: RouteObject[] = [
             // Lỗi khi vẽ một trang chỉ thay phần nội dung, giữ menu để sang trang khác.
             errorElement: <RouteErrorFallback />,
             children: [
-              { path: '/account', element: <AccountPage /> },
+              { path: '/account', element: <AccountPage />, handle: bg(authRegisterLivingRoom) },
               // Admin không có màn Thông báo (docs/frontend-screens.md mục 1, 8.4)
               {
                 element: <ProtectedRoute roles={['Tenant', 'Landlord']} />,
-                children: [{ path: '/notifications', element: <NotificationsPage /> }],
+                children: [{ path: '/notifications', element: <NotificationsPage />, handle: bg(authRegisterLivingRoom) }],
               },
             ],
           },
@@ -117,17 +140,17 @@ const routes: RouteObject[] = [
             // Lỗi khi vẽ một trang chỉ thay phần nội dung, giữ menu để sang trang khác.
             errorElement: <RouteErrorFallback />,
             children: [
-              { index: true, element: <TenantDashboardPage /> },
+              { index: true, element: <TenantDashboardPage />, handle: bg(tenantBedroom) },
               { path: 'landlord-application', element: <LandlordApplicationPage /> },
-              { path: 'rental-requests', element: <TenantRentalRequestListPage /> },
-              { path: 'rental-requests/:id', element: <TenantRentalRequestDetailPage /> },
-              { path: 'contracts', element: <TenantContractListPage /> },
-              { path: 'contracts/:id', element: <TenantContractDetailPage /> },
-              { path: 'invoices', element: <TenantInvoiceListPage /> },
-              { path: 'invoices/:id', element: <TenantInvoiceDetailPage /> },
-              { path: 'maintenance-requests', element: <TenantMaintenanceRequestListPage /> },
-              { path: 'maintenance-requests/new', element: <ReportMaintenanceRequestPage /> },
-              { path: 'maintenance-requests/:id', element: <TenantMaintenanceRequestDetailPage /> },
+              { path: 'rental-requests', element: <TenantRentalRequestListPage />, handle: bg(rentalRequestHouseForRent, '50% 62%') },
+              { path: 'rental-requests/:id', element: <TenantRentalRequestDetailPage />, handle: bg(rentalRequestHouseForRent, '50% 62%') },
+              { path: 'contracts', element: <TenantContractListPage />, handle: bg(contractSigningDocuments) },
+              { path: 'contracts/:id', element: <TenantContractDetailPage />, handle: bg(contractSigningDocuments) },
+              { path: 'invoices', element: <TenantInvoiceListPage />, handle: bg(invoiceCalculatorMoney) },
+              { path: 'invoices/:id', element: <TenantInvoiceDetailPage />, handle: bg(invoiceCalculatorMoney) },
+              { path: 'maintenance-requests', element: <TenantMaintenanceRequestListPage />, handle: bg(propertyApartmentRoofs) },
+              { path: 'maintenance-requests/new', element: <ReportMaintenanceRequestPage />, handle: bg(propertyApartmentRoofs) },
+              { path: 'maintenance-requests/:id', element: <TenantMaintenanceRequestDetailPage />, handle: bg(propertyApartmentRoofs) },
               { path: '*', element: <NotFoundPage /> },
             ],
           },
@@ -149,28 +172,28 @@ const routes: RouteObject[] = [
             // Lỗi khi vẽ một trang chỉ thay phần nội dung, giữ menu để sang trang khác.
             errorElement: <RouteErrorFallback />,
             children: [
-              { index: true, element: <LandlordDashboardPage /> },
-              { path: 'properties', element: <PropertyListPage /> },
-              { path: 'properties/new', element: <PropertyFormPage /> },
-              { path: 'properties/:id', element: <PropertyDetailPage /> },
-              { path: 'properties/:id/edit', element: <PropertyFormPage /> },
-              { path: 'properties/:propertyId/rooms/new', element: <RoomFormPage /> },
-              { path: 'rooms/:id', element: <LandlordRoomDetailPage /> },
-              { path: 'rooms/:id/edit', element: <RoomFormPage /> },
-              { path: 'bank-account', element: <BankAccountPage /> },
-              { path: 'rental-requests', element: <LandlordRentalRequestListPage /> },
-              { path: 'rental-requests/:id', element: <LandlordRentalRequestDetailPage /> },
-              { path: 'contracts', element: <LandlordContractListPage /> },
-              { path: 'contracts/new', element: <ContractFormPage /> },
-              { path: 'contracts/:id', element: <LandlordContractDetailPage /> },
-              { path: 'contracts/:id/edit', element: <ContractFormPage /> },
-              { path: 'contracts/:id/invoices/new', element: <InvoiceFormPage /> },
-              { path: 'contracts/:id/settlement', element: <SettlementPage /> },
-              { path: 'invoices', element: <LandlordInvoiceListPage /> },
-              { path: 'invoices/:id', element: <LandlordInvoiceDetailPage /> },
-              { path: 'invoices/:id/edit', element: <InvoiceFormPage /> },
-              { path: 'maintenance-requests', element: <LandlordMaintenanceRequestListPage /> },
-              { path: 'maintenance-requests/:id', element: <LandlordMaintenanceRequestDetailPage /> },
+              { index: true, element: <LandlordDashboardPage />, handle: bg(landlordApartmentFacade) },
+              { path: 'properties', element: <PropertyListPage />, handle: bg(propertyApartmentRoofs) },
+              { path: 'properties/new', element: <PropertyFormPage />, handle: bg(propertyApartmentRoofs) },
+              { path: 'properties/:id', element: <PropertyDetailPage />, handle: bg(propertyApartmentRoofs) },
+              { path: 'properties/:id/edit', element: <PropertyFormPage />, handle: bg(propertyApartmentRoofs) },
+              { path: 'properties/:propertyId/rooms/new', element: <RoomFormPage />, handle: bg(propertyApartmentRoofs) },
+              { path: 'rooms/:id', element: <LandlordRoomDetailPage />, handle: bg(propertyApartmentRoofs) },
+              { path: 'rooms/:id/edit', element: <RoomFormPage />, handle: bg(propertyApartmentRoofs) },
+              { path: 'bank-account', element: <BankAccountPage />, handle: bg(invoiceCalculatorMoney) },
+              { path: 'rental-requests', element: <LandlordRentalRequestListPage />, handle: bg(rentalRequestHouseForRent, '50% 62%') },
+              { path: 'rental-requests/:id', element: <LandlordRentalRequestDetailPage />, handle: bg(rentalRequestHouseForRent, '50% 62%') },
+              { path: 'contracts', element: <LandlordContractListPage />, handle: bg(contractSigningDocuments) },
+              { path: 'contracts/new', element: <ContractFormPage />, handle: bg(contractSigningDocuments) },
+              { path: 'contracts/:id', element: <LandlordContractDetailPage />, handle: bg(contractSigningDocuments) },
+              { path: 'contracts/:id/edit', element: <ContractFormPage />, handle: bg(contractSigningDocuments) },
+              { path: 'contracts/:id/invoices/new', element: <InvoiceFormPage />, handle: bg(invoiceCalculatorMoney) },
+              { path: 'contracts/:id/settlement', element: <SettlementPage />, handle: bg(contractSigningDocuments) },
+              { path: 'invoices', element: <LandlordInvoiceListPage />, handle: bg(invoiceCalculatorMoney) },
+              { path: 'invoices/:id', element: <LandlordInvoiceDetailPage />, handle: bg(invoiceCalculatorMoney) },
+              { path: 'invoices/:id/edit', element: <InvoiceFormPage />, handle: bg(invoiceCalculatorMoney) },
+              { path: 'maintenance-requests', element: <LandlordMaintenanceRequestListPage />, handle: bg(propertyApartmentRoofs) },
+              { path: 'maintenance-requests/:id', element: <LandlordMaintenanceRequestDetailPage />, handle: bg(propertyApartmentRoofs) },
               { path: '*', element: <NotFoundPage /> },
             ],
           },
@@ -192,11 +215,11 @@ const routes: RouteObject[] = [
             // Lỗi khi vẽ một trang chỉ thay phần nội dung, giữ menu để sang trang khác.
             errorElement: <RouteErrorFallback />,
             children: [
-              { index: true, element: <AdminDashboardPage /> },
-              { path: 'landlord-applications', element: <LandlordApplicationListPage /> },
-              { path: 'landlord-applications/:id', element: <LandlordApplicationReviewPage /> },
-              { path: 'users', element: <UserListPage /> },
-              { path: 'audit-logs', element: <AuditLogPage /> },
+              { index: true, element: <AdminDashboardPage />, handle: bg(adminHouseKeys) },
+              { path: 'landlord-applications', element: <LandlordApplicationListPage />, handle: bg(adminLaptopDesk) },
+              { path: 'landlord-applications/:id', element: <LandlordApplicationReviewPage />, handle: bg(adminLaptopDesk) },
+              { path: 'users', element: <UserListPage />, handle: bg(adminLaptopDesk) },
+              { path: 'audit-logs', element: <AuditLogPage />, handle: bg(adminLaptopDesk) },
               { path: '*', element: <NotFoundPage /> },
             ],
           },

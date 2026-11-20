@@ -48,7 +48,7 @@ function VietQrBoxContent({ paymentQr, className }: { paymentQr: PaymentQr; clas
             role="img"
             aria-label={`Mã VietQR chuyển ${formatCurrency(paymentQr.amount)}, nội dung ${paymentQr.transferContent}`}
             shapeRendering="crispEdges"
-            className="aspect-square w-full max-w-60 shrink-0 rounded-lg border bg-background text-foreground"
+            className="aspect-square w-full max-w-60 shrink-0 rounded-lg border bg-card text-foreground"
           >
             <path d={qrImage.path} fill="currentColor" />
           </svg>
