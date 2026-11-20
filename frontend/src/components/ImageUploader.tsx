@@ -244,7 +244,7 @@ export default function ImageUploader({
               type="button"
               disabled={isLocked}
               onClick={() => inputRef.current?.click()}
-              className="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-input text-sm text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-accent-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50"
+              className="flex aspect-square w-full flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-input text-sm text-muted-foreground transition-colors outline-none hover:bg-accent hover:text-accent-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
             >
               {isUploading ? <Spinner className="size-5" /> : <ImagePlus className="size-5" aria-hidden="true" />}
               <span>{isUploading ? 'Đang tải lên' : 'Thêm ảnh'}</span>

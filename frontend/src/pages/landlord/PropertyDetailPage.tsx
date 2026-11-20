@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import PageHeader from '@/components/PageHeader'
+import PhotoGrid from '@/components/PhotoGrid'
 import PropertyRoomList from '@/components/PropertyRoomList'
 import RoomCountsSummary from '@/components/RoomCountsSummary'
 import StatusBadge from '@/components/StatusBadge'
@@ -84,7 +85,7 @@ function PropertyDetailContent({ property }: { property: PropertyDetail }) {
       <RoomCountsSummary counts={property.roomCounts} variant="tiles" />
 
       <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-        <h2 className="text-lg font-medium">Thông tin khu trọ</h2>
+        <h2 className="text-lg font-bold">Thông tin khu trọ</h2>
         <dl className="grid gap-4 text-sm md:grid-cols-[10rem_1fr]">
           <dt className="text-muted-foreground">Trạng thái</dt>
           <dd>
@@ -116,7 +117,7 @@ function PropertyDetailContent({ property }: { property: PropertyDetail }) {
         </dl>
       </div>
 
-      {property.images.length > 0 && <PropertyImages property={property} />}
+      <PropertyImages property={property} />
       <PropertyRoomList propertyId={property.id} isArchived={isArchived} />
     </>
   )
@@ -165,24 +166,12 @@ function PropertyActions({ property }: { property: PropertyDetail }) {
 function PropertyImages({ property }: { property: PropertyDetail }) {
   return (
     <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-      <h2 className="text-lg font-medium">Ảnh khu trọ</h2>
-      <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-        {property.images.map((image, index) => (
-          <li key={image.path} className="relative">
-            <img
-              src={image.url}
-              alt={`Ảnh khu trọ ${property.name}, ảnh ${index + 1}`}
-              className="aspect-4/3 w-full rounded-lg object-cover"
-              loading="lazy"
-            />
-            {index === 0 && (
-              <Badge variant="secondary" className="absolute top-2 left-2">
-                Ảnh đại diện
-              </Badge>
-            )}
-          </li>
-        ))}
-      </ul>
+      <h2 className="text-lg font-bold">Ảnh khu trọ</h2>
+      <PhotoGrid
+        images={property.images}
+        altPrefix={`Ảnh khu trọ ${property.name}`}
+        missingText="Chưa có ảnh khu trọ. Sửa khu trọ để thêm ảnh."
+      />
     </div>
   )
 }

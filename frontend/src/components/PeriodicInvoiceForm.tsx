@@ -142,7 +142,7 @@ export default function PeriodicInvoiceForm({
 function FormSection({ title, children }: { title: string; children: ReactNode }) {
   return (
     <FieldSet className="flex min-w-0 flex-col gap-4 rounded-xl border bg-card p-4 shadow-sm md:p-6">
-      <FieldLegend className="text-lg font-medium">{title}</FieldLegend>
+      <FieldLegend className="text-lg font-bold">{title}</FieldLegend>
       {children}
     </FieldSet>
   )

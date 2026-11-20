@@ -24,7 +24,7 @@ export default function PropertyRoomList({ propertyId, isArchived }: { propertyI
   return (
     <section className="flex flex-col gap-4" aria-labelledby="rooms-heading">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <h2 id="rooms-heading" className="text-lg font-semibold">
+        <h2 id="rooms-heading" className="text-lg font-bold">
           Danh sách phòng
         </h2>
         {!isArchived && (
@@ -98,7 +98,7 @@ function RoomList({ rooms }: { rooms: RoomListItem[] }) {
             >
               <RoomCover room={room} />
               <div className="flex min-w-0 flex-1 flex-col gap-2">
-                <span className="font-medium wrap-anywhere">{room.code}</span>
+                <span className="font-semibold wrap-anywhere">{room.code}</span>
                 <MoneyText amount={room.rentPrice} />
                 <span className="text-sm text-muted-foreground">
                   {room.area.toLocaleString('vi-VN')} m² · {room.maxOccupants} người
@@ -109,7 +109,7 @@ function RoomList({ rooms }: { rooms: RoomListItem[] }) {
           </li>
         ))}
       </ul>
-      <div className="hidden rounded-xl border bg-card shadow-sm md:block">
+      <div className="hidden overflow-hidden rounded-xl border bg-card shadow-sm md:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -127,7 +127,7 @@ function RoomList({ rooms }: { rooms: RoomListItem[] }) {
                     <div className="flex min-w-0 flex-col gap-1">
                       <Link
                         to={`/landlord/rooms/${room.id}`}
-                        className="font-medium wrap-anywhere underline-offset-4 hover:underline"
+                        className="font-semibold wrap-anywhere underline-offset-4 hover:underline"
                       >
                         {room.code}
                       </Link>

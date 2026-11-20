@@ -28,7 +28,7 @@ export default function SettlementReview({ invoice }: SettlementReviewProps) {
 
   return (
     <section aria-labelledby="settlement-review-title" className="flex flex-col gap-6">
-      <h2 id="settlement-review-title" className="text-xl font-semibold">
+      <h2 id="settlement-review-title" className="text-xl font-bold">
         Bảng thanh lý
       </h2>
 

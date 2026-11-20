@@ -119,7 +119,7 @@ function ApplicationStatus({ application, justSubmitted, onResubmit }: Applicati
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-medium">Hồ sơ của bạn</h2>
+        <h2 className="text-lg font-bold">Hồ sơ của bạn</h2>
         <StatusBadge kind="landlordApplication" status={status} />
       </div>
 

@@ -200,7 +200,7 @@ function UserCards({ users, ...actions }: UserActionsProps & { users: UserListIt
       {users.map((user) => (
         <li key={user.id} className="flex flex-col gap-2 rounded-xl border bg-card p-4 text-card-foreground shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <span className="min-w-0 font-medium wrap-anywhere">{user.fullName}</span>
+            <span className="min-w-0 font-semibold wrap-anywhere">{user.fullName}</span>
             <StatusBadge kind="userAccount" status={user.isLocked ? 'BiKhoa' : 'HoatDong'} />
           </div>
           <p className="text-sm wrap-anywhere text-muted-foreground">{user.email}</p>
@@ -222,7 +222,7 @@ function UserCards({ users, ...actions }: UserActionsProps & { users: UserListIt
 /** Từ `md`: bảng. */
 function UserTable({ users, ...actions }: UserActionsProps & { users: UserListItem[] }) {
   return (
-    <div className="hidden rounded-xl border bg-card shadow-sm md:block">
+    <div className="hidden overflow-hidden rounded-xl border bg-card shadow-sm md:block">
       <Table>
         <TableHeader>
           <TableRow>
@@ -240,7 +240,7 @@ function UserTable({ users, ...actions }: UserActionsProps & { users: UserListIt
             <TableRow key={user.id}>
               <TableCell className="px-4 py-3 whitespace-normal">
                 <div className="flex flex-col gap-1">
-                  <span className="font-medium wrap-anywhere">{user.fullName}</span>
+                  <span className="font-semibold wrap-anywhere">{user.fullName}</span>
                   <span className="wrap-anywhere text-muted-foreground">{user.email}</span>
                   {user.phoneNumber && <span className="text-muted-foreground">{user.phoneNumber}</span>}
                   {user.lockReason && <LockReason reason={user.lockReason} />}

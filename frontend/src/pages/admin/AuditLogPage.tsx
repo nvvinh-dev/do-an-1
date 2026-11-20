@@ -131,9 +131,9 @@ function AuditLogCards({ logs, onSelect }: AuditLogListViewProps) {
           <button
             type="button"
             onClick={() => onSelect(log.id)}
-            className="flex w-full flex-col gap-1 rounded-xl border bg-card p-4 text-left text-card-foreground shadow-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="flex w-full flex-col gap-1 rounded-xl border bg-card p-4 text-left text-card-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <span className="font-medium wrap-anywhere">{getAuditActionLabel(log.action)}</span>
+            <span className="font-semibold wrap-anywhere">{getAuditActionLabel(log.action)}</span>
             <span className="text-sm wrap-anywhere">{formatEntity(log)}</span>
             <span className="text-sm text-muted-foreground wrap-anywhere">
               {log.actor.fullName} (mã {log.actor.id})
@@ -149,7 +149,7 @@ function AuditLogCards({ logs, onSelect }: AuditLogListViewProps) {
 /** Từ `md`: bảng; nút cuối dòng mở so sánh trước – sau. */
 function AuditLogTable({ logs, onSelect }: AuditLogListViewProps) {
   return (
-    <div className="hidden rounded-xl border bg-card shadow-sm md:block">
+    <div className="hidden overflow-hidden rounded-xl border bg-card shadow-sm md:block">
       <Table>
         <TableHeader>
           <TableRow>

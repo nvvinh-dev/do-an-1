@@ -111,7 +111,7 @@ function RentalRequestDetailContent({ rentalRequest }: { rentalRequest: RentalRe
       <RentalRequestStatusNotice rentalRequest={rentalRequest} isOverdue={isOverdue} />
 
       <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-        <h2 className="text-lg font-medium">Thông tin yêu cầu</h2>
+        <h2 className="text-lg font-bold">Thông tin yêu cầu</h2>
         <dl className="grid gap-4 text-sm md:grid-cols-[12rem_1fr]">
           <dt className="text-muted-foreground">Trạng thái</dt>
           <dd>

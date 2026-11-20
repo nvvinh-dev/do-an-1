@@ -445,7 +445,7 @@ interface DetailCardProps {
 function DetailCard({ title, children, note }: DetailCardProps) {
   return (
     <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-      <h2 className="text-lg font-medium">{title}</h2>
+      <h2 className="text-lg font-bold">{title}</h2>
       {children && <dl className="grid gap-4 text-sm md:grid-cols-[12rem_1fr]">{children}</dl>}
       {note && <p className="text-sm text-muted-foreground">{note}</p>}
     </div>
@@ -684,7 +684,7 @@ interface ContractInvoicesSectionProps {
 function ContractInvoicesSection({ invoices, isPending, error, onRetry }: ContractInvoicesSectionProps) {
   return (
     <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-      <h2 className="text-lg font-medium">Hóa đơn</h2>
+      <h2 className="text-lg font-bold">Hóa đơn</h2>
       {/* Lỗi tải lại nền thì giữ danh sách cũ, chỉ báo lỗi kèm nút thử lại. */}
       <ApiErrorAlert error={error} onRetry={onRetry} />
       {invoices === undefined ? (
@@ -702,7 +702,7 @@ function ContractInvoicesSection({ invoices, isPending, error, onRetry }: Contra
             <li key={invoice.id}>
               <Link
                 to={`/landlord/invoices/${invoice.id}`}
-                className="flex flex-col gap-1 py-3 outline-none hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50 md:flex-row md:items-center md:justify-between md:gap-4"
+                className="flex flex-col gap-1 py-3 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring md:flex-row md:items-center md:justify-between md:gap-4"
               >
                 <span className="flex flex-col gap-0.5">
                   <span className="font-medium">

@@ -324,7 +324,7 @@ interface DetailCardProps {
 function DetailCard({ title, children, note }: DetailCardProps) {
   return (
     <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-      <h2 className="text-lg font-medium">{title}</h2>
+      <h2 className="text-lg font-bold">{title}</h2>
       {children && <dl className="grid gap-4 text-sm md:grid-cols-[12rem_1fr]">{children}</dl>}
       {note && <p className="text-sm text-muted-foreground">{note}</p>}
     </div>

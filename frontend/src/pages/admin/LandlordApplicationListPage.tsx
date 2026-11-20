@@ -127,10 +127,10 @@ function ApplicationCards({ applications, listSearch }: ApplicationListViewProps
           <Link
             to={applicationPath(application.id)}
             state={{ listSearch }}
-            className="flex flex-col gap-2 rounded-xl border bg-card p-4 text-card-foreground shadow-sm outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="flex flex-col gap-2 rounded-xl border bg-card p-4 text-card-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="font-medium wrap-anywhere">{application.applicantFullName}</span>
+              <span className="font-semibold wrap-anywhere">{application.applicantFullName}</span>
               <StatusBadge kind="landlordApplication" status={application.status} />
             </div>
             <p className="text-sm text-muted-foreground wrap-anywhere">{application.applicantEmail}</p>
@@ -145,7 +145,7 @@ function ApplicationCards({ applications, listSearch }: ApplicationListViewProps
 /** Từ `md`: bảng; tên người nộp là liên kết tới trang duyệt. */
 function ApplicationTable({ applications, listSearch }: ApplicationListViewProps) {
   return (
-    <div className="hidden rounded-xl border bg-card shadow-sm md:block">
+    <div className="hidden overflow-hidden rounded-xl border bg-card shadow-sm md:block">
       <Table>
         <TableHeader>
           <TableRow>
@@ -162,7 +162,7 @@ function ApplicationTable({ applications, listSearch }: ApplicationListViewProps
                 <Link
                   to={applicationPath(application.id)}
                   state={{ listSearch }}
-                  className="font-medium wrap-anywhere underline-offset-4 hover:underline"
+                  className="font-semibold wrap-anywhere underline-offset-4 hover:underline"
                 >
                   {application.applicantFullName}
                 </Link>

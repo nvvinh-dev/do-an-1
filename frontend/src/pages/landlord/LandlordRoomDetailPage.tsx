@@ -6,6 +6,7 @@ import ApiErrorAlert from '@/components/ApiErrorAlert'
 import ConfirmDialog from '@/components/ConfirmDialog'
 import MoneyText from '@/components/MoneyText'
 import PageHeader from '@/components/PageHeader'
+import PhotoGrid from '@/components/PhotoGrid'
 import StatusBadge from '@/components/StatusBadge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -85,7 +86,7 @@ function RoomDetailContent({ room, refetchError, onRetry }: RoomDetailContentPro
         </Alert>
       )}
       <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 shadow-sm md:p-6">
-        <h2 className="text-lg font-semibold">Đăng tin và khai thác</h2>
+        <h2 className="text-lg font-bold">Đăng tin và khai thác</h2>
         <VisibilityControl
           room={room}
           showError={lastAction === 'visibility'}
@@ -100,7 +101,7 @@ function RoomDetailContent({ room, refetchError, onRetry }: RoomDetailContentPro
       </section>
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 shadow-sm md:p-6">
-          <h2 className="text-lg font-semibold">Thông tin phòng</h2>
+          <h2 className="text-lg font-bold">Thông tin phòng</h2>
           <dl className="grid gap-3 md:grid-cols-[10rem_1fr]">
             <dt className="text-muted-foreground">Diện tích</dt>
             <dd>{room.area.toLocaleString('vi-VN')} m²</dd>
@@ -138,7 +139,7 @@ function RoomDetailContent({ room, refetchError, onRetry }: RoomDetailContentPro
           </dl>
         </section>
         <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 shadow-sm md:p-6">
-          <h2 className="text-lg font-semibold">Giá và phí hiện hành</h2>
+          <h2 className="text-lg font-bold">Giá và phí hiện hành</h2>
           <dl className="grid gap-3 md:grid-cols-[1fr_auto]">
             <dt className="text-muted-foreground">Giá thuê / tháng</dt>
             <dd>
@@ -171,28 +172,14 @@ function RoomDetailContent({ room, refetchError, onRetry }: RoomDetailContentPro
           </p>
         </section>
       </div>
-      {room.images.length > 0 && (
-        <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 md:p-6">
-          <h2 className="text-lg font-semibold">Ảnh phòng</h2>
-          <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-            {room.images.map((image, index) => (
-              <li key={image.path} className="relative">
-                <img
-                  src={image.url}
-                  alt={`Ảnh phòng ${room.code}, ảnh ${index + 1}`}
-                  className="aspect-4/3 w-full rounded-lg object-cover"
-                  loading="lazy"
-                />
-                {index === 0 && (
-                  <Badge variant="secondary" className="absolute top-2 left-2">
-                    Ảnh đại diện
-                  </Badge>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 md:p-6">
+        <h2 className="text-lg font-bold">Ảnh phòng</h2>
+        <PhotoGrid
+          images={room.images}
+          altPrefix={`Ảnh phòng ${room.code}`}
+          missingText="Chưa có ảnh phòng. Sửa phòng để thêm ảnh."
+        />
+      </section>
     </section>
   )
 }
