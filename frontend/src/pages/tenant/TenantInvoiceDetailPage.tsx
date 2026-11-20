@@ -1,17 +1,22 @@
-import { ChevronLeft, HandCoins } from 'lucide-react'
+import { HandCoins } from 'lucide-react'
 import { useId, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router'
 import { toast } from 'sonner'
+import ActionPanel from '@/components/ActionPanel'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
+import BackLink from '@/components/BackLink'
+import DetailHeader from '@/components/DetailHeader'
+import DetailLayout from '@/components/DetailLayout'
 import FormDialog, { FormDialogBody } from '@/components/FormDialog'
 import ImageUploader from '@/components/ImageUploader'
 import InvoiceBreakdown from '@/components/InvoiceBreakdown'
+import InvoicePaymentSummary from '@/components/InvoicePaymentSummary'
 import MoneyText from '@/components/MoneyText'
-import PageHeader from '@/components/PageHeader'
 import PaymentAmountField from '@/components/PaymentAmountField'
 import PaymentReportList from '@/components/PaymentReportList'
 import SettlementReview from '@/components/SettlementReview'
 import VietQrBox from '@/components/VietQrBox'
+import StatusBadge from '@/components/StatusBadge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel } from '@/components/ui/field'
@@ -56,12 +61,7 @@ export default function TenantInvoiceDetailPage() {
 
   return (
     <section className="flex flex-col gap-6">
-      <Button asChild variant="ghost" size="sm" className="-ml-3 self-start">
-        <Link to={{ pathname: '/tenant/invoices', search: listSearch }}>
-          <ChevronLeft />
-          Hóa đơn
-        </Link>
-      </Button>
+      <BackLink to={{ pathname: '/tenant/invoices', search: listSearch }}>Hóa đơn</BackLink>
 
       {invoiceQuery.isPending ? (
         <InvoiceDetailSkeleton />
@@ -86,44 +86,58 @@ function InvoiceDetailContent({ invoice }: { invoice: InvoiceDetail }) {
   const actions = getTenantInvoiceActions(invoice)
   const contract = contractQuery.data
 
+  const typeLabel = getInvoiceTypeLabel(invoice.type)
+
   return (
     <>
-      <PageHeader
+      <DetailHeader
         title={contract ? `Hóa đơn phòng ${contract.room.code}` : `Hóa đơn #${invoice.id}`}
-        description={
-          contract
-            ? `${getInvoiceTypeLabel(invoice.type)} · ${contract.room.propertyName}`
-            : getInvoiceTypeLabel(invoice.type)
-        }
-        action={
-          actions.canReportPayment && (
-            <Button type="button" size="page" onClick={() => setReportOpen(true)}>
-              <HandCoins />
-              Báo đã thanh toán
-            </Button>
-          )
+        status={<StatusBadge kind="invoice" status={invoice.status} />}
+        subtitle={
+          <>
+            {contract ? `${typeLabel} · ${contract.room.propertyName}` : typeLabel}
+            {' · '}
+            <Link to={`/tenant/contracts/${invoice.contractId}`} className="underline underline-offset-4">
+              Xem hợp đồng
+            </Link>
+          </>
         }
       />
-
-      <Link to={`/tenant/contracts/${invoice.contractId}`} className="-mt-3 self-start text-sm underline underline-offset-4">
-        Xem hợp đồng
-      </Link>
 
       {/* Hộp thoại nằm ngoài nút mở nó: server trả `409` (Chủ trọ vừa hủy, sửa hóa đơn) thì trang tải lại sang trạng
           thái mới, nút biến mất nhưng hộp thoại vẫn mở để hiện `detail`. */}
       <ReportPaymentDialog invoice={invoice} open={reportOpen} onOpenChange={setReportOpen} />
 
-      <InvoiceStatusNotice invoice={invoice} pendingReport={actions.pendingReport} />
+      <DetailLayout aside={invoice.type === 'ThanhLy' ? null : <InvoicePaymentSummary invoice={invoice} />}>
+        {actions.canReportPayment ? (
+          <ActionPanel
+            title={invoice.status === 'QuaHan' ? 'Hóa đơn đã quá hạn' : 'Hóa đơn còn phải trả'}
+            actions={
+              <Button type="button" size="page" onClick={() => setReportOpen(true)}>
+                <HandCoins />
+                Báo đã thanh toán
+              </Button>
+            }
+          >
+            <p>
+              {invoice.dueDate ? `Hạn thanh toán là ${formatDate(invoice.dueDate)}. ` : ''}Chuyển khoản phần còn phải trả
+              rồi bấm Báo đã thanh toán kèm ảnh minh chứng.
+            </p>
+          </ActionPanel>
+        ) : (
+          <InvoiceStatusNotice invoice={invoice} pendingReport={actions.pendingReport} />
+        )}
 
-      {actions.canReportPayment && <PaymentSection invoice={invoice} />}
+        {actions.canReportPayment && <PaymentSection invoice={invoice} />}
 
-      {invoice.type === 'ThanhLy' ? (
-        <SettlementReview invoice={invoice} />
-      ) : (
-        <InvoiceBreakdown invoice={invoice} invoicePath={(invoiceId) => `/tenant/invoices/${invoiceId}`} />
-      )}
+        {invoice.type === 'ThanhLy' ? (
+          <SettlementReview invoice={invoice} />
+        ) : (
+          <InvoiceBreakdown invoice={invoice} invoicePath={(invoiceId) => `/tenant/invoices/${invoiceId}`} />
+        )}
 
-      <PaymentReportList reports={invoice.paymentReports} />
+        <PaymentReportList reports={invoice.paymentReports} />
+      </DetailLayout>
     </>
   )
 }
@@ -282,7 +296,7 @@ function ReportPaymentBody({ invoice, isPending, error, onSubmit }: ReportPaymen
     >
       <PaymentAmountField
         id={amountId}
-        label="Số tiền đã trả (₫)"
+        label="Số tiền đã trả"
         value={amount}
         onChange={setAmount}
         description="Trả một phần cũng được; không vượt phần còn phải trả."
