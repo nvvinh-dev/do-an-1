@@ -152,21 +152,21 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
         subtitle={contract.room.propertyName}
         action={
           (moveOutActions.canSend || moveOutActions.canWithdraw || actions.canCancel) && (
-            <div className="flex flex-col gap-2 md:flex-row">
+            <div className="flex flex-wrap gap-2">
               {moveOutActions.canSend && (
-                <Button type="button" size="page" onClick={() => setOpenDialog('sendMoveOutNotice')}>
+                <Button type="button" onClick={() => setOpenDialog('sendMoveOutNotice')}>
                   <CalendarX />
                   Gửi thông báo trả phòng
                 </Button>
               )}
               {moveOutActions.canWithdraw && (
-                <Button type="button" variant="outline" size="page" onClick={() => setOpenDialog('withdrawMoveOutNotice')}>
+                <Button type="button" variant="outline" onClick={() => setOpenDialog('withdrawMoveOutNotice')}>
                   <Undo2 />
                   Rút thông báo
                 </Button>
               )}
               {actions.canCancel && (
-                <Button type="button" variant="destructive" size="page" onClick={() => setOpenDialog('cancel')}>
+                <Button type="button" variant="destructive" onClick={() => setOpenDialog('cancel')}>
                   <CircleX />
                   Hủy hợp đồng
                 </Button>

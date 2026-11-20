@@ -97,7 +97,7 @@ function RentalRequestDetailContent({ rentalRequest }: { rentalRequest: RentalRe
         subtitle={rentalRequest.room.propertyName}
         action={
           canCancel && (
-            <Button type="button" variant="destructive" size="page" onClick={() => setCancelOpen(true)}>
+            <Button type="button" variant="destructive" onClick={() => setCancelOpen(true)}>
               <CircleX />
               Rút yêu cầu
             </Button>

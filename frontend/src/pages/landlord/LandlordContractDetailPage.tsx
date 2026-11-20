@@ -191,7 +191,7 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
   }
   if (actions.canCreateInvoice) {
     buttons.push(
-      <Button key="invoice" asChild size="page" variant={settlementLink ? 'outline' : 'default'}>
+      <Button key="invoice" asChild variant={settlementLink ? 'outline' : 'default'}>
         <Link to={`/landlord/contracts/${contract.id}/invoices/new`}>
           <FilePlus />
           {contract.status === 'DangThanhLy' ? 'Lập hóa đơn định kỳ' : 'Lập hóa đơn kỳ tiếp'}
@@ -201,7 +201,7 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
   }
   if (settlementLink) {
     buttons.push(
-      <Button key="settlement" asChild size="page">
+      <Button key="settlement" asChild>
         <Link to={`/landlord/contracts/${contract.id}/settlement`}>
           <FileText />
           {settlementLink}
@@ -215,7 +215,7 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
         key="moveOutNotice"
         type="button"
         variant="outline"
-        size="page"
+       
         onClick={() => setOpenDialog('sendMoveOutNotice')}
       >
         <CalendarX />
@@ -229,7 +229,7 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
         key="withdrawMoveOutNotice"
         type="button"
         variant="outline"
-        size="page"
+       
         onClick={() => setOpenDialog('withdrawMoveOutNotice')}
       >
         <Undo2 />
@@ -239,7 +239,7 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
   }
   if (actions.canEdit) {
     buttons.push(
-      <Button key="edit" asChild variant="outline" size="page">
+      <Button key="edit" asChild variant="outline">
         <Link to={`/landlord/contracts/${contract.id}/edit`}>
           <Pencil />
           Sửa
@@ -249,7 +249,7 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
   }
   if (actions.canEditInitialMeter) {
     buttons.push(
-      <Button key="meter" type="button" variant="outline" size="page" onClick={() => setOpenDialog('initialMeter')}>
+      <Button key="meter" type="button" variant="outline" onClick={() => setOpenDialog('initialMeter')}>
         <Gauge />
         Sửa chỉ số đầu
       </Button>,
@@ -257,7 +257,7 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
   }
   if (actions.canRecall) {
     buttons.push(
-      <Button key="recall" type="button" variant="outline" size="page" onClick={() => setOpenDialog('recall')}>
+      <Button key="recall" type="button" variant="outline" onClick={() => setOpenDialog('recall')}>
         <Undo2 />
         Thu hồi để sửa
       </Button>,
@@ -265,7 +265,7 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
   }
   if (actions.canCancel) {
     buttons.push(
-      <Button key="cancel" type="button" variant="destructive" size="page" onClick={() => setOpenDialog('cancel')}>
+      <Button key="cancel" type="button" variant="destructive" onClick={() => setOpenDialog('cancel')}>
         <CircleX />
         Hủy hợp đồng
       </Button>,
@@ -280,7 +280,7 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
         title={`Hợp đồng phòng ${contract.room.code}`}
         status={<StatusBadge kind="contract" status={contract.status} />}
         subtitle={`${contract.room.propertyName} · Người thuê: ${contract.tenant.fullName}`}
-        action={buttons.length > 0 && <div className="flex flex-col flex-wrap gap-2 md:flex-row">{buttons}</div>}
+        action={buttons.length > 0 && <div className="flex flex-wrap gap-2">{buttons}</div>}
       />
 
       {/* Hộp thoại nằm ngoài nút mở nó để không bị gỡ theo nút khi server trả `409` và trang tải lại sang
