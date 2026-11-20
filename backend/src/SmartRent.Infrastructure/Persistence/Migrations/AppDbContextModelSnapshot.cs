@@ -260,6 +260,14 @@ namespace SmartRent.Infrastructure.Persistence.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("cancelled_by_user_id");
 
+                    b.Property<string>("ChangeRequestReason")
+                        .HasColumnType("text")
+                        .HasColumnName("change_request_reason");
+
+                    b.Property<DateTimeOffset?>("ChangeRequestedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("change_requested_at");
+
                     b.Property<decimal>("DepositAmount")
                         .HasColumnType("numeric(14,2)")
                         .HasColumnName("deposit_amount");

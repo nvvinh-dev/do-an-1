@@ -57,6 +57,7 @@ import type { PaymentMethod } from '@/types/paymentTypes'
 import { normalizeMeterIndex, validateMeterIndex } from '@/utils/contractForm'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDate } from '@/utils/formatDate'
+import { formatDateTime } from '@/utils/formatDateTime'
 import { formatMeterIndex } from '@/utils/formatMeterIndex'
 import { canShowContractInvoices, getLandlordContractActions } from '@/utils/getLandlordContractActions'
 import { getMoveOutNoticeActions } from '@/utils/getMoveOutNoticeActions'
@@ -519,6 +520,11 @@ function ContractStatusNotice({ contract, today, now }: ContractStatusNoticeProp
         <Alert>
           <AlertTitle>Hợp đồng nháp</AlertTitle>
           <AlertDescription>
+            {contract.changeRequestReason && contract.changeRequestedAt && (
+              <p className="whitespace-pre-line wrap-anywhere">
+                Người thuê yêu cầu sửa lúc {formatDateTime(contract.changeRequestedAt)}: {contract.changeRequestReason}
+              </p>
+            )}
             <p>Người thuê xem được nhưng chưa đồng ý được. Kiểm tra điều khoản rồi bấm Gửi cho người thuê.</p>
             <HoldDeadline holdExpiresAt={contract.holdExpiresAt} />
           </AlertDescription>

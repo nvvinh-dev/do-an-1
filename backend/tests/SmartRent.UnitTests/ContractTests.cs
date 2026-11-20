@@ -207,10 +207,37 @@ public class ContractTests
     {
         var contract = NewContract(ContractStatus.ChoNguoiThueXacNhan);
 
-        contract.RequestChanges(ApprovedAt.AddHours(5));
+        contract.RequestChanges("Sai ngày bắt đầu", ApprovedAt.AddHours(5));
 
         Assert.Equal(ContractStatus.Nhap, contract.Status);
         Assert.Null(contract.TenantConfirmedAt);
+    }
+
+    [Fact]
+    public void RequestChanges_GhiLyDoVaThoiDiemGui()
+    {
+        // Duyệt 01/10 08:00 UTC; người thuê yêu cầu sửa lúc 01/10 13:00 UTC.
+        var contract = NewContract(ContractStatus.ChoNguoiThueXacNhan);
+        var requestedAt = ApprovedAt.AddHours(5);
+
+        contract.RequestChanges("Sai ngày bắt đầu, tôi vào ở ngày 05/10", requestedAt);
+
+        Assert.Equal("Sai ngày bắt đầu, tôi vào ở ngày 05/10", contract.ChangeRequestReason);
+        Assert.Equal(requestedAt, contract.ChangeRequestedAt);
+    }
+
+    [Fact]
+    public void RequestChanges_LanHai_GhiDeLyDoLanTruoc()
+    {
+        // Lần 1 lúc 01/10 10:00 UTC; Chủ trọ sửa rồi gửi lại lúc 11:00; lần 2 lúc 14:00 UTC.
+        var contract = NewContract(ContractStatus.ChoNguoiThueXacNhan);
+        contract.RequestChanges("Sai ngày bắt đầu", ApprovedAt.AddHours(2));
+        contract.Send(ApprovedAt.AddHours(3));
+
+        contract.RequestChanges("Thiếu người ở cùng", ApprovedAt.AddHours(6));
+
+        Assert.Equal("Thiếu người ở cùng", contract.ChangeRequestReason);
+        Assert.Equal(ApprovedAt.AddHours(6), contract.ChangeRequestedAt);
     }
 
     [Theory]
@@ -233,9 +260,11 @@ public class ContractTests
         // Người thuê đã đồng ý thì muốn sửa phải nhờ Chủ trọ thu hồi (FR-102), không tự đưa về Nháp.
         var contract = AwaitingDeposit();
 
-        Assert.Throws<InvalidOperationException>(() => contract.RequestChanges(ApprovedAt.AddHours(5)));
+        Assert.Throws<InvalidOperationException>(() => contract.RequestChanges("Sai ngày bắt đầu", ApprovedAt.AddHours(5)));
         Assert.Equal(ContractStatus.ChoNhanCoc, contract.Status);
         Assert.NotNull(contract.TenantConfirmedAt);
+        Assert.Null(contract.ChangeRequestReason);
+        Assert.Null(contract.ChangeRequestedAt);
     }
 
     [Fact]
