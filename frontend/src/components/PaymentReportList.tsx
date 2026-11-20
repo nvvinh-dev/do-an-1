@@ -20,7 +20,7 @@ export default function PaymentReportList({ reports, renderPendingActions }: Pay
 
   return (
     <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-      <h2 className="text-lg font-medium">Lịch sử báo thanh toán</h2>
+      <h2 className="text-lg font-bold">Lịch sử báo thanh toán</h2>
       {sorted.length === 0 ? (
         <p className="text-sm text-muted-foreground">Chưa có lượt báo thanh toán nào.</p>
       ) : (

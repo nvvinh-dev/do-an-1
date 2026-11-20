@@ -7,7 +7,7 @@ import type { MaintenanceRequestImage } from '@/types/maintenanceRequestTypes'
 export default function MaintenanceRequestImages({ images }: { images: MaintenanceRequestImage[] }) {
   return (
     <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-      <h2 className="text-lg font-medium">Ảnh sự cố</h2>
+      <h2 className="text-lg font-bold">Ảnh sự cố</h2>
       {images.length === 0 ? (
         <p className="text-sm text-muted-foreground">Không có ảnh.</p>
       ) : (

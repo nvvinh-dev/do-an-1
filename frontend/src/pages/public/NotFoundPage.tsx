@@ -15,7 +15,7 @@ export default function NotFoundPage() {
   return (
     <section className="mx-auto flex max-w-md flex-col items-center gap-3 py-16 text-center">
       <p className="text-sm font-semibold text-muted-foreground">404</p>
-      <h1 className="text-2xl font-semibold">Không tìm thấy trang</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Không tìm thấy trang</h1>
       <p className="text-muted-foreground">
         Đường dẫn không tồn tại, hoặc bạn không xem được nội dung này.
       </p>

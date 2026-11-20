@@ -39,7 +39,7 @@ function VietQrBoxContent({ paymentQr, className }: { paymentQr: PaymentQr; clas
         className,
       )}
     >
-      <h2 className="text-lg font-medium">Chuyển khoản bằng mã VietQR</h2>
+      <h2 className="text-lg font-bold">Chuyển khoản bằng mã VietQR</h2>
 
       <div className="flex flex-col items-center gap-4 md:flex-row md:items-start md:gap-6">
         {qrImage ? (
@@ -62,7 +62,7 @@ function VietQrBoxContent({ paymentQr, className }: { paymentQr: PaymentQr; clas
           <dl className="grid gap-x-4 gap-y-2 sm:grid-cols-[10rem_1fr] sm:gap-y-3">
             <dt className="text-muted-foreground">Số tiền</dt>
             <dd>
-              <MoneyText amount={paymentQr.amount} className="text-base font-semibold" />
+              <MoneyText amount={paymentQr.amount} className="text-2xl font-bold text-primary" />
             </dd>
 
             <dt className="text-muted-foreground">Nội dung chuyển khoản</dt>

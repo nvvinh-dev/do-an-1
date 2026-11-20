@@ -154,8 +154,8 @@ export default function InvoiceBreakdown({ invoice, invoicePath }: InvoiceBreakd
         )}
 
         <div className="flex items-baseline justify-between gap-4 border-t pt-4">
-          <span className="font-medium">Tổng</span>
-          <MoneyText amount={invoice.totalAmount} className="text-lg font-semibold" />
+          <span className="font-semibold">Tổng</span>
+          <MoneyText amount={invoice.totalAmount} className="text-2xl font-bold" />
         </div>
       </BreakdownCard>
     </div>
@@ -165,7 +165,7 @@ export default function InvoiceBreakdown({ invoice, invoicePath }: InvoiceBreakd
 function BreakdownCard({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-      <h2 className="text-lg font-medium">{title}</h2>
+      <h2 className="text-lg font-bold">{title}</h2>
       {children}
     </div>
   )

@@ -86,7 +86,7 @@ function RoomDetailContent({ room, refetchError, onRetry }: RoomDetailContentPro
         </Alert>
       )}
       <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 shadow-sm md:p-6">
-        <h2 className="text-lg font-semibold">Đăng tin và khai thác</h2>
+        <h2 className="text-lg font-bold">Đăng tin và khai thác</h2>
         <VisibilityControl
           room={room}
           showError={lastAction === 'visibility'}
@@ -101,7 +101,7 @@ function RoomDetailContent({ room, refetchError, onRetry }: RoomDetailContentPro
       </section>
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 shadow-sm md:p-6">
-          <h2 className="text-lg font-semibold">Thông tin phòng</h2>
+          <h2 className="text-lg font-bold">Thông tin phòng</h2>
           <dl className="grid gap-3 md:grid-cols-[10rem_1fr]">
             <dt className="text-muted-foreground">Diện tích</dt>
             <dd>{room.area.toLocaleString('vi-VN')} m²</dd>
@@ -139,7 +139,7 @@ function RoomDetailContent({ room, refetchError, onRetry }: RoomDetailContentPro
           </dl>
         </section>
         <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 shadow-sm md:p-6">
-          <h2 className="text-lg font-semibold">Giá và phí hiện hành</h2>
+          <h2 className="text-lg font-bold">Giá và phí hiện hành</h2>
           <dl className="grid gap-3 md:grid-cols-[1fr_auto]">
             <dt className="text-muted-foreground">Giá thuê / tháng</dt>
             <dd>

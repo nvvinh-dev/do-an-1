@@ -24,7 +24,7 @@ export default function PropertyRoomList({ propertyId, isArchived }: { propertyI
   return (
     <section className="flex flex-col gap-4" aria-labelledby="rooms-heading">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <h2 id="rooms-heading" className="text-lg font-semibold">
+        <h2 id="rooms-heading" className="text-lg font-bold">
           Danh sách phòng
         </h2>
         {!isArchived && (

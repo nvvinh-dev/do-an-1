@@ -52,7 +52,7 @@ function CountTile({ label, value }: { label: string; value: number }) {
   return (
     <div className="flex flex-col gap-1 rounded-xl border bg-card p-4 shadow-sm">
       <dt className="text-sm text-muted-foreground">{label}</dt>
-      <dd className="text-2xl font-semibold tabular-nums">{value}</dd>
+      <dd className="text-2xl font-bold tabular-nums">{value}</dd>
     </div>
   )
 }

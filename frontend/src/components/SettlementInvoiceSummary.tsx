@@ -118,11 +118,11 @@ export default function SettlementInvoiceSummary({ invoice, invoicePath }: Settl
       </SummaryCard>
 
       <div className="flex flex-col gap-2 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-        <h2 className="text-lg font-medium">Số dư</h2>
+        <h2 className="text-lg font-bold">Số dư</h2>
         {invoice.totalAmount === 0 ? (
           <p className="text-sm">Hai bên không còn khoản nào phải trả.</p>
         ) : (
-          <MoneyText amount={invoice.totalAmount} settlementBalance className="text-2xl font-semibold" />
+          <MoneyText amount={invoice.totalAmount} settlementBalance className="text-2xl font-bold" />
         )}
         {invoice.totalAmount > 0 && invoice.status !== 'Nhap' && invoice.status !== 'ChoNguoiThueXacNhan' && (
           <p className="text-sm text-muted-foreground">
@@ -138,7 +138,7 @@ export default function SettlementInvoiceSummary({ invoice, invoicePath }: Settl
 function SummaryCard({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-      <h2 className="text-lg font-medium">{title}</h2>
+      <h2 className="text-lg font-bold">{title}</h2>
       {children}
     </div>
   )

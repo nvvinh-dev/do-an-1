@@ -16,7 +16,7 @@ export default function RouteErrorFallback() {
 
   return (
     <section className="mx-auto flex max-w-md flex-col items-center gap-3 px-4 py-16 text-center">
-      <h1 className="text-2xl font-semibold">Trang gặp lỗi khi hiển thị</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Trang gặp lỗi khi hiển thị</h1>
       <p className="text-muted-foreground">
         Tải lại trang để thử lại. Lỗi vẫn còn thì về trang chủ rồi mở lại từ menu.
       </p>

@@ -99,7 +99,7 @@ function ProfileForm({ email, fullName, phoneNumber }: ProfileFormProps) {
       onSubmit={onSubmit}
       className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground md:p-6"
     >
-      <h2 className="text-lg font-medium">Thông tin cá nhân</h2>
+      <h2 className="text-lg font-bold">Thông tin cá nhân</h2>
 
       {saved && !isDirty && (
         <Alert className="border-success/40 text-success">
@@ -222,7 +222,7 @@ function ChangePasswordForm() {
       onSubmit={onSubmit}
       className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground md:p-6"
     >
-      <h2 className="text-lg font-medium">Đổi mật khẩu</h2>
+      <h2 className="text-lg font-bold">Đổi mật khẩu</h2>
 
       {saved && !isDirty && (
         <Alert className="border-success/40 text-success">

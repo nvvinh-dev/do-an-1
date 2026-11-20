@@ -90,7 +90,7 @@ function RoomDetailContent({ detail }: { detail: PublicRoomDetail }) {
 
         <div className="flex min-w-0 flex-col gap-6 lg:col-start-1">
           <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 shadow-sm md:p-6">
-            <h2 className="text-lg font-semibold">Thông tin phòng</h2>
+            <h2 className="text-lg font-bold">Thông tin phòng</h2>
             <dl className="grid gap-3 md:grid-cols-[10rem_1fr]">
               <dt className="text-muted-foreground">Diện tích</dt>
               <dd className="tabular-nums">{room.area.toLocaleString('vi-VN')} m²</dd>
@@ -106,7 +106,7 @@ function RoomDetailContent({ detail }: { detail: PublicRoomDetail }) {
           </section>
 
           <section className="flex flex-col gap-4 rounded-xl border bg-card p-4 shadow-sm md:p-6">
-            <h2 className="text-lg font-semibold">Khu trọ {property.name}</h2>
+            <h2 className="text-lg font-bold">Khu trọ {property.name}</h2>
             <dl className="grid gap-3 md:grid-cols-[10rem_1fr]">
               <dt className="text-muted-foreground">Địa chỉ</dt>
               <dd className="wrap-anywhere">

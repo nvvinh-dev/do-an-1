@@ -84,7 +84,7 @@ export default function MoveOutNoticeCard({ contract, viewer, today, settlementL
 function CardShell({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-      <h2 className="text-lg font-medium">{title}</h2>
+      <h2 className="text-lg font-bold">{title}</h2>
       {children}
     </div>
   )

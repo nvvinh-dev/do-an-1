@@ -91,7 +91,7 @@ function ReviewContent({ application, onReloadDocuments }: ReviewContentProps) {
       <ReviewStatusNotice application={application} />
 
       <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-        <h2 className="text-lg font-medium">Thông tin hồ sơ</h2>
+        <h2 className="text-lg font-bold">Thông tin hồ sơ</h2>
         <dl className="grid gap-4 text-sm md:grid-cols-[12rem_1fr]">
           <dt className="text-muted-foreground">Trạng thái</dt>
           <dd>
@@ -205,7 +205,7 @@ function DocumentsSection({ application, onReloadDocuments }: DocumentsSectionPr
   return (
     <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
       <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-medium">Giấy tờ</h2>
+        <h2 className="text-lg font-bold">Giấy tờ</h2>
         <p className="text-sm text-muted-foreground">
           Đối chiếu số CCCD và họ tên trên giấy tờ với thông tin hồ sơ. Bấm vào ảnh để xem cỡ lớn.
         </p>
@@ -308,7 +308,7 @@ interface ReviewActionsProps {
 function ReviewActions({ application, onReject }: ReviewActionsProps) {
   return (
     <div className="flex flex-col gap-4 rounded-xl border bg-card p-4 text-card-foreground shadow-sm md:p-6">
-      <h2 className="text-lg font-medium">Xử lý hồ sơ</h2>
+      <h2 className="text-lg font-bold">Xử lý hồ sơ</h2>
 
       {application.applicantPhoneNumber ? (
         <ApproveForm application={application} phoneNumber={application.applicantPhoneNumber} />
