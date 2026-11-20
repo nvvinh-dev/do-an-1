@@ -2,19 +2,15 @@ import { Plus } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import PageHeader from '@/components/PageHeader'
-import PropertyCoverImage from '@/components/PropertyCoverImage'
-import RoomCountsSummary from '@/components/RoomCountsSummary'
-import StatusBadge from '@/components/StatusBadge'
+import PropertyCard from '@/components/PropertyCard'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyTitle } from '@/components/ui/empty'
 import EmptyIllustration from '@/components/EmptyIllustration'
 import { Field, FieldLabel } from '@/components/ui/field'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { usePropertyList } from '@/hooks/usePropertyList'
 import type { PropertyListItem } from '@/types/propertyTypes'
-import { formatPropertyAddress } from '@/utils/formatPropertyAddress'
 
 const NEW_PROPERTY_PATH = '/landlord/properties/new'
 
@@ -71,10 +67,7 @@ export default function PropertyListPage() {
           {propertiesQuery.data.length === 0 ? (
             <PropertyListEmpty includeArchived={includeArchived} />
           ) : (
-            <>
-              <PropertyCards properties={propertiesQuery.data} />
-              <PropertyTable properties={propertiesQuery.data} />
-            </>
+            <PropertyGrid properties={propertiesQuery.data} />
           )}
         </>
       )}
@@ -82,94 +75,25 @@ export default function PropertyListPage() {
   )
 }
 
-function propertyPath(id: number) {
-  return `/landlord/properties/${id}`
-}
-
-/** Dưới `md`: mỗi khu trọ một thẻ, bấm cả thẻ để mở chi tiết (docs/design-system.md mục 5). */
-function PropertyCards({ properties }: { properties: PropertyListItem[] }) {
+/**
+ * Lưới thẻ khu trọ có ảnh ở mọi cỡ màn (docs/frontend-screens.md mục 6, L2; docs/design-system.md mục 11):
+ * 1 cột dưới `md`, 2 cột từ `md`, 3 cột từ `xl`. Khu đã lưu trữ có ảnh mờ và nhãn Lưu trữ (`PropertyCard`).
+ */
+function PropertyGrid({ properties }: { properties: PropertyListItem[] }) {
   return (
-    <ul className="flex flex-col gap-3 md:hidden">
+    <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {properties.map((property) => (
         <li key={property.id}>
-          <Link
-            to={propertyPath(property.id)}
-            className="flex gap-3 rounded-xl border bg-card p-4 text-card-foreground shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <CoverImage property={property} />
-            <div className="flex min-w-0 flex-1 flex-col gap-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="font-medium wrap-anywhere">{property.name}</span>
-                <StatusBadge kind="property" status={property.status} />
-              </div>
-              <p className="text-sm text-muted-foreground wrap-anywhere">{formatPropertyAddress(property)}</p>
-              <RoomCountsSummary counts={property.roomCounts} />
-            </div>
-          </Link>
+          <PropertyCard property={property} />
         </li>
       ))}
     </ul>
   )
 }
 
-/** Từ `md`: bảng; tên khu trọ là liên kết tới chi tiết. */
-function PropertyTable({ properties }: { properties: PropertyListItem[] }) {
-  return (
-    <div className="hidden overflow-hidden rounded-xl border bg-card shadow-sm md:block">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="px-4">Khu trọ</TableHead>
-            <TableHead>Trạng thái</TableHead>
-            <TableHead className="px-4">Phòng</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {properties.map((property) => (
-            <TableRow key={property.id}>
-              <TableCell className="px-4 py-3 whitespace-normal">
-                <div className="flex items-center gap-3">
-                  <CoverImage property={property} />
-                  <div className="flex min-w-0 flex-col gap-1">
-                    <Link
-                      to={propertyPath(property.id)}
-                      className="font-medium wrap-anywhere underline-offset-4 hover:underline"
-                    >
-                      {property.name}
-                    </Link>
-                    <span className="text-muted-foreground wrap-anywhere">{formatPropertyAddress(property)}</span>
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell className="py-3">
-                <StatusBadge kind="property" status={property.status} />
-              </TableCell>
-              <TableCell className="px-4 py-3 whitespace-normal">
-                <RoomCountsSummary counts={property.roomCounts} />
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
-  )
-}
-
-function CoverImage({ property }: { property: PropertyListItem }) {
-  return (
-    <PropertyCoverImage
-      src={property.coverImageUrl}
-      alt={`Ảnh đại diện khu trọ ${property.name}`}
-      aspect="square"
-      missingText={`Khu trọ ${property.name} chưa có ảnh`}
-      className="size-14 shrink-0 rounded-lg"
-    />
-  )
-}
-
 function PropertyListEmpty({ includeArchived }: { includeArchived: boolean }) {
   return (
-    <Empty className="border">
+    <Empty className="border bg-card">
       <EmptyHeader>
         <EmptyIllustration kind="house" />
         <EmptyTitle>{includeArchived ? 'Chưa có khu trọ nào' : 'Chưa có khu trọ nào đang khai thác'}</EmptyTitle>
@@ -189,14 +113,14 @@ function PropertyListEmpty({ includeArchived }: { includeArchived: boolean }) {
 
 function PropertyListSkeleton() {
   return (
-    <div className="flex flex-col gap-3" aria-busy="true">
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-busy="true" aria-label="Đang tải khu trọ">
       {Array.from({ length: 3 }, (_, index) => (
-        <div key={index} className="flex gap-3 rounded-xl border bg-card p-4">
-          <Skeleton className="size-14 shrink-0 rounded-lg" />
-          <div className="flex flex-1 flex-col gap-2">
+        <div key={index} className="flex flex-col overflow-hidden rounded-xl border bg-card">
+          <Skeleton className="aspect-video w-full rounded-none" />
+          <div className="flex flex-col gap-2 p-4">
             <Skeleton className="h-4 w-1/2" />
             <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-1.5 w-full" />
           </div>
         </div>
       ))}
