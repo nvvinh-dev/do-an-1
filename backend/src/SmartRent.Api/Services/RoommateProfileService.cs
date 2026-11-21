@@ -132,6 +132,9 @@ public class RoommateProfileService
     {
         await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
 
+        // Lời mời đang gửi cùng lúc giữ khóa chia sẻ hồ sơ: chờ nó commit để câu UPDATE bên dưới thấy và rút nó.
+        await _db.LockRoommateProfileAsync(tenantUserId, cancellationToken);
+
         var profile = await _db.RoommateProfiles
             .FirstOrDefaultAsync(p => p.TenantUserId == tenantUserId, cancellationToken);
 

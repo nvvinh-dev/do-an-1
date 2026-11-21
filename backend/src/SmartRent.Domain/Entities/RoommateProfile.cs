@@ -70,6 +70,12 @@ public class RoommateProfile
     /// <summary><c>false</c> khi Người thuê tạm dừng tìm.</summary>
     public bool IsSearching { get; set; }
 
+    /// <summary>
+    /// FR-106: hồ sơ Công khai và đang tìm mới xuất hiện trong danh sách ứng viên của người khác; Chỉ khi tôi kết nối
+    /// hoặc đang tạm dừng thì không.
+    /// </summary>
+    public bool IsListedAsCandidate => Visibility == RoommateProfileVisibility.CongKhai && IsSearching;
+
     /// <summary>Lần sửa gần nhất; ứng viên cùng điểm thì hồ sơ sửa gần hơn đứng trước.</summary>
     public DateTimeOffset UpdatedAt { get; set; }
 }

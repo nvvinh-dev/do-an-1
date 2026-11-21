@@ -181,6 +181,7 @@ builder.Services.AddScoped<RoomSearchService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<MaintenanceRequestService>();
 builder.Services.AddScoped<RoommateProfileService>();
+builder.Services.AddScoped<RoommateConnectionService>();
 builder.Services.AddSingleton<LocationCatalog>();
 
 // Tác vụ định kỳ chạy mỗi giờ trong tiến trình API — docs/architecture.md mục 7.

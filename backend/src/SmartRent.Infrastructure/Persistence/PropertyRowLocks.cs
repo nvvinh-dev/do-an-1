@@ -47,7 +47,7 @@ public static class PropertyRowLocks
             $"SELECT 1 FROM rooms WHERE property_id = {propertyId} ORDER BY id FOR UPDATE",
             cancellationToken);
 
-    private static async Task ExecuteLockAsync(
+    internal static async Task ExecuteLockAsync(
         this AppDbContext db,
         FormattableString sql,
         CancellationToken cancellationToken)
