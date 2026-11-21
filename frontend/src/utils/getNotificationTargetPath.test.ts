@@ -40,8 +40,10 @@ describe('getNotificationTargetPath', () => {
     expect(target('Invoice', null, 'Landlord')).toBeNull()
   })
 
-  it('Lời mời ở ghép (Phase 2) chưa có trang T9: không chuyển trang', () => {
-    expect(target('RoommateInvitation', 5, 'Tenant')).toBeNull()
+  it('Lời mời ở ghép (Phase 2): Người thuê mở T9; Chủ trọ không có màn ở ghép', () => {
+    expect(target('RoommateInvitation', 5, 'Tenant')).toBe('/tenant/roommate/invitations')
+    expect(target('RoommateInvitation', null, 'Tenant')).toBe('/tenant/roommate/invitations')
+    expect(target('RoommateInvitation', 5, 'Landlord')).toBeNull()
   })
 
   it('Sự cố (Phase 2): Người thuê mở T10, Chủ trọ mở L11', () => {
