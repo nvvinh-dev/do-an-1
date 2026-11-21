@@ -140,6 +140,17 @@ public class RoommateConnectionService
         await using var transaction = await _db.Database.BeginTransactionAsync(cancellationToken);
         await _db.LockRoommatePairAsync(senderUserId, ownerUserId.Value, cancellationToken);
 
+        // Một trong hai bên xóa hồ sơ cùng lúc thì phải chờ, để không còn lời mời đang chờ gắn với hồ sơ đã xóa.
+        await _db.ShareRoommateProfilesAsync(senderUserId, ownerUserId.Value, cancellationToken);
+
+        // Kiểm lại trong khóa: người gửi có thể vừa xóa hồ sơ của mình.
+        callerError = await CheckCallerCanUseAsync(senderUserId, cancellationToken);
+
+        if (callerError is not null)
+        {
+            return ServiceResult<RoommateInvitationResponse>.Fail(callerError.StatusCode, callerError.Error!);
+        }
+
         if (await FindViewableProfileAsync(senderUserId, profileId, cancellationToken) is null)
         {
             return ServiceResult<RoommateInvitationResponse>.Fail(StatusCodes.Status404NotFound, ProfileNotFoundMessage);

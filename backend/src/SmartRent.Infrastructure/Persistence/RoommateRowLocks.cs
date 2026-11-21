@@ -35,4 +35,29 @@ public static class RoommateRowLocks
 
         return db.ExecuteLockAsync($"SELECT pg_advisory_xact_lock(hashtextextended({key}, 0))", cancellationToken);
     }
+
+    /// <summary>
+    /// Khóa dòng hồ sơ của người xóa trước khi chuyển lời mời đang chờ sang Đã rút (FR-117): lời mời gửi cùng lúc
+    /// giữ khóa <see cref="ShareRoommateProfilesAsync"/> nên một trong hai bên phải chờ bên kia commit.
+    /// </summary>
+    public static Task LockRoommateProfileAsync(
+        this AppDbContext db,
+        long tenantUserId,
+        CancellationToken cancellationToken)
+        => db.ExecuteLockAsync(
+            $"SELECT 1 FROM roommate_profiles WHERE tenant_user_id = {tenantUserId} FOR UPDATE",
+            cancellationToken);
+
+    /// <summary>
+    /// Khóa chia sẻ hồ sơ của người gửi và chủ hồ sơ khi gửi lời mời. Bên xóa hồ sơ đến trước thì bên gửi chờ rồi
+    /// đọc lại thấy hồ sơ đã mất; bên gửi đến trước thì bên xóa chờ, câu UPDATE thấy lời mời mới và rút nó.
+    /// </summary>
+    public static Task ShareRoommateProfilesAsync(
+        this AppDbContext db,
+        long userIdA,
+        long userIdB,
+        CancellationToken cancellationToken)
+        => db.ExecuteLockAsync(
+            $"SELECT 1 FROM roommate_profiles WHERE tenant_user_id IN ({userIdA}, {userIdB}) FOR SHARE",
+            cancellationToken);
 }
