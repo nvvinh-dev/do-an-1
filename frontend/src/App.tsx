@@ -44,6 +44,9 @@ import AccountPage from '@/pages/shared/AccountPage'
 import NotificationsPage from '@/pages/shared/NotificationsPage'
 import LandlordApplicationPage from '@/pages/tenant/LandlordApplicationPage'
 import ReportMaintenanceRequestPage from '@/pages/tenant/ReportMaintenanceRequestPage'
+import RoommateInvitationsPage from '@/pages/tenant/RoommateInvitationsPage'
+import RoommateMatchesPage from '@/pages/tenant/RoommateMatchesPage'
+import RoommateProfilePage from '@/pages/tenant/RoommateProfilePage'
 import TenantContractDetailPage from '@/pages/tenant/TenantContractDetailPage'
 import TenantContractListPage from '@/pages/tenant/TenantContractListPage'
 import TenantDashboardPage from '@/pages/tenant/TenantDashboardPage'
@@ -135,6 +138,9 @@ const routes: RouteObject[] = [
               { path: 'maintenance-requests', element: <TenantMaintenanceRequestListPage /> },
               { path: 'maintenance-requests/new', element: <ReportMaintenanceRequestPage /> },
               { path: 'maintenance-requests/:id', element: <TenantMaintenanceRequestDetailPage /> },
+              { path: 'roommate', element: <RoommateMatchesPage /> },
+              { path: 'roommate/profile', element: <RoommateProfilePage /> },
+              { path: 'roommate/invitations', element: <RoommateInvitationsPage /> },
               { path: '*', element: <NotFoundPage /> },
             ],
           },

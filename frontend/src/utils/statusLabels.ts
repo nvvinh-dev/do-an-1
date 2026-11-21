@@ -92,7 +92,7 @@ const STATUS_DISPLAYS = {
     DaHuy: neutral('Đã hủy'),
   },
   // Lời mời ở ghép (Phase 2).
-  coTenantInvitation: {
+  roommateInvitation: {
     ChoPhanHoi: pending('Chờ phản hồi'),
     DaChapNhan: success('Đã chấp nhận'),
     TuChoi: danger('Từ chối'),

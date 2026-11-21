@@ -1,24 +1,34 @@
 import {
   BadgeCheck,
   Bell,
+  ChevronDown,
   CircleUser,
   FileSignature,
   KeyRound,
   LayoutGrid,
   LogOut,
+  MailOpen,
   Menu,
   ReceiptText,
   Search,
+  UserRoundSearch,
+  UsersRound,
   Wrench,
   type LucideIcon,
 } from 'lucide-react'
 import { useState } from 'react'
-import { NavLink, Outlet } from 'react-router'
+import { NavLink, Outlet, useLocation } from 'react-router'
 import AccountMenu from '@/components/AccountMenu'
 import AppLogo from '@/components/AppLogo'
 import NavIconChip, { type NavTint } from '@/components/NavIconChip'
 import NotificationBell from '@/components/NotificationBell'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Separator } from '@/components/ui/separator'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet'
 import { useLogout } from '@/hooks/useLogout'
@@ -32,8 +42,18 @@ interface TenantNavItem {
   end: boolean
 }
 
+interface TenantNavGroup {
+  label?: string
+  items: TenantNavItem[]
+  /**
+   * Trên menu ngang (từ xl) cả nhóm là một mục thả xuống mang tên nhóm, vì đủ mười một mục thì không vừa
+   * một hàng trong khung 1152px (docs/design-system.md mục 5). Menu trong sheet vẫn liệt kê từng mục.
+   */
+  collapsedOnBar?: boolean
+}
+
 // Mục, thứ tự và nhóm theo docs/frontend-screens.md mục 1; icon và sắc theo docs/design-system.md mục 4.
-const menuGroups: { label?: string; items: TenantNavItem[] }[] = [
+const menuGroups: TenantNavGroup[] = [
   {
     items: [
       { label: 'Tìm phòng', to: '/', icon: Search, tint: 'slate', end: true },
@@ -61,8 +81,62 @@ const menuGroups: { label?: string; items: TenantNavItem[] }[] = [
       { label: 'Thông báo', to: '/notifications', icon: Bell, tint: 'slate', end: false },
     ],
   },
+  {
+    label: 'Ở ghép',
+    collapsedOnBar: true,
+    items: [
+      { label: 'Hồ sơ ở ghép', to: '/tenant/roommate/profile', icon: UserRoundSearch, tint: 'violet', end: false },
+      // `end`: `/tenant/roommate` là tiền tố của hai mục còn lại.
+      { label: 'Tìm bạn ở ghép', to: '/tenant/roommate', icon: UsersRound, tint: 'violet', end: true },
+      { label: 'Lời mời ở ghép', to: '/tenant/roommate/invitations', icon: MailOpen, tint: 'violet', end: false },
+    ],
+  },
 ]
-const menuItems = menuGroups.flatMap((group) => group.items)
+// Menu ngang: các nhóm `collapsedOnBar` thành một mục thả xuống, còn lại từng mục như trong sheet.
+type BarEntry = TenantNavItem | { group: string; items: TenantNavItem[] }
+const barEntries = menuGroups.flatMap((group): BarEntry[] =>
+  group.collapsedOnBar && group.label ? [{ group: group.label, items: group.items }] : group.items,
+)
+
+const barLinkClass = (isActive: boolean) =>
+  cn(
+    'flex items-center gap-1 border-b-2 px-2.5 text-sm whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring',
+    isActive
+      ? 'border-primary font-semibold text-primary'
+      : 'border-transparent font-medium text-muted-foreground hover:text-foreground',
+  )
+
+/**
+ * Một nhóm trên menu ngang dạng mục thả xuống: gạch chân như mục đang chọn khi trang hiện tại thuộc nhóm.
+ * Mục trong danh sách thả xuống giữ ô icon có sắc như trong sheet.
+ */
+function BarGroupMenu({ label, items }: { label: string; items: TenantNavItem[] }) {
+  const { pathname } = useLocation()
+  const isActive = items.some((item) => pathname === item.to || pathname.startsWith(`${item.to}/`))
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className={cn(barLinkClass(isActive), 'cursor-pointer')}>
+        {label}
+        <ChevronDown className="size-4" aria-hidden="true" />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" className="w-56">
+        {items.map((item) => (
+          <DropdownMenuItem key={item.to} asChild className="min-h-10">
+            <NavLink to={item.to} end={item.end}>
+              {({ isActive: itemActive }) => (
+                <>
+                  <NavIconChip icon={item.icon} tint={item.tint} active={itemActive} />
+                  <span className={cn(itemActive && 'font-semibold')}>{item.label}</span>
+                </>
+              )}
+            </NavLink>
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
 // Menu trong sheet giống sidebar của Chủ trọ: mục cao 44px, mục chọn nền teal nhạt và vạch trái.
 function sheetLinkClass(isActive: boolean) {
@@ -90,23 +164,20 @@ export default function TenantLayout() {
           <AppLogo to="/tenant" />
 
           <nav aria-label="Menu chính" className="hidden h-full items-stretch gap-1 xl:flex">
-            {menuItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  cn(
-                    'flex items-center border-b-2 px-2.5 text-sm whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                    isActive
-                      ? 'border-primary font-semibold text-primary'
-                      : 'border-transparent font-medium text-muted-foreground hover:text-foreground',
-                  )
-                }
-              >
-                {item.label}
-              </NavLink>
-            ))}
+            {barEntries.map((entry) =>
+              'group' in entry ? (
+                <BarGroupMenu key={entry.group} label={entry.group} items={entry.items} />
+              ) : (
+                <NavLink
+                  key={entry.to}
+                  to={entry.to}
+                  end={entry.end}
+                  className={({ isActive }) => barLinkClass(isActive)}
+                >
+                  {entry.label}
+                </NavLink>
+              ),
+            )}
           </nav>
 
           <div className="ml-auto flex items-center gap-1">

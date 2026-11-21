@@ -12,7 +12,7 @@ describe('getStatusDisplay', () => {
     expect(getStatusDisplay('paymentReport', 'TuChoiXacNhan')).toEqual({ label: 'Bị từ chối', tone: 'danger' })
     expect(getStatusDisplay('landlordApplication', 'DaThuHoi')).toEqual({ label: 'Đã thu hồi', tone: 'danger' })
     expect(getStatusDisplay('userAccount', 'BiKhoa')).toEqual({ label: 'Đã khóa', tone: 'danger' })
-    expect(getStatusDisplay('coTenantInvitation', 'DaRut')).toEqual({ label: 'Đã rút', tone: 'neutral' })
+    expect(getStatusDisplay('roommateInvitation', 'DaRut')).toEqual({ label: 'Đã rút', tone: 'neutral' })
   })
 
   it('cùng một mã có thể mang nhãn hay tông khác nhau theo loại đối tượng', () => {
