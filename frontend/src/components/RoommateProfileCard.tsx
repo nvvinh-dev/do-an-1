@@ -8,6 +8,7 @@ import RoommateProfileFacts from '@/components/RoommateProfileFacts'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { useRoommateMutation } from '@/hooks/useRoommateMutation'
+import { getApiErrorInfo } from '@/lib/apiError'
 import { blockRoommateProfile, sendRoommateInvitation } from '@/services/roommateService'
 import type { RoommateMatch } from '@/types/roommateTypes'
 import { formatCriterionScore, MATCH_CRITERIA } from '@/utils/roommateLabels'
@@ -68,7 +69,20 @@ export default function RoommateProfileCard({ match }: RoommateProfileCardProps)
           type="button"
           size="page"
           disabled={isBusy}
-          onClick={() => inviteMutation.mutate(undefined, { onSuccess: () => toast.success('Đã gửi lời mời kết nối') })}
+          onClick={() =>
+            inviteMutation.mutate(undefined, {
+              onSuccess: () => toast.success('Đã gửi lời mời kết nối'),
+              // `409` (bên kia vừa mời mình, vừa kết nối, từng từ chối — FR-116) làm danh sách tải lại và thẻ này
+              // rời đi cùng khung lỗi bên trong, nên báo bằng toast để người dùng vẫn thấy lý do.
+              onError: (error) => {
+                if (getApiErrorInfo(error).status === 409) {
+                  toast.error(getApiErrorInfo(error).message, {
+                    description: 'Xem thẻ Đã nhận ở trang Lời mời ở ghép nếu người này vừa mời bạn.',
+                  })
+                }
+              },
+            })
+          }
         >
           {inviteMutation.isPending ? <Spinner /> : <Send />}
           Gửi lời mời
