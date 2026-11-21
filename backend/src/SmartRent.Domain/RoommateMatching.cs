@@ -16,7 +16,27 @@ public static class RoommateMatching
     public const decimal AreaWeight = 25;
     public const decimal OrganizationWeight = 15;
 
+    /// <summary>Danh sách ứng viên có tối đa 20 hồ sơ (FR-113).</summary>
+    public const int MaxCandidates = 20;
+
     private const int HabitItemCount = 5;
+
+    /// <summary>
+    /// FR-113: xếp hạng ứng viên của <paramref name="viewer"/>. Bỏ hồ sơ của chính người xem, hồ sơ không được liệt kê
+    /// (<see cref="RoommateProfile.IsListedAsCandidate"/>) và hồ sơ không qua lọc cứng (<see cref="CanMatch"/>); điểm
+    /// cao trước, cùng điểm thì hồ sơ sửa gần hơn trước, rồi id lớn hơn trước cho thứ tự ổn định; lấy tối đa
+    /// <see cref="MaxCandidates"/>. Các điều kiện cần database — tài khoản bị khóa, hợp đồng Đang hiệu lực, lời mời,
+    /// chặn — do bên gọi lọc trước.
+    /// </summary>
+    public static IReadOnlyList<RoommateMatch> Rank(RoommateProfile viewer, IEnumerable<RoommateProfile> candidates)
+        => candidates
+            .Where(c => c.TenantUserId != viewer.TenantUserId && c.IsListedAsCandidate && CanMatch(viewer, c))
+            .Select(c => new RoommateMatch(c, Calculate(viewer, c)))
+            .OrderByDescending(m => m.Score.Score)
+            .ThenByDescending(m => m.Profile.UpdatedAt)
+            .ThenByDescending(m => m.Profile.Id)
+            .Take(MaxCandidates)
+            .ToList();
 
     /// <summary>
     /// FR-108, FR-109: yêu cầu giới tính của mỗi bên chấp nhận giới tính của bên kia, và hai bên cùng tỉnh/thành.
@@ -130,3 +150,6 @@ public static class RoommateMatching
 /// <c>GET /roommate-profiles/matches</c> (api-design mục 15).
 /// </summary>
 public record RoommateMatchScore(int Score, decimal Budget, decimal Habits, decimal Area, decimal Organization);
+
+/// <summary>Một ứng viên trong danh sách ứng viên kèm điểm phù hợp với người xem (FR-113).</summary>
+public record RoommateMatch(RoommateProfile Profile, RoommateMatchScore Score);
