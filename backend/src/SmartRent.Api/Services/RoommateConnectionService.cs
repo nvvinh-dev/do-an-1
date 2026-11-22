@@ -175,12 +175,17 @@ public class RoommateConnectionService
 
         // FR-115: lời mời cũ chỉ mở quyền xem; gửi mới thì hồ sơ phải đang là ứng viên của người gửi, để người đã
         // tạm dừng hay chuyển sang Chỉ khi tôi kết nối không bị gửi lại sau mỗi lần rút. Không nói lý do cụ thể.
-        var ranked = await RankAsync(senderUserId, cancellationToken);
-
-        if (!ranked.Succeeded || !ranked.Value!.Any(m => m.Profile.Id == profileId))
+        // Giữa hai bên chưa có lời mời nào thì FindViewableProfileAsync đã xếp hạng và xác nhận hồ sơ là ứng viên,
+        // chỉ xếp hạng lại khi hồ sơ xem được nhờ lời mời cũ.
+        if (existing.Count > 0)
         {
-            return ServiceResult<RoommateInvitationResponse>.Fail(
-                StatusCodes.Status409Conflict, "Hồ sơ này hiện không nhận lời mời mới từ bạn.");
+            var ranked = await RankAsync(senderUserId, cancellationToken);
+
+            if (!ranked.Succeeded || !ranked.Value!.Any(m => m.Profile.Id == profileId))
+            {
+                return ServiceResult<RoommateInvitationResponse>.Fail(
+                    StatusCodes.Status409Conflict, "Hồ sơ này hiện không nhận lời mời mới từ bạn.");
+            }
         }
 
         var invitation = RoommateInvitation.Send(senderUserId, ownerUserId.Value, DateTimeOffset.UtcNow);
