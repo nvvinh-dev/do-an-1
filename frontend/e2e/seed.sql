@@ -65,8 +65,9 @@ where l.email = 'e2e-chutro@smartrent.test'
   and t.email = 'e2e-nguoithue@smartrent.test'
   and not exists (select 1 from contracts c where c.room_id = r.id and c.tenant_user_id = t.id);
 
--- Hóa đơn định kỳ tháng 11/2026 đã phát hành, chưa thu đồng nào. Hạn 30/11/2026: qua hạn thì tác vụ định kỳ gắn
--- Quá hạn, luồng 3 vẫn chạy được (FR-45 cho báo thanh toán khi Quá hạn).
+-- Hóa đơn định kỳ tháng 11/2026 đã phát hành, chưa thu đồng nào. Hạn 26/11/2026 = ngày phát hành 21/11 cộng
+-- payment_due_days 5 ngày, như /issue tính. Qua hạn thì tác vụ định kỳ gắn Quá hạn, luồng 3 vẫn chạy được (FR-45
+-- cho báo thanh toán khi Quá hạn).
 insert into invoices (contract_id, type, period_start, period_end,
                       previous_electricity_index, current_electricity_index, electricity_unit_price, electricity_amount,
                       previous_water_index, current_water_index, water_unit_price, water_amount,
@@ -74,7 +75,7 @@ insert into invoices (contract_id, type, period_start, period_end,
 select c.id, 'DinhKy', date '2026-11-01', date '2026-11-30',
        100, 200, 3500, 350000,
        10, 15, 20000, 100000,
-       3000000, 0, 3450000, 0, 'ChuaThanhToan', timestamptz '2026-11-21 09:00:00+07', date '2026-11-30'
+       3000000, 0, 3450000, 0, 'ChuaThanhToan', timestamptz '2026-11-21 09:00:00+07', date '2026-11-26'
 from contracts c
 join rooms r on r.id = c.room_id
 join properties p on p.id = r.property_id
