@@ -1,6 +1,6 @@
 import type { MaintenanceRequestStatus } from '@/types/maintenanceRequestTypes'
 
-/** Sự cố Mới quá số giờ này kể từ lúc gửi thì người thuê được quyền khiếu nại (BP-08 A4). */
+/** Sự cố Mới quá số giờ này kể từ lúc gửi thì người thuê được nhắc liên hệ trực tiếp Chủ trọ (BP-08 A4). */
 const ACCEPT_OVERDUE_HOURS = 72
 
 const MS_PER_HOUR = 60 * 60 * 1000
