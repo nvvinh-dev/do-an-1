@@ -43,6 +43,15 @@ export const SAMPLE_ROOM = {
   area: 12.34,
 }
 
+/**
+ * Hóa đơn mẫu của luồng 3 do `e2e/seed.sql` tạo: hóa đơn định kỳ tháng 11/2026 của hợp đồng Đang hiệu lực giữa
+ * `e2e-nguoithue` và phòng `[E2E] P02`, tổng lớn để mỗi lần chạy chỉ thu thêm `paymentAmount` mà vẫn còn nợ.
+ */
+export const SAMPLE_INVOICE = {
+  roomCode: '[E2E] P02',
+  paymentAmount: 1_000,
+}
+
 export function getPassword(account: E2eAccount): string {
   const password = process.env[account.passwordEnv]
   if (!password) {
