@@ -161,6 +161,18 @@ builder.Services.AddRateLimiter(options =>
                 PermitLimit = 60,
                 Window = TimeSpan.FromMinutes(1)
             }));
+
+    // Endpoint gọi AI đều cần đăng nhập; mỗi endpoint một bộ đếm riêng theo tài khoản (FR-122).
+    options.AddPolicy(RateLimitPolicies.Ai, context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: GetUserId(context) is { } userId
+                ? $"{GetRouteTemplate(context)}|user:{userId}"
+                : $"{GetRouteTemplate(context)}|ip:{GetClientIp(context)}",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 20,
+                Window = TimeSpan.FromHours(1)
+            }));
 });
 
 // ------------------------------------------------- Service nghiệp vụ
