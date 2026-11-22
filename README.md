@@ -332,6 +332,12 @@ dotnet user-secrets set "Gemini:ApiKey" "<api-key>"
 
 `Gemini:ApiKey` tạo trong Google AI Studio. Hạn mức gọi tính theo từng project, nên dùng một project riêng cho buổi demo. Tên model đặt ở `Gemini:Model` trong `appsettings.json`.
 
+Khi chạy thử hằng ngày, đặt `Gemini:UseFake` là `true` để dùng bản AI giả trả kết quả cố định, không gọi Gemini và không tốn hạn mức:
+
+```bash
+dotnet user-secrets set "Gemini:UseFake" "true"
+```
+
 `Supabase:ServiceRoleKey` lấy ở **Project Settings → API Keys**, phần `service_role`. Key này có toàn quyền trên database và storage — không bao giờ đưa vào frontend.
 
 `Smtp:AppPassword` tạo tại tài khoản Google: bật xác minh 2 bước, rồi vào **Bảo mật → Mật khẩu ứng dụng**. Không dùng mật khẩu Gmail thường.
