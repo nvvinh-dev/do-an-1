@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SmartRent.Infrastructure.Ai;
 using SmartRent.Infrastructure.Email;
 using SmartRent.Infrastructure.Persistence;
 using SmartRent.Infrastructure.Storage;
@@ -41,6 +42,23 @@ public static class DependencyInjection
         services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
         // Singleton: email được gửi nền sau khi request kết thúc, và SmtpEmailSender không giữ trạng thái.
         services.AddSingleton<IEmailSender, SmtpEmailSender>();
+
+        // Thiếu Gemini:ApiKey thì vẫn đăng ký bình thường: ứng dụng khởi động, chỉ endpoint AI trả 503 (FR-121).
+        var geminiSection = configuration.GetSection(GeminiOptions.SectionName);
+        services.Configure<GeminiOptions>(geminiSection);
+
+        if (geminiSection.GetValue<bool>(nameof(GeminiOptions.UseFake)))
+        {
+            services.AddSingleton<IAiClient, FakeAiClient>();
+        }
+        else
+        {
+            services.AddHttpClient<IAiClient, GeminiClient>(client =>
+            {
+                client.BaseAddress = new Uri(GeminiClient.BaseAddress);
+                client.Timeout = GeminiClient.Timeout;
+            });
+        }
 
         return services;
     }

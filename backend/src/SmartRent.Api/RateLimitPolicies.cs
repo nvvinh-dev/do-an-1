@@ -30,4 +30,10 @@ public static class RateLimitPolicies
 
     /// <summary>Tìm kiếm và xem chi tiết phòng công khai — mỗi endpoint 60 lần mỗi phút theo IP.</summary>
     public const string PublicSearch = "public-search";
+
+    /// <summary>
+    /// Endpoint gọi AI: tìm kiếm tự nhiên, trợ lý, giải thích điểm ở ghép —
+    /// mỗi endpoint 20 lần mỗi giờ theo tài khoản (FR-122).
+    /// </summary>
+    public const string Ai = "ai";
 }
