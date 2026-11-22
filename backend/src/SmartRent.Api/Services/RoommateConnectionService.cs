@@ -75,7 +75,8 @@ public class RoommateConnectionService
     }
 
     /// <summary>
-    /// FR-114 (dùng chung cho xem hồ sơ, gửi lời mời, chặn và giải thích điểm): hồ sơ của người khác mà
+    /// FR-114 (dùng chung cho xem hồ sơ, gửi lời mời, chặn và giải thích điểm; gửi lời mời còn đòi hồ sơ đang là
+    /// ứng viên — FR-115): hồ sơ của người khác mà
     /// <paramref name="viewerUserId"/> xem được — giữa hai bên có lời mời kết nối (mọi trạng thái), hoặc hồ sơ đang
     /// nằm trong danh sách ứng viên của người xem; và không bên nào chặn bên nào (FR-118). Không xem được thì
     /// <c>null</c>.
@@ -112,7 +113,8 @@ public class RoommateConnectionService
     }
 
     /// <summary>
-    /// FR-115, FR-116, FR-119: gửi lời mời Chờ phản hồi tới chủ hồ sơ và thông báo cho người nhận (mức Thường).
+    /// FR-115, FR-116, FR-119: gửi lời mời Chờ phản hồi tới chủ một hồ sơ đang trong danh sách ứng viên của người
+    /// gửi và thông báo cho người nhận (mức Thường).
     /// </summary>
     public async Task<ServiceResult<RoommateInvitationResponse>> SendInvitationAsync(
         long senderUserId,
@@ -169,6 +171,21 @@ public class RoommateConnectionService
                 StatusCodes.Status409Conflict,
                 "Không gửi được lời mời: hai bên đang có lời mời chờ phản hồi, đã kết nối, " +
                 "hoặc người này đã từ chối lời mời của bạn.");
+        }
+
+        // FR-115: lời mời cũ chỉ mở quyền xem; gửi mới thì hồ sơ phải đang là ứng viên của người gửi, để người đã
+        // tạm dừng hay chuyển sang Chỉ khi tôi kết nối không bị gửi lại sau mỗi lần rút. Không nói lý do cụ thể.
+        // Giữa hai bên chưa có lời mời nào thì FindViewableProfileAsync đã xếp hạng và xác nhận hồ sơ là ứng viên,
+        // chỉ xếp hạng lại khi hồ sơ xem được nhờ lời mời cũ.
+        if (existing.Count > 0)
+        {
+            var ranked = await RankAsync(senderUserId, cancellationToken);
+
+            if (!ranked.Succeeded || !ranked.Value!.Any(m => m.Profile.Id == profileId))
+            {
+                return ServiceResult<RoommateInvitationResponse>.Fail(
+                    StatusCodes.Status409Conflict, "Hồ sơ này hiện không nhận lời mời mới từ bạn.");
+            }
         }
 
         var invitation = RoommateInvitation.Send(senderUserId, ownerUserId.Value, DateTimeOffset.UtcNow);
