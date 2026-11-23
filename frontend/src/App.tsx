@@ -117,7 +117,7 @@ const routes: RouteObject[] = [
   {
     path: '/tenant',
     element: <ProtectedRoute roles={['Tenant']} />,
-    // Lỗi ở chính khung (thanh trên, chuông thông báo) thì thay cả khung.
+    // Lỗi ở chính khung (thanh bên, chuông thông báo) thì thay cả khung.
     errorElement: <RouteErrorFallback />,
     children: [
       {
