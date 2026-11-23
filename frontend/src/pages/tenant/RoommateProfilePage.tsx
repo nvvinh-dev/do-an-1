@@ -1,5 +1,5 @@
 import { CirclePause, CirclePlay, ShieldBan, Trash2 } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, type Ref } from 'react'
 import { Controller, useForm, useWatch, type Control, type FieldPath } from 'react-hook-form'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
@@ -20,6 +20,7 @@ import { useLocations } from '@/hooks/useLocations'
 import { useMyRoommateProfile } from '@/hooks/useMyRoommateProfile'
 import { useRoommateBlocks } from '@/hooks/useRoommateBlocks'
 import { useRoommateMutation } from '@/hooks/useRoommateMutation'
+import { useSchools } from '@/hooks/useSchools'
 import { getApiErrorInfo } from '@/lib/apiError'
 import {
   deleteMyRoommateProfile,
@@ -28,6 +29,7 @@ import {
   unblockRoommate,
 } from '@/services/roommateService'
 import type { Location } from '@/types/locationTypes'
+import type { School } from '@/types/schoolTypes'
 import {
   COOKING_FREQUENCIES,
   GENDERS,
@@ -54,6 +56,8 @@ import {
 import {
   EMPTY_ROOMMATE_PROFILE_FORM,
   MAX_ORGANIZATION_NAME_LENGTH,
+  OTHER_SCHOOL,
+  needsTypedOrganizationName,
   toRoommateProfileFormValues,
   toRoommateProfileRequest,
   validateBudget,
@@ -61,6 +65,7 @@ import {
   validateMoveInFrom,
   type RoommateProfileFormValues,
 } from '@/utils/roommateProfileForm'
+import { searchSchools } from '@/utils/searchSchools'
 import { searchWards } from '@/utils/searchWards'
 
 /**
@@ -71,21 +76,29 @@ import { searchWards } from '@/utils/searchWards'
 export default function RoommateProfilePage() {
   const profileQuery = useMyRoommateProfile()
   const locationsQuery = useLocations()
+  const schoolsQuery = useSchools()
 
   let content
-  if (profileQuery.isPending || locationsQuery.isPending) {
+  if (profileQuery.isPending || locationsQuery.isPending || schoolsQuery.isPending) {
     content = <ProfileSkeleton />
   } else if (profileQuery.isLoadingError) {
     content = <ApiErrorAlert error={profileQuery.error} onRetry={() => void profileQuery.refetch()} />
   } else if (locationsQuery.isError) {
     content = <ApiErrorAlert error={locationsQuery.error} onRetry={() => void locationsQuery.refetch()} />
+  } else if (schoolsQuery.isError) {
+    content = <ApiErrorAlert error={schoolsQuery.error} onRetry={() => void schoolsQuery.refetch()} />
   } else {
     const profile = profileQuery.data ?? null
     content = (
       <>
         {profile && <ProfileStatus profile={profile} />}
         {/* Đổi key khi hồ sơ được tạo hoặc bị xóa để form lấy lại giá trị ban đầu. */}
-        <ProfileForm key={profile?.id ?? 'new'} profile={profile} locations={locationsQuery.data} />
+        <ProfileForm
+          key={profile?.id ?? 'new'}
+          profile={profile}
+          locations={locationsQuery.data}
+          schools={schoolsQuery.data}
+        />
       </>
     )
   }
@@ -199,13 +212,14 @@ function ProfileStatus({ profile }: { profile: MyRoommateProfile }) {
 interface ProfileFormProps {
   profile: MyRoommateProfile | null
   locations: Location[]
+  schools: School[]
 }
 
 /**
  * Form tạo hoặc sửa (`PUT /roommate-profiles/me`). `409` chỉ xảy ra khi đang có hợp đồng Đang hiệu lực
  * (FR-107): thay form bằng `detail` của server. Lỗi khác hiện ngay trên nút lưu, giữ nguyên dữ liệu đã nhập.
  */
-function ProfileForm({ profile, locations }: ProfileFormProps) {
+function ProfileForm({ profile, locations, schools }: ProfileFormProps) {
   const navigate = useNavigate()
   const today = getVietnamToday()
   const saveMutation = useRoommateMutation(saveMyRoommateProfile)
@@ -216,6 +230,9 @@ function ProfileForm({ profile, locations }: ProfileFormProps) {
 
   const city = useWatch({ control, name: 'city' })
   const visibility = useWatch({ control, name: 'visibility' })
+  const occupationType = useWatch({ control, name: 'occupationType' })
+  const schoolCode = useWatch({ control, name: 'schoolCode' })
+  const typesName = needsTypedOrganizationName({ occupationType, schoolCode })
   const wards = useMemo(() => locations.find((location) => location.city === city)?.wards ?? [], [locations, city])
   const searchWardsOfCity = useCallback((query: string) => searchWards(wards, query), [wards])
 
@@ -351,31 +368,69 @@ function ProfileForm({ profile, locations }: ProfileFormProps) {
             options={OCCUPATION_TYPES}
             labels={OCCUPATION_TYPE_LABELS}
           />
-          <Controller
-            name="organizationName"
-            control={control}
-            rules={{
-              validate: (value) => value.trim() !== '' || 'Vui lòng nhập tên trường hoặc công ty.',
-              maxLength: {
-                value: MAX_ORGANIZATION_NAME_LENGTH,
-                message: `Tên trường hoặc công ty tối đa ${MAX_ORGANIZATION_NAME_LENGTH} ký tự.`,
-              },
-            }}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="organizationName">
-                  Tên trường hoặc công ty <span aria-hidden="true">*</span>
-                </FieldLabel>
-                <Input
-                  {...field}
-                  id="organizationName"
-                  placeholder="Ví dụ: Đại học Bách khoa"
-                  aria-invalid={fieldState.invalid}
-                />
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-              </Field>
-            )}
-          />
+          {occupationType === 'SinhVien' && (
+            <Controller
+              name="schoolCode"
+              control={control}
+              rules={{ validate: (value) => value !== '' || 'Vui lòng chọn trường.' }}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel htmlFor="schoolCode">
+                    Trường <span aria-hidden="true">*</span>
+                  </FieldLabel>
+                  <SchoolCombobox
+                    schools={schools}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    inputRef={field.ref}
+                    invalid={fieldState.invalid}
+                  />
+                  <FieldDescription>Không thấy trường của bạn thì chọn Trường khác ở cuối danh sách.</FieldDescription>
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+          )}
+          {typesName && (
+            <Controller
+              name="organizationName"
+              control={control}
+              rules={{
+                validate: (value) => {
+                  // Ô ẩn (đã chọn trường trong danh mục) thì không kiểm tra.
+                  if (!needsTypedOrganizationName(getValues())) return true
+                  if (value.trim() === '') {
+                    return getValues('occupationType') === 'SinhVien'
+                      ? 'Vui lòng nhập tên trường.'
+                      : 'Vui lòng nhập tên công ty hoặc nơi làm việc.'
+                  }
+                  return (
+                    value.trim().length <= MAX_ORGANIZATION_NAME_LENGTH ||
+                    `Tên tối đa ${MAX_ORGANIZATION_NAME_LENGTH} ký tự.`
+                  )
+                },
+              }}
+              render={({ field, fieldState }) => (
+                <Field
+                  data-invalid={fieldState.invalid}
+                  className={occupationType === 'SinhVien' ? 'sm:col-span-2' : undefined}
+                >
+                  <FieldLabel htmlFor="organizationName">
+                    {ORGANIZATION_NAME_LABELS[occupationType]} <span aria-hidden="true">*</span>
+                  </FieldLabel>
+                  <Input
+                    {...field}
+                    id="organizationName"
+                    placeholder={ORGANIZATION_NAME_PLACEHOLDERS[occupationType]}
+                    disabled={occupationType === ''}
+                    aria-invalid={fieldState.invalid}
+                  />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            />
+          )}
         </FieldGroup>
       </FormSection>
 
@@ -484,6 +539,86 @@ function SelectField<Option extends string>({
           {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
         </Field>
       )}
+    />
+  )
+}
+
+// Ô tên đổi nhãn theo loại: Trường khác của sinh viên, hoặc công ty của người đi làm; chưa chọn loại thì khóa ô.
+const ORGANIZATION_NAME_LABELS: Record<RoommateProfileFormValues['occupationType'], string> = {
+  '': 'Tên trường hoặc công ty',
+  SinhVien: 'Tên trường',
+  DiLam: 'Tên công ty hoặc nơi làm việc',
+}
+const ORGANIZATION_NAME_PLACEHOLDERS: Record<RoommateProfileFormValues['occupationType'], string> = {
+  '': 'Chọn đang đi học hay đi làm trước',
+  SinhVien: 'Gõ đầy đủ tên trường',
+  DiLam: 'Ví dụ: FPT Software',
+}
+
+const SCHOOL_TYPE_LABELS: Record<School['type'], string> = { DaiHoc: 'Đại học', CaoDang: 'Cao đẳng' }
+
+/** Số trường khớp nhất hiện trong ô chọn trường; muốn thấy trường khác thì gõ thêm chữ. */
+const MAX_SCHOOL_RESULTS = 8
+
+/** Mục cuối của ô chọn trường: trường không có trong danh mục thì gõ tên (FR-112). */
+const OTHER_SCHOOL_OPTION: School = { code: OTHER_SCHOOL, name: 'Trường khác', type: 'DaiHoc', city: null, aliases: [] }
+
+interface SchoolComboboxProps {
+  schools: School[]
+  /** Mã trường đã chọn, `OTHER_SCHOOL` hoặc chuỗi rỗng. */
+  value: string
+  onChange: (value: string) => void
+  onBlur: () => void
+  inputRef: Ref<HTMLInputElement>
+  invalid: boolean
+}
+
+/**
+ * Ô chọn trường trong danh mục (`GET /schools`), tìm theo tên bỏ dấu, tên viết tắt hoặc thành phố. Danh mục
+ * gần 700 trường nên chưa gõ gì thì không liệt kê trường nào, gõ rồi thì chỉ hiện `MAX_SCHOOL_RESULTS` trường
+ * khớp nhất. Trường khác luôn là mục cuối, kể cả khi không trường nào khớp chữ gõ.
+ */
+function SchoolCombobox({ schools, value, onChange, onBlur, inputRef, invalid }: SchoolComboboxProps) {
+  const items = useMemo(() => [...schools, OTHER_SCHOOL_OPTION], [schools])
+  const search = useCallback(
+    (query: string) =>
+      query.trim() === ''
+        ? [OTHER_SCHOOL_OPTION]
+        : [...searchSchools(schools, query).slice(0, MAX_SCHOOL_RESULTS), OTHER_SCHOOL_OPTION],
+    [schools],
+  )
+  const selected = useMemo(() => items.find((item) => item.code === value) ?? null, [items, value])
+
+  return (
+    <SearchCombobox
+      id="schoolCode"
+      items={items}
+      search={search}
+      selectedItem={selected}
+      onSelect={(item) => onChange(item?.code ?? '')}
+      onBlur={onBlur}
+      inputRef={inputRef}
+      itemToLabel={(item) => item.name}
+      itemToKey={(item) => item.code}
+      renderItem={(item) =>
+        item.code === OTHER_SCHOOL ? (
+          <span className="flex flex-col">
+            <span className="font-medium">Trường khác</span>
+            <span className="text-xs text-muted-foreground">Trường không có trong danh sách, gõ tên ở ô bên dưới</span>
+          </span>
+        ) : (
+          <span className="flex flex-col">
+            <span className="wrap-anywhere">{item.name}</span>
+            <span className="text-xs text-muted-foreground">
+              {SCHOOL_TYPE_LABELS[item.type]}
+              {item.city ? ` · ${item.city}` : ''}
+            </span>
+          </span>
+        )
+      }
+      placeholder="Gõ tên trường hoặc tên viết tắt, ví dụ UIT"
+      emptyText="Không tìm thấy trường."
+      invalid={invalid}
     />
   )
 }

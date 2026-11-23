@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { MyRoommateProfile } from '@/types/roommateTypes'
 import {
+  OTHER_SCHOOL,
   toRoommateProfileFormValues,
   toRoommateProfileRequest,
   validateBudget,
@@ -22,6 +23,7 @@ const profile: MyRoommateProfile = {
   cooking: 'ThinhThoang',
   noiseLevel: 'YenTinh',
   occupationType: 'SinhVien',
+  schoolCode: null,
   organizationName: 'Đại học Bách khoa',
   moveInFrom: '2026-12-01',
   visibility: 'ChiKhiToiKetNoi',
@@ -81,6 +83,7 @@ describe('toRoommateProfileRequest', () => {
       cooking: profile.cooking,
       noiseLevel: profile.noiseLevel,
       occupationType: profile.occupationType,
+      schoolCode: null,
       organizationName: profile.organizationName,
       moveInFrom: profile.moveInFrom,
       visibility: profile.visibility,
@@ -97,5 +100,33 @@ describe('toRoommateProfileRequest', () => {
     expect(request.ward).toBeNull()
     expect(request.budgetMin).toBe(1_500_000)
     expect(request.organizationName).toBe('Đại học Bách khoa')
+  })
+
+  it('hồ sơ sinh viên chưa có mã trường mở lại ở Trường khác, giữ tên đã gõ', () => {
+    const values = toRoommateProfileFormValues(profile)
+    expect(values.schoolCode).toBe(OTHER_SCHOOL)
+    expect(values.organizationName).toBe('Đại học Bách khoa')
+  })
+
+  it('chọn trường trong danh mục thì gửi mã, không gửi tên', () => {
+    const uit = { ...profile, schoolCode: 'uit', organizationName: 'Trường Đại học Công nghệ Thông tin – ĐHQG TP.HCM' }
+    const values = toRoommateProfileFormValues(uit)
+    expect(values.schoolCode).toBe('uit')
+    expect(values.organizationName).toBe('')
+
+    const request = toRoommateProfileRequest({ ...values, organizationName: 'chữ còn sót' })
+    expect(request.schoolCode).toBe('uit')
+    expect(request.organizationName).toBeNull()
+  })
+
+  it('đi làm thì gửi tên công ty, bỏ qua mã trường đã chọn trước khi đổi loại', () => {
+    const request = toRoommateProfileRequest({
+      ...toRoommateProfileFormValues(profile),
+      occupationType: 'DiLam',
+      schoolCode: 'uit',
+      organizationName: ' FPT Software ',
+    })
+    expect(request.schoolCode).toBeNull()
+    expect(request.organizationName).toBe('FPT Software')
   })
 })

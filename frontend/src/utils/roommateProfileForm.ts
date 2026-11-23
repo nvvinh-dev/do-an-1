@@ -25,6 +25,12 @@ export interface RoommateProfileFormValues {
   cooking: CookingFrequency | ''
   noiseLevel: NoiseLevel | ''
   occupationType: OccupationType | ''
+  /**
+   * Sinh viên: mã trường đã chọn trong danh mục, `OTHER_SCHOOL` khi chọn Trường khác, chuỗi rỗng khi
+   * chưa chọn. Đi làm thì bỏ qua.
+   */
+  schoolCode: string
+  /** Tên công ty, hoặc tên trường khi chọn Trường khác. */
   organizationName: string
   moveInFrom: string
   visibility: RoommateProfileVisibility
@@ -43,12 +49,21 @@ export const EMPTY_ROOMMATE_PROFILE_FORM: RoommateProfileFormValues = {
   cooking: '',
   noiseLevel: '',
   occupationType: '',
+  schoolCode: '',
   organizationName: '',
   moveInFrom: '',
   visibility: 'CongKhai',
 }
 
 export const MAX_ORGANIZATION_NAME_LENGTH = 200
+
+/** Giá trị của mục Trường khác ở ô chọn trường; không trùng mã trường nào (mã chỉ gồm chữ thường, số, gạch). */
+export const OTHER_SCHOOL = '__truong-khac__'
+
+/** Ô chọn trường đang ở Trường khác hoặc đi làm, nên phải gõ tên. */
+export function needsTypedOrganizationName(values: Pick<RoommateProfileFormValues, 'occupationType' | 'schoolCode'>) {
+  return values.occupationType !== 'SinhVien' || values.schoolCode === OTHER_SCHOOL
+}
 const MAX_BUDGET = 999_999_999_999
 
 /** Hồ sơ đang có → giá trị ban đầu của form sửa. */
@@ -66,7 +81,9 @@ export function toRoommateProfileFormValues(profile: MyRoommateProfile): Roommat
     cooking: profile.cooking,
     noiseLevel: profile.noiseLevel,
     occupationType: profile.occupationType,
-    organizationName: profile.organizationName,
+    // Hồ sơ sinh viên lưu trước khi có danh mục, hoặc chọn Trường khác, không có mã: mở lại ở Trường khác.
+    schoolCode: profile.occupationType === 'SinhVien' ? (profile.schoolCode ?? OTHER_SCHOOL) : '',
+    organizationName: profile.schoolCode === null ? profile.organizationName : '',
     moveInFrom: profile.moveInFrom,
     visibility: profile.visibility,
   }
@@ -99,8 +116,9 @@ export function validateMoveInFrom(value: string, today: string): true | string 
 }
 
 /**
- * Form đã qua kiểm tra → body của `PUT /roommate-profiles/me`. Phường để trống gửi `null` (FR-109); tên
- * trường hoặc công ty bỏ khoảng trắng hai đầu.
+ * Form đã qua kiểm tra → body của `PUT /roommate-profiles/me`. Phường để trống gửi `null` (FR-109). Sinh viên
+ * chọn trường trong danh mục thì gửi mã, tên là `null`; Trường khác hoặc đi làm thì gửi tên đã gõ, bỏ khoảng
+ * trắng hai đầu, mã là `null` (FR-112).
  */
 export function toRoommateProfileRequest(values: RoommateProfileFormValues): RoommateProfileRequest {
   return {
@@ -116,7 +134,8 @@ export function toRoommateProfileRequest(values: RoommateProfileFormValues): Roo
     cooking: values.cooking as CookingFrequency,
     noiseLevel: values.noiseLevel as NoiseLevel,
     occupationType: values.occupationType as OccupationType,
-    organizationName: values.organizationName.trim(),
+    schoolCode: needsTypedOrganizationName(values) ? null : values.schoolCode,
+    organizationName: needsTypedOrganizationName(values) ? values.organizationName.trim() : null,
     moveInFrom: values.moveInFrom,
     visibility: values.visibility,
   }
