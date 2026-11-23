@@ -175,7 +175,7 @@ SmartRent_System/
 │   │   │   ├── Services/               # Service điều phối nghiệp vụ
 │   │   │   ├── Contracts/              # Kiểu dữ liệu vào/ra của API
 │   │   │   ├── Validators/             # Kiểm tra dữ liệu đầu vào (FluentValidation)
-│   │   │   └── Data/                   # Dữ liệu tĩnh: danh mục tỉnh/thành – phường/xã (locations.json)
+│   │   │   └── Data/                   # Dữ liệu tĩnh: danh mục tỉnh/thành – phường/xã (locations.json), danh mục trường (schools.json)
 │   │   ├── SmartRent.Domain/           # Entity, quy tắc nghiệp vụ
 │   │   │   ├── Entities/
 │   │   │   └── Enums/
@@ -211,6 +211,8 @@ SmartRent_System/
 ```
 
 **Danh mục đơn vị hành chính** (`backend/src/SmartRent.Api/Data/locations.json`) lấy từ web service của Cục Thống kê (https://danhmuchanhchinh.nso.gov.vn/DMDVHC.asmx, thao tác `DanhMucTinh` và `DanhMucPhuongXa`) tính đến ngày 06/10/2026: 34 tỉnh/thành, 3.321 phường/xã/đặc khu, khớp trang thống kê số lượng của cùng nguồn. Tên giữ nguyên như nguồn, chỉ bỏ khoảng trắng thừa và chuẩn hóa Unicode về dạng NFC; tỉnh/thành và phường/xã xếp theo mã. Danh mục chính thức thay đổi thì tải lại từ nguồn này.
+
+**Danh mục trường** (`backend/src/SmartRent.Api/Data/schools.json`) cho ô chọn trường ở hồ sơ ở ghép (FR-112) lấy từ các bảng và danh sách của bài "Danh sách trường đại học, học viện và cao đẳng tại Việt Nam" trên Wikipedia tiếng Việt, bản ngày 23/11/2026: 686 trường, gồm 334 đại học, học viện, trường thành viên, phân hiệu và 352 trường cao đẳng; không lấy trường dự bị đại học. Trường thành viên ghi kèm đại học chủ quản ("Trường Đại học Công nghệ Thông tin – ĐHQG TP.HCM"). Mã trường là tên trường bỏ dấu, chữ thường, nối bằng gạch ngang, vì trường cao đẳng không có mã tuyển sinh thống nhất; đã lưu vào hồ sơ nên **không đổi mã** của trường đã có khi cập nhật danh mục, chỉ thêm trường mới. Tên viết tắt lấy từ cột Viết tắt của bài. Tên chuẩn hóa Unicode về dạng NFC. Danh mục chưa đủ mọi trường, nhất là trường cao đẳng: người dùng chọn Trường khác rồi gõ tên.
 
 **Nguyên tắc sắp xếp file:** mỗi thư mục chỉ chứa một loại code, và tên file ghép từ **chức năng nghiệp vụ + vai trò của file** — nhìn tên là biết file thuộc chức năng nào, làm nhiệm vụ gì. Không đặt tên chung chung như `Helper`, `Utils`, `Common`.
 
