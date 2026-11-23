@@ -134,7 +134,7 @@ function SidebarNav({ homePath, groups }: Pick<SidebarLayoutProps, 'homePath' | 
 }
 
 /**
- * Khung có sidebar của Chủ trọ và Admin (docs/design-system.md mục 5): từ lg sidebar cố định
+ * Khung có sidebar của Người thuê, Chủ trọ và Admin (docs/design-system.md mục 5): từ lg sidebar cố định
  * bên trái, dưới lg sidebar trượt ra từ nút trên thanh trên.
  */
 export default function SidebarLayout({ homePath, groups, showNotificationBell }: SidebarLayoutProps) {
