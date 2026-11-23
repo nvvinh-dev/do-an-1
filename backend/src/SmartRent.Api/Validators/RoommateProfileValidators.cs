@@ -2,6 +2,7 @@ using FluentValidation;
 using SmartRent.Api.Contracts;
 using SmartRent.Domain;
 using SmartRent.Domain.Entities;
+using SmartRent.Domain.Enums;
 
 namespace SmartRent.Api.Validators;
 
@@ -43,11 +44,23 @@ public class RoommateProfileRequestValidator : AbstractValidator<RoommateProfile
         RuleFor(x => x.NoiseLevel).NotNull().IsInEnum();
 
         RuleFor(x => x.OccupationType).NotNull().IsInEnum();
+
+        // FR-112: mã trường chỉ dành cho Sinh viên; mã có trong danh mục không (422) kiểm ở service.
+        RuleFor(x => x.SchoolCode)
+            .NotEmpty()
+            .WithMessage("Mã trường không được để trống; chọn Trường khác thì gửi null.")
+            .Must((request, _) => request.OccupationType == OccupationType.SinhVien)
+            .WithMessage("Chỉ sinh viên mới chọn trường trong danh mục.")
+            .When(x => x.SchoolCode is not null);
+
+        // Có mã trường thì server lấy tên theo danh mục; không có (Trường khác, đi làm) thì bắt buộc gõ tên.
         RuleFor(x => x.OrganizationName)
             .NotEmpty()
-            .Must(name => name.Trim().Length <= RoommateProfile.MaxOrganizationNameLength)
+            .WithMessage("Vui lòng nhập tên trường hoặc công ty.")
+            .Must(name => name!.Trim().Length <= RoommateProfile.MaxOrganizationNameLength)
             .When(x => x.OrganizationName is not null, ApplyConditionTo.CurrentValidator)
-            .WithMessage($"Tên trường hoặc công ty tối đa {RoommateProfile.MaxOrganizationNameLength} ký tự.");
+            .WithMessage($"Tên trường hoặc công ty tối đa {RoommateProfile.MaxOrganizationNameLength} ký tự.")
+            .When(x => x.SchoolCode is null);
     }
 }
 
