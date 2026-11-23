@@ -518,7 +518,7 @@ public class MaintenanceRequestService
                 OverdueAcceptanceEvent,
                 "Sự cố chưa được tiếp nhận",
                 $"Sự cố \"{m.Title}\" ở phòng {m.RoomCode} ({m.PropertyName}) đã quá 72 giờ mà Chủ trọ chưa tiếp nhận. " +
-                "Bạn có thể gửi khiếu nại tới quản trị viên.",
+                "Bạn hãy liên hệ trực tiếp Chủ trọ để được hỗ trợ.",
                 nameof(MaintenanceRequest),
                 m.Id);
         }

@@ -49,7 +49,7 @@ import { normalizeRoomMoney } from '@/utils/validateRoomInput'
 // Lý do từ chối tối đa 500 ký tự (FR-141).
 const REJECTION_REASON_MAX_LENGTH = 500
 
-// Sự cố Mới quá 72 giờ thì người thuê được quyền khiếu nại (BP-08 A4).
+// Sự cố Mới quá 72 giờ thì người thuê được nhắc liên hệ trực tiếp Chủ trọ (BP-08 A4).
 const ACCEPT_OVERDUE_MS = 72 * 60 * 60 * 1000
 
 /** `state` mà liên kết ở trang danh sách gửi kèm: query lọc và trang đang xem, để nút quay lại giữ nguyên. */
@@ -100,7 +100,7 @@ export default function LandlordMaintenanceRequestDetailPage() {
 }
 
 /**
- * Mốc tiếp theo làm đổi cách hiện trang khi đang mở: sự cố Mới qua 72 giờ (hiện cảnh báo khiếu nại),
+ * Mốc tiếp theo làm đổi cách hiện trang khi đang mở: sự cố Mới qua 72 giờ (hiện cảnh báo quá 72 giờ),
  * sự cố chờ xác nhận qua 168 giờ (thay đếm ngược bằng câu sẽ tự đóng). `null` khi không có mốc.
  */
 function getNextMark(maintenanceRequest: MaintenanceRequestDetail): number | null {
@@ -268,7 +268,7 @@ function MaintenanceRequestStatusNotice({
       if (isAcceptOverdue) {
         return (
           <ActionPanel title="Đã quá 72 giờ chưa tiếp nhận" actions={actionButtons}>
-            <p>Người thuê đã được quyền gửi khiếu nại tới Admin về sự cố này. Bạn vẫn tiếp nhận hoặc từ chối được.</p>
+            <p>Sự cố đã quá 72 giờ chưa được tiếp nhận, người thuê đã được nhắc liên hệ trực tiếp với bạn. Bạn vẫn tiếp nhận hoặc từ chối được.</p>
           </ActionPanel>
         )
       }

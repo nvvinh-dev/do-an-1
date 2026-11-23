@@ -69,7 +69,7 @@ public class MaintenanceRequest
     /// </summary>
     public static readonly TimeSpan ConfirmationWindow = TimeSpan.FromHours(168);
 
-    /// <summary>BP-08 A4: sự cố ở Mới quá 72 giờ thì Người thuê được gợi ý gửi khiếu nại.</summary>
+    /// <summary>BP-08 A4: sự cố ở Mới quá 72 giờ thì Người thuê được nhắc liên hệ trực tiếp Chủ trọ.</summary>
     public static readonly TimeSpan AcceptanceWindow = TimeSpan.FromHours(72);
 
     /// <summary>Hạn Người thuê xác nhận; chỉ có nghĩa khi sự cố đang Chờ người thuê xác nhận.</summary>
