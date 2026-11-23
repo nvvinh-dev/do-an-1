@@ -12,7 +12,12 @@ namespace SmartRent.Infrastructure.Ai;
 public class FakeAiClient : IAiClient
 {
     private static readonly IReadOnlyDictionary<string, string> CannedResponses =
-        new Dictionary<string, string>();
+        new Dictionary<string, string>
+        {
+            // Hợp đồng #1 chỉ còn trong response khi thuộc người hỏi — dùng để thấy server lọc references (FR-129).
+            [AiOperations.AssistantQuestion] =
+                """{"answer":"[AI giả] Đây là câu trả lời mẫu của trợ lý, không gọi Gemini.","references":[{"type":"Contract","id":1}]}"""
+        };
 
     private const string DefaultTextResponse = "[AI giả] Đây là câu trả lời mẫu, không gọi Gemini.";
 
