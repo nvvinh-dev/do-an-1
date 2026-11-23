@@ -372,7 +372,10 @@ function ProfileForm({ profile, locations, schools }: ProfileFormProps) {
             <Controller
               name="schoolCode"
               control={control}
-              rules={{ validate: (value) => value !== '' || 'Vui lòng chọn trường.' }}
+              rules={{
+                // Đổi sang Đi làm thì ô này ẩn đi: không bắt chọn trường nữa.
+                validate: (value) => getValues('occupationType') !== 'SinhVien' || value !== '' || 'Vui lòng chọn trường.',
+              }}
               render={({ field, fieldState }) => (
                 <Field data-invalid={fieldState.invalid}>
                   <FieldLabel htmlFor="schoolCode">
@@ -575,19 +578,31 @@ interface SchoolComboboxProps {
 
 /**
  * Ô chọn trường trong danh mục (`GET /schools`), tìm theo tên bỏ dấu, tên viết tắt hoặc thành phố. Danh mục
- * gần 700 trường nên chưa gõ gì thì không liệt kê trường nào, gõ rồi thì chỉ hiện `MAX_SCHOOL_RESULTS` trường
- * khớp nhất. Trường khác luôn là mục cuối, kể cả khi không trường nào khớp chữ gõ.
+ * gần 700 trường nên chưa gõ gì thì chỉ hiện trường đang chọn (nếu có), gõ rồi thì chỉ hiện
+ * `MAX_SCHOOL_RESULTS` trường khớp nhất. Trường khác luôn là mục cuối, kể cả khi không trường nào khớp chữ gõ.
  */
 function SchoolCombobox({ schools, value, onChange, onBlur, inputRef, invalid }: SchoolComboboxProps) {
-  const items = useMemo(() => [...schools, OTHER_SCHOOL_OPTION], [schools])
+  const selected = useMemo(
+    () => (value === OTHER_SCHOOL ? OTHER_SCHOOL_OPTION : (schools.find((school) => school.code === value) ?? null)),
+    [schools, value],
+  )
+  // Mở ô đã chọn mà chưa gõ gì thì chỉ hiện trường đang chọn và Trường khác: ô tô sẵn mục đầu, nên nhấn
+  // Enter chọn lại đúng trường đó. Base UI lấy các mục này từ đầu `items` (xem `limit` của SearchCombobox).
+  const pinned = useMemo(
+    () => (selected && selected !== OTHER_SCHOOL_OPTION ? [selected, OTHER_SCHOOL_OPTION] : [OTHER_SCHOOL_OPTION]),
+    [selected],
+  )
+  const items = useMemo(
+    () => [...pinned, ...schools.filter((school) => !pinned.includes(school))],
+    [pinned, schools],
+  )
   const search = useCallback(
     (query: string) =>
       query.trim() === ''
-        ? [OTHER_SCHOOL_OPTION]
+        ? pinned
         : [...searchSchools(schools, query).slice(0, MAX_SCHOOL_RESULTS), OTHER_SCHOOL_OPTION],
-    [schools],
+    [schools, pinned],
   )
-  const selected = useMemo(() => items.find((item) => item.code === value) ?? null, [items, value])
 
   return (
     <SearchCombobox
@@ -619,6 +634,7 @@ function SchoolCombobox({ schools, value, onChange, onBlur, inputRef, invalid }:
       placeholder="Gõ tên trường hoặc tên viết tắt, ví dụ UIT"
       emptyText="Không tìm thấy trường."
       invalid={invalid}
+      limit={pinned.length}
     />
   )
 }

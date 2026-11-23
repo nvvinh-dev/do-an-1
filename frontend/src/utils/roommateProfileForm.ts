@@ -57,7 +57,10 @@ export const EMPTY_ROOMMATE_PROFILE_FORM: RoommateProfileFormValues = {
 
 export const MAX_ORGANIZATION_NAME_LENGTH = 200
 
-/** Giá trị của mục Trường khác ở ô chọn trường; không trùng mã trường nào (mã chỉ gồm chữ thường, số, gạch). */
+/**
+ * Giá trị của mục Trường khác ở ô chọn trường. Không trùng mã trường nào vì có gạch dưới: backend chỉ nạp
+ * danh mục có mã gồm chữ thường, số và gạch ngang (`SchoolCatalog`).
+ */
 export const OTHER_SCHOOL = '__truong-khac__'
 
 /** Ô chọn trường đang ở Trường khác hoặc đi làm, nên phải gõ tên. */
