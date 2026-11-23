@@ -21,7 +21,8 @@ public record RoommateProfileRequest(
     CookingFrequency? Cooking,
     NoiseLevel? NoiseLevel,
     OccupationType? OccupationType,
-    string OrganizationName);
+    string? SchoolCode,
+    string? OrganizationName);
 
 /// <summary>Tạm dừng (<c>false</c>) hoặc tiếp tục (<c>true</c>) tìm bạn ở ghép — FR-106.</summary>
 public record RoommateSearchingRequest(bool? IsSearching);
@@ -41,6 +42,7 @@ public record RoommateProfileResponse(
     CookingFrequency Cooking,
     NoiseLevel NoiseLevel,
     OccupationType OccupationType,
+    string? SchoolCode,
     string OrganizationName,
     DateOnly MoveInFrom,
     RoommateProfileVisibility Visibility,
@@ -66,6 +68,7 @@ public record RoommateProfilePublicResponse(
     CookingFrequency Cooking,
     NoiseLevel NoiseLevel,
     OccupationType OccupationType,
+    string? SchoolCode,
     string OrganizationName,
     DateOnly MoveInFrom,
     DateTimeOffset UpdatedAt);

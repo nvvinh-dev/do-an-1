@@ -23,7 +23,8 @@ public class RoommateMatchingTests
         CookingFrequency cooking = CookingFrequency.ThinhThoang,
         NoiseLevel noise = NoiseLevel.BinhThuong,
         OccupationType occupation = OccupationType.SinhVien,
-        string organization = "Đại học Công nghệ Thông tin") => new()
+        string organization = "Đại học Công nghệ Thông tin",
+        string? schoolCode = null) => new()
     {
         Gender = gender,
         PreferredRoommateGender = preferred,
@@ -37,8 +38,16 @@ public class RoommateMatchingTests
         Cooking = cooking,
         NoiseLevel = noise,
         OccupationType = occupation,
-        OrganizationName = organization
+        OrganizationName = organization,
+        SchoolCode = schoolCode
     };
+
+    private const string Uit = "truong-dai-hoc-cong-nghe-thong-tin-dhqg-tp-hcm";
+    private const string UitName = "Trường Đại học Công nghệ Thông tin – ĐHQG TP.HCM";
+    private const string BkHcm = "truong-dai-hoc-bach-khoa-dhqg-tp-hcm";
+    private const string BkHcmName = "Trường Đại học Bách khoa – ĐHQG TP.HCM";
+    private const string BkHn = "dai-hoc-bach-khoa-ha-noi";
+    private const string BkHnName = "Đại học Bách khoa Hà Nội";
 
     // ---- Lọc cứng: giới tính hai chiều (FR-108), cùng tỉnh/thành (FR-109) ----
 
@@ -221,6 +230,65 @@ public class RoommateMatchingTests
         var b = Profile(organization: "Đại học Y Dược");
 
         Assert.Equal(1m, RoommateMatching.OrganizationScore(a, b));
+    }
+
+    [Fact]
+    public void OrganizationScore_HaiTruongTrongDanhMucCungMa_DuocMot()
+    {
+        var a = Profile(organization: UitName, schoolCode: Uit);
+        // Tên lưu lúc chọn có thể khác nếu danh mục đổi tên sau đó: so theo mã.
+        var b = Profile(organization: "Trường Đại học Công nghệ Thông tin, ĐHQG-HCM", schoolCode: Uit);
+
+        Assert.Equal(1m, RoommateMatching.OrganizationScore(a, b));
+    }
+
+    [Fact]
+    public void OrganizationScore_BachKhoaHaNoiVaBachKhoaTpHcm_LaKhacTruong()
+    {
+        var a = Profile(organization: BkHnName, schoolCode: BkHn);
+        var b = Profile(organization: BkHcmName, schoolCode: BkHcm);
+
+        Assert.Equal(0.5m, RoommateMatching.OrganizationScore(a, b));
+    }
+
+    [Fact]
+    public void OrganizationScore_HaiTruongThanhVienCungMotDhqg_VanLaKhacTruong()
+    {
+        var a = Profile(organization: UitName, schoolCode: Uit);
+        var b = Profile(organization: BkHcmName, schoolCode: BkHcm);
+
+        Assert.Equal(0.5m, RoommateMatching.OrganizationScore(a, b));
+    }
+
+    [Fact]
+    public void OrganizationScore_MotBenTruongKhacGoDungTenTrongDanhMuc_SoTheoTen()
+    {
+        var a = Profile(organization: UitName, schoolCode: Uit);
+        var b = Profile(organization: " trường đại học công nghệ thông tin – ĐHQG TP.HCM", schoolCode: null);
+
+        Assert.Equal(1m, RoommateMatching.OrganizationScore(a, b));
+    }
+
+    [Fact]
+    public void OrganizationScore_MotBenTruongKhacTenKhac_DuocNuaDiem()
+    {
+        var a = Profile(organization: UitName, schoolCode: Uit);
+        var b = Profile(organization: "Trường Đại học Công nghệ Thông tin Gia Định", schoolCode: null);
+
+        Assert.Equal(0.5m, RoommateMatching.OrganizationScore(a, b));
+    }
+
+    [Fact]
+    public void Calculate_HaiTruongBachKhoaKhacThanhPho_TruongDuocNuaDiem()
+    {
+        // Mọi tiêu chí khác giống hệt: 30 + 30 + 25 + 15 × 0,5 = 92,5 → 93.
+        var a = Profile(organization: BkHnName, schoolCode: BkHn);
+        var b = Profile(organization: BkHcmName, schoolCode: BkHcm);
+
+        var result = RoommateMatching.Calculate(a, b);
+
+        Assert.Equal(0.5m, result.Organization);
+        Assert.Equal(93, result.Score);
     }
 
     // ---- Tổng điểm (FR-113, BR-19) ----

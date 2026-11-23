@@ -1493,6 +1493,10 @@ namespace SmartRent.Infrastructure.Persistence.Migrations
                         .HasColumnType("text")
                         .HasColumnName("preferred_roommate_gender");
 
+                    b.Property<string>("SchoolCode")
+                        .HasColumnType("text")
+                        .HasColumnName("school_code");
+
                     b.Property<string>("SleepTime")
                         .IsRequired()
                         .HasColumnType("text")
@@ -1541,6 +1545,8 @@ namespace SmartRent.Infrastructure.Persistence.Migrations
                             t.HasCheckConstraint("ck_roommate_profiles_occupation_type", "occupation_type IN ('SinhVien', 'DiLam')");
 
                             t.HasCheckConstraint("ck_roommate_profiles_preferred_roommate_gender", "preferred_roommate_gender IN ('ChiNam', 'ChiNu', 'KhongYeuCau')");
+
+                            t.HasCheckConstraint("ck_roommate_profiles_school_code", "school_code IS NULL OR occupation_type = 'SinhVien'");
 
                             t.HasCheckConstraint("ck_roommate_profiles_sleep_time", "sleep_time IN ('Truoc23Gio', 'Tu23Den1Gio', 'Sau1Gio')");
 

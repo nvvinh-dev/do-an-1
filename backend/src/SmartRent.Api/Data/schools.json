@@ -1,0 +1,5304 @@
+[
+  {
+    "code": "co-so-hau-giang-dai-hoc-can-tho",
+    "name": "Cơ sở Hậu Giang – Đại học Cần Thơ",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": []
+  },
+  {
+    "code": "co-so-soc-trang-dai-hoc-can-tho",
+    "name": "Cơ sở Sóc Trăng – Đại học Cần Thơ",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": []
+  },
+  {
+    "code": "dai-hoc-bach-khoa-ha-noi",
+    "name": "Đại học Bách khoa Hà Nội",
+    "type": "DaiHoc",
+    "city": null,
+    "aliases": [
+      "HUST"
+    ]
+  },
+  {
+    "code": "dai-hoc-can-tho",
+    "name": "Đại học Cần Thơ",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": []
+  },
+  {
+    "code": "dai-hoc-cong-nghiep-ha-noi",
+    "name": "Đại học Công nghiệp Hà Nội",
+    "type": "DaiHoc",
+    "city": null,
+    "aliases": [
+      "HaUI"
+    ]
+  },
+  {
+    "code": "dai-hoc-da-nang",
+    "name": "Đại học Đà Nẵng",
+    "type": "DaiHoc",
+    "city": "Đà Nẵng",
+    "aliases": []
+  },
+  {
+    "code": "dai-hoc-duy-tan",
+    "name": "Đại học Duy Tân",
+    "type": "DaiHoc",
+    "city": null,
+    "aliases": [
+      "DTU"
+    ]
+  },
+  {
+    "code": "dai-hoc-hue",
+    "name": "Đại học Huế",
+    "type": "DaiHoc",
+    "city": "Huế",
+    "aliases": []
+  },
+  {
+    "code": "dai-hoc-kinh-te-quoc-dan",
+    "name": "Đại học Kinh tế Quốc dân",
+    "type": "DaiHoc",
+    "city": null,
+    "aliases": [
+      "NEU"
+    ]
+  },
+  {
+    "code": "dai-hoc-kinh-te-thanh-pho-ho-chi-minh",
+    "name": "Đại học Kinh tế Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": null,
+    "aliases": [
+      "UEH"
+    ]
+  },
+  {
+    "code": "dai-hoc-phenikaa",
+    "name": "Đại học Phenikaa",
+    "type": "DaiHoc",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "dai-hoc-quoc-gia-ha-noi",
+    "name": "Đại học Quốc gia Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "dai-hoc-quoc-gia-thanh-pho-ho-chi-minh",
+    "name": "Đại học Quốc gia Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "dai-hoc-thai-nguyen",
+    "name": "Đại học Thái Nguyên",
+    "type": "DaiHoc",
+    "city": "Thái Nguyên",
+    "aliases": []
+  },
+  {
+    "code": "dai-hoc-tra-vinh",
+    "name": "Đại học Trà Vinh",
+    "type": "DaiHoc",
+    "city": "Vĩnh Long",
+    "aliases": []
+  },
+  {
+    "code": "dai-hoc-y-duoc-thanh-pho-ho-chi-minh",
+    "name": "Đại học Y Dược Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "YDS"
+    ]
+  },
+  {
+    "code": "hoc-vien-am-nhac-hue",
+    "name": "Học viện Âm nhạc Huế",
+    "type": "DaiHoc",
+    "city": "Huế",
+    "aliases": [
+      "HAM"
+    ]
+  },
+  {
+    "code": "hoc-vien-am-nhac-quoc-gia-viet-nam",
+    "name": "Học viện Âm nhạc Quốc gia Việt Nam",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VNAM"
+    ]
+  },
+  {
+    "code": "hoc-vien-an-ninh-nhan-dan",
+    "name": "Học viện An ninh nhân dân",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "hoc-vien-bao-chi-va-tuyen-truyen",
+    "name": "Học viện Báo chí và Tuyên truyền",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "AJC"
+    ]
+  },
+  {
+    "code": "hoc-vien-bien-phong",
+    "name": "Học viện Biên phòng",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "hoc-vien-can-bo-thanh-pho-ho-chi-minh",
+    "name": "Học viện Cán bộ Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "HCA"
+    ]
+  },
+  {
+    "code": "hoc-vien-canh-sat-nhan-dan",
+    "name": "Học viện Cảnh sát nhân dân",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "hoc-vien-cao-dai-tien-thien",
+    "name": "Học viện cao đài Tiên Thiên",
+    "type": "DaiHoc",
+    "city": "Vĩnh Long",
+    "aliases": []
+  },
+  {
+    "code": "hoc-vien-chien-luoc-khoa-hoc-va-cong-nghe",
+    "name": "Học viện Chiến lược Khoa học và Công nghệ",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VISTS"
+    ]
+  },
+  {
+    "code": "hoc-vien-chinh-sach-va-phat-trien",
+    "name": "Học viện Chính sách và Phát triển",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "APD"
+    ]
+  },
+  {
+    "code": "hoc-vien-chinh-tri-cong-an-nhan-dan",
+    "name": "Học viện Chính trị - Công an Nhân dân",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "hoc-vien-chinh-tri-quan-doi-nhan-dan-viet-nam",
+    "name": "Học viện Chính trị Quân đội Nhân dân Việt Nam",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "hoc-vien-chinh-tri-quoc-gia-ho-chi-minh",
+    "name": "Học viện Chính trị Quốc gia Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HCMA"
+    ]
+  },
+  {
+    "code": "hoc-vien-cong-giao-viet-nam",
+    "name": "Học viện Công giáo Việt Nam",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "CIV"
+    ]
+  },
+  {
+    "code": "hoc-vien-cong-nghe-buu-chinh-vien-thong",
+    "name": "Học viện Công nghệ Bưu chính Viễn thông",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "PTIT"
+    ]
+  },
+  {
+    "code": "hoc-vien-dan-toc",
+    "name": "Học viện Dân tộc",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VAEM"
+    ]
+  },
+  {
+    "code": "hoc-vien-hai-quan",
+    "name": "Học viện Hải quân",
+    "type": "DaiHoc",
+    "city": "Khánh Hòa",
+    "aliases": []
+  },
+  {
+    "code": "hoc-vien-hang-khong-viet-nam",
+    "name": "Học viện Hàng không Việt Nam",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "VAA"
+    ]
+  },
+  {
+    "code": "hoc-vien-hanh-chinh-va-quan-tri-cong",
+    "name": "Học viện Hành chính và Quản trị công",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "APAG"
+    ]
+  },
+  {
+    "code": "hoc-vien-hau-can",
+    "name": "Học viện Hậu cần",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "hoc-vien-khoa-hoc-quan-su",
+    "name": "Học viện Khoa học Quân sự",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "hoc-vien-khoa-hoc-va-cong-nghe",
+    "name": "Học viện Khoa học và Công nghệ",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "GUST"
+    ]
+  },
+  {
+    "code": "hoc-vien-khoa-hoc-xa-hoi",
+    "name": "Học viện Khoa học Xã hội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "GASS"
+    ]
+  },
+  {
+    "code": "hoc-vien-ky-thuat-mat-ma",
+    "name": "Học viện Kỹ thuật Mật mã",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "hoc-vien-ky-thuat-quan-su",
+    "name": "Học viện Kỹ thuật Quân sự",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "hoc-vien-ky-thuat-va-cong-nghe-an-ninh",
+    "name": "Học viện Kỹ thuật và Công nghệ An ninh",
+    "type": "DaiHoc",
+    "city": "Bắc Ninh",
+    "aliases": []
+  },
+  {
+    "code": "hoc-vien-luc-quan",
+    "name": "Học viện Lục quân",
+    "type": "DaiHoc",
+    "city": "Lâm Đồng",
+    "aliases": []
+  },
+  {
+    "code": "hoc-vien-mua-viet-nam",
+    "name": "Học viện Múa Việt Nam",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VNAD"
+    ]
+  },
+  {
+    "code": "hoc-vien-ngan-hang",
+    "name": "Học viện Ngân hàng",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "BAV"
+    ]
+  },
+  {
+    "code": "hoc-vien-ngoai-giao",
+    "name": "Học viện Ngoại giao",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "DAV"
+    ]
+  },
+  {
+    "code": "hoc-vien-nong-nghiep-viet-nam",
+    "name": "Học viện Nông nghiệp Việt Nam",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VNUA"
+    ]
+  },
+  {
+    "code": "hoc-vien-phat-giao-nam-tong-khmer",
+    "name": "Học viện Phật giáo Nam tông Khmer",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": []
+  },
+  {
+    "code": "hoc-vien-phat-giao-viet-nam-tai-ha-noi",
+    "name": "Học viện Phật giáo Việt Nam tại Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VBA"
+    ]
+  },
+  {
+    "code": "hoc-vien-phat-giao-viet-nam-tai-hue",
+    "name": "Học viện Phật giáo Việt Nam tại Huế",
+    "type": "DaiHoc",
+    "city": "Huế",
+    "aliases": [
+      "VBAH"
+    ]
+  },
+  {
+    "code": "hoc-vien-phat-giao-viet-nam-tai-thanh-pho-ho-chi-minh",
+    "name": "Học viện Phật giáo Việt Nam tại Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "VBU"
+    ]
+  },
+  {
+    "code": "hoc-vien-phong-chay-chua-chay-va-cuu-nan-cuu-ho",
+    "name": "Học viện Phòng cháy chữa cháy và Cứu nạn cứu hộ",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "hoc-vien-phong-khong-khong-quan",
+    "name": "Học viện Phòng không – Không quân",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "hoc-vien-phu-nu-viet-nam",
+    "name": "Học viện Phụ nữ Việt Nam",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VWA"
+    ]
+  },
+  {
+    "code": "hoc-vien-quan-ly-giao-duc",
+    "name": "Học viện Quản lý giáo dục",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "NAEM"
+    ]
+  },
+  {
+    "code": "hoc-vien-quan-y",
+    "name": "Học viện Quân y",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "hoc-vien-quoc-phong",
+    "name": "Học viện Quốc phòng",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "hoc-vien-quoc-te",
+    "name": "Học viện Quốc tế",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "hoc-vien-tai-chinh",
+    "name": "Học viện Tài chính",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "AOF"
+    ]
+  },
+  {
+    "code": "hoc-vien-thanh-thieu-nien-viet-nam",
+    "name": "Học viện Thanh thiếu niên Việt Nam",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VYA"
+    ]
+  },
+  {
+    "code": "hoc-vien-toa-an",
+    "name": "Học viện Tòa án",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VCA"
+    ]
+  },
+  {
+    "code": "hoc-vien-y-duoc-hoc-co-truyen-viet-nam",
+    "name": "Học viện Y – Dược học cổ truyền Việt Nam",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VUTM"
+    ]
+  },
+  {
+    "code": "khoa-giao-duc-quoc-phong-va-an-ninh-dai-hoc-da-nang",
+    "name": "Khoa Giáo dục Quốc phòng và An ninh – Đại học Đà Nẵng",
+    "type": "DaiHoc",
+    "city": "Đà Nẵng",
+    "aliases": []
+  },
+  {
+    "code": "khoa-giao-duc-the-chat-dai-hoc-da-nang",
+    "name": "Khoa Giáo dục thể chất – Đại học Đà Nẵng",
+    "type": "DaiHoc",
+    "city": "Đà Nẵng",
+    "aliases": []
+  },
+  {
+    "code": "khoa-giao-duc-the-chat-dai-hoc-hue",
+    "name": "Khoa Giáo dục thể chất – Đại học Huế",
+    "type": "DaiHoc",
+    "city": "Huế",
+    "aliases": [
+      "FPE"
+    ]
+  },
+  {
+    "code": "khoa-giao-duc-the-chat-dai-hoc-tra-vinh",
+    "name": "Khoa Giáo dục thể chất – Đại học Trà Vinh",
+    "type": "DaiHoc",
+    "city": "Vĩnh Long",
+    "aliases": []
+  },
+  {
+    "code": "khoa-khoa-hoc-chinh-tri-xa-hoi-va-nhan-van-dai-hoc-can-tho",
+    "name": "Khoa Khoa học Chính trị, Xã hội và Nhân văn – Đại học Cần Thơ",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": [
+      "SPSSSH"
+    ]
+  },
+  {
+    "code": "khoa-khoa-hoc-co-ban-dai-hoc-tra-vinh",
+    "name": "Khoa Khoa học cơ bản – Đại học Trà Vinh",
+    "type": "DaiHoc",
+    "city": "Vĩnh Long",
+    "aliases": []
+  },
+  {
+    "code": "khoa-luat-dai-hoc-can-tho",
+    "name": "Khoa Luật – Đại học Cần Thơ",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": [
+      "SL"
+    ]
+  },
+  {
+    "code": "khoa-ly-luan-chinh-tri-dai-hoc-tra-vinh",
+    "name": "Khoa Lý luận chính trị – Đại học Trà Vinh",
+    "type": "DaiHoc",
+    "city": "Vĩnh Long",
+    "aliases": []
+  },
+  {
+    "code": "khoa-moi-truong-va-tai-nguyen-thien-nhien-dai-hoc-can-tho",
+    "name": "Khoa Môi trường và Tài nguyên Thiên nhiên – Đại học Cần Thơ",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": [
+      "CENRES"
+    ]
+  },
+  {
+    "code": "khoa-ngoai-ngu-dai-hoc-can-tho",
+    "name": "Khoa Ngoại ngữ – Đại học Cần Thơ",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": [
+      "SFL"
+    ]
+  },
+  {
+    "code": "khoa-nong-nghiep-thuy-san-dai-hoc-tra-vinh",
+    "name": "Khoa Nông nghiệp - Thủy sản – Đại học Trà Vinh",
+    "type": "DaiHoc",
+    "city": "Vĩnh Long",
+    "aliases": []
+  },
+  {
+    "code": "khoa-quoc-te-dai-hoc-hue",
+    "name": "Khoa Quốc tế – Đại học Huế",
+    "type": "DaiHoc",
+    "city": "Huế",
+    "aliases": [
+      "HUIS"
+    ]
+  },
+  {
+    "code": "khoa-quoc-te-dai-hoc-thai-nguyen",
+    "name": "Khoa Quốc tế – Đại học Thái Nguyên",
+    "type": "DaiHoc",
+    "city": "Thái Nguyên",
+    "aliases": [
+      "TNU-IS"
+    ]
+  },
+  {
+    "code": "khoa-sau-dai-hoc-dai-hoc-can-tho",
+    "name": "Khoa Sau Đại học – Đại học Cần Thơ",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": [
+      "GS"
+    ]
+  },
+  {
+    "code": "khoa-y-duoc-dai-hoc-da-nang",
+    "name": "Khoa Y – Dược – Đại học Đà Nẵng",
+    "type": "DaiHoc",
+    "city": "Đà Nẵng",
+    "aliases": []
+  },
+  {
+    "code": "nhac-vien-thanh-pho-ho-chi-minh",
+    "name": "Nhạc viện Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "HCMCONS"
+    ]
+  },
+  {
+    "code": "phan-hieu-dai-hoc-da-nang-tai-kon-tum-dai-hoc-da-nang",
+    "name": "Phân hiệu Đại học Đà Nẵng tại Kon Tum – Đại học Đà Nẵng",
+    "type": "DaiHoc",
+    "city": "Đà Nẵng",
+    "aliases": []
+  },
+  {
+    "code": "phan-hieu-dai-hoc-hue-tai-quang-tri-dai-hoc-hue",
+    "name": "Phân hiệu Đại học Huế tại Quảng Trị – Đại học Huế",
+    "type": "DaiHoc",
+    "city": "Huế",
+    "aliases": [
+      "HU-QTC"
+    ]
+  },
+  {
+    "code": "phan-hieu-dai-hoc-quoc-gia-tp-hcm-tai-ben-tre-dhqg-tp-hcm",
+    "name": "Phân hiệu Đại học Quốc gia TP.HCM tại Bến Tre – ĐHQG TP.HCM",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "phan-hieu-dai-hoc-thai-nguyen-tai-dien-bien-dai-hoc-thai-nguyen",
+    "name": "Phân hiệu Đại học Thái Nguyên tại Điện Biên – Đại học Thái Nguyên",
+    "type": "DaiHoc",
+    "city": "Thái Nguyên",
+    "aliases": []
+  },
+  {
+    "code": "phan-hieu-dai-hoc-thai-nguyen-tai-ha-giang-dai-hoc-thai-nguyen",
+    "name": "Phân hiệu Đại học Thái Nguyên tại Hà Giang – Đại học Thái Nguyên",
+    "type": "DaiHoc",
+    "city": "Thái Nguyên",
+    "aliases": []
+  },
+  {
+    "code": "phan-hieu-dai-hoc-thai-nguyen-tai-lao-cai-dai-hoc-thai-nguyen",
+    "name": "Phân hiệu Đại học Thái Nguyên tại Lào Cai – Đại học Thái Nguyên",
+    "type": "DaiHoc",
+    "city": "Thái Nguyên",
+    "aliases": []
+  },
+  {
+    "code": "truong-bach-khoa-dai-hoc-can-tho",
+    "name": "Trường Bách khoa – Đại học Cần Thơ",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": [
+      "COE"
+    ]
+  },
+  {
+    "code": "truong-cao-dang-cong-nghe-va-ky-thuat-o-to",
+    "name": "Trường Cao đẳng Công nghệ và Kỹ thuật Ô tô",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghiep-quoc-phong",
+    "name": "Trường Cao đẳng Công nghiệp Quốc phòng",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-ky-thuat-dai-hoc-thai-nguyen",
+    "name": "Trường Cao đẳng Kinh tế - Kỹ thuật – Đại học Thái Nguyên",
+    "type": "DaiHoc",
+    "city": "Thái Nguyên",
+    "aliases": [
+      "TEC"
+    ]
+  },
+  {
+    "code": "truong-cao-dang-ky-thuat-hai-quan",
+    "name": "Trường Cao đẳng Kỹ thuật Hải quân",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-quan-y-1",
+    "name": "Trường Cao đẳng Quân y 1",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-quan-y-2",
+    "name": "Trường Cao đẳng Quân y 2",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cong-nghe-thong-tin-va-truyen-thong-dai-hoc-can-tho",
+    "name": "Trường Công nghệ Thông tin và Truyền thông – Đại học Cần Thơ",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": [
+      "CICT"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-an-giang-dhqg-tp-hcm",
+    "name": "Trường Đại học An Giang – ĐHQG TP.HCM",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "VNUHCM - AGU",
+      "AGU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-an-ninh-nhan-dan",
+    "name": "Trường Đại học An ninh nhân dân",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-anh-quoc-tai-viet-nam",
+    "name": "Trường Đại học Anh Quốc tại Việt Nam",
+    "type": "DaiHoc",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-ba-ria-vung-tau",
+    "name": "Trường Đại học Bà Rịa – Vũng Tàu",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "BVU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-bac-lieu",
+    "name": "Trường Đại học Bạc Liêu",
+    "type": "DaiHoc",
+    "city": "Cà Mau",
+    "aliases": [
+      "BLU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-bach-khoa-dai-hoc-da-nang",
+    "name": "Trường Đại học Bách khoa – Đại học Đà Nẵng",
+    "type": "DaiHoc",
+    "city": "Đà Nẵng",
+    "aliases": [
+      "DUT"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-bach-khoa-dhqg-tp-hcm",
+    "name": "Trường Đại học Bách khoa – ĐHQG TP.HCM",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "VNUHCM - UT",
+      "UT"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-binh-duong",
+    "name": "Trường Đại học Bình Dương",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-canh-sat-nhan-dan",
+    "name": "Trường Đại học Cảnh sát nhân dân",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-cmc",
+    "name": "Trường Đại học CMC",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "CMCU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-doan",
+    "name": "Trường Đại học Công đoàn",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "TUU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghe-dhqg-ha-noi",
+    "name": "Trường Đại học Công nghệ – ĐHQG Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VNU - UET",
+      "UET"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghe-dong-a",
+    "name": "Trường Đại học Công nghệ Đông Á",
+    "type": "DaiHoc",
+    "city": "Bắc Ninh",
+    "aliases": [
+      "EAUT"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghe-dong-nai",
+    "name": "Trường Đại học Công nghệ Đồng Nai",
+    "type": "DaiHoc",
+    "city": "Đồng Nai",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghe-giao-thong-van-tai",
+    "name": "Trường Đại học Công nghệ Giao thông Vận tải",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "UTT"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghe-ky-thuat-hung-yen",
+    "name": "Trường Đại học Công nghệ Kỹ thuật Hưng Yên",
+    "type": "DaiHoc",
+    "city": "Hưng Yên",
+    "aliases": [
+      "HYUTE"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghe-ky-thuat-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Công nghệ Kỹ thuật Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "HCMUTE"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghe-ky-thuat-vinh",
+    "name": "Trường Đại học Công nghệ Kỹ thuật Vinh",
+    "type": "DaiHoc",
+    "city": "Nghệ An",
+    "aliases": [
+      "VUTE"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghe-ky-thuat-vinh-long",
+    "name": "Trường Đại học Công nghệ Kỹ thuật Vĩnh Long",
+    "type": "DaiHoc",
+    "city": "Vĩnh Long",
+    "aliases": [
+      "VLUTE"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghe-mien-dong",
+    "name": "Trường Đại học Công nghệ Miền Đông",
+    "type": "DaiHoc",
+    "city": "Đồng Nai",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghe-sai-gon",
+    "name": "Trường Đại học Công nghệ Sài Gòn",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "STU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghe-swinburne-fpt-viet-nam",
+    "name": "Trường Đại học Công nghệ Swinburne - FPT Việt Nam",
+    "type": "DaiHoc",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghe-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Công nghệ Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "HUTECH"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghe-thong-tin-dhqg-tp-hcm",
+    "name": "Trường Đại học Công nghệ Thông tin – ĐHQG TP.HCM",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "VNUHCM - UIT",
+      "UIT"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghe-thong-tin-va-truyen-thong-dai-hoc-thai-nguyen",
+    "name": "Trường Đại học Công nghệ Thông tin và Truyền thông – Đại học Thái Nguyên",
+    "type": "DaiHoc",
+    "city": "Thái Nguyên",
+    "aliases": [
+      "ICTU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghe-thong-tin-va-truyen-thong-viet-han-dai-hoc-da-nang",
+    "name": "Trường Đại học Công nghệ thông tin và Truyền thông Việt – Hàn – Đại học Đà Nẵng",
+    "type": "DaiHoc",
+    "city": "Đà Nẵng",
+    "aliases": [
+      "VKU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghe-va-quan-ly-huu-nghi",
+    "name": "Trường Đại học Công nghệ và Quản lý Hữu Nghị",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "UTM"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghe-van-xuan",
+    "name": "Trường Đại học Công nghệ Vạn Xuân",
+    "type": "DaiHoc",
+    "city": "Nghệ An",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghiep-quang-ninh",
+    "name": "Trường Đại học Công nghiệp Quảng Ninh",
+    "type": "DaiHoc",
+    "city": "Quảng Ninh",
+    "aliases": [
+      "QUI"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghiep-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Công nghiệp Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "IUH"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghiep-va-thuong-mai-ha-noi",
+    "name": "Trường Đại học Công nghiệp và Thương mại Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HICT"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghiep-viet-hung",
+    "name": "Trường Đại học Công nghiệp Việt–Hung",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VIU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghiep-viet-tri",
+    "name": "Trường Đại học Công nghiệp Việt Trì",
+    "type": "DaiHoc",
+    "city": "Phú Thọ",
+    "aliases": [
+      "VUI"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cong-nghiep-vinh",
+    "name": "Trường Đại học Công nghiệp Vinh",
+    "type": "DaiHoc",
+    "city": "Nghệ An",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-cong-thuong-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Công Thương Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "HUIT"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-cuu-long",
+    "name": "Trường Đại học Cửu Long",
+    "type": "DaiHoc",
+    "city": "Vĩnh Long",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-da-lat",
+    "name": "Trường Đại học Đà Lạt",
+    "type": "DaiHoc",
+    "city": "Lâm Đồng",
+    "aliases": [
+      "DLU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-dai-nam",
+    "name": "Trường Đại học Đại Nam",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "DNU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-dau-khi-viet-nam",
+    "name": "Trường Đại học Dầu khí Việt Nam",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "PVU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-dien-luc",
+    "name": "Trường Đại học Điện lực",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "EPU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-dieu-duong-nam-dinh",
+    "name": "Trường Đại học Điều dưỡng Nam Định",
+    "type": "DaiHoc",
+    "city": "Ninh Bình",
+    "aliases": [
+      "NDUN"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-dong-a",
+    "name": "Trường Đại học Đông Á",
+    "type": "DaiHoc",
+    "city": "Đà Nẵng",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-dong-do",
+    "name": "Trường Đại học Đông Đô",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HDIU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-dong-nai",
+    "name": "Trường Đại học Đồng Nai",
+    "type": "DaiHoc",
+    "city": "Đồng Nai",
+    "aliases": [
+      "DNU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-dong-thap",
+    "name": "Trường Đại học Đồng Tháp",
+    "type": "DaiHoc",
+    "city": "Đồng Tháp",
+    "aliases": [
+      "DTU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-duoc-ha-noi",
+    "name": "Trường Đại học Dược Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HUP"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-fpt",
+    "name": "Trường Đại học FPT",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "FPTU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-fulbright-viet-nam",
+    "name": "Trường Đại học Fulbright Việt Nam",
+    "type": "DaiHoc",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-gia-dinh",
+    "name": "Trường Đại học Gia Định",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "GDU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-giao-duc-dhqg-ha-noi",
+    "name": "Trường Đại học Giáo dục – ĐHQG Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VNU - UEd",
+      "UEd"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-giao-thong-van-tai",
+    "name": "Trường Đại học Giao thông Vận tải",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "UTC"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-giao-thong-van-tai-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Giao thông vận tải Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "UTH"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-greenwich-fpt-viet-nam",
+    "name": "Trường Đại học Greenwich - FPT Việt Nam",
+    "type": "DaiHoc",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-ha-hoa-tien",
+    "name": "Trường Đại học Hà Hoa Tiên",
+    "type": "DaiHoc",
+    "city": "Ninh Bình",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-ha-long",
+    "name": "Trường Đại học Hạ Long",
+    "type": "DaiHoc",
+    "city": "Quảng Ninh",
+    "aliases": [
+      "UHL"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-ha-noi",
+    "name": "Trường Đại học Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HANU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-ha-tinh",
+    "name": "Trường Đại học Hà Tĩnh",
+    "type": "DaiHoc",
+    "city": "Hà Tĩnh",
+    "aliases": [
+      "HTU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-hai-duong",
+    "name": "Trường Đại học Hải Dương",
+    "type": "DaiHoc",
+    "city": "Hải Phòng",
+    "aliases": [
+      "UHD"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-hai-phong",
+    "name": "Trường Đại học Hải Phòng",
+    "type": "DaiHoc",
+    "city": "Hải Phòng",
+    "aliases": [
+      "DHHP"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-hang-hai-viet-nam",
+    "name": "Trường Đại học Hàng hải Việt Nam",
+    "type": "DaiHoc",
+    "city": "Hải Phòng",
+    "aliases": [
+      "VMU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-hoa-binh",
+    "name": "Trường Đại học Hòa Bình",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HBU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-hoa-lu",
+    "name": "Trường Đại học Hoa Lư",
+    "type": "DaiHoc",
+    "city": "Ninh Bình",
+    "aliases": [
+      "HLUV"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-hoa-sen",
+    "name": "Trường Đại học Hoa Sen",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "HSU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-hong-duc",
+    "name": "Trường Đại học Hồng Đức",
+    "type": "DaiHoc",
+    "city": "Thanh Hóa",
+    "aliases": [
+      "HDU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-hung-vuong",
+    "name": "Trường Đại học Hùng Vương",
+    "type": "DaiHoc",
+    "city": "Phú Thọ",
+    "aliases": [
+      "HVU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-hung-vuong-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Hùng Vương Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "DHV"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-intracom",
+    "name": "Trường Đại học Intracom",
+    "type": "DaiHoc",
+    "city": "Hưng Yên",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-khanh-hoa",
+    "name": "Trường Đại học Khánh Hòa",
+    "type": "DaiHoc",
+    "city": "Khánh Hòa",
+    "aliases": [
+      "UKH"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-khoa-hoc-dai-hoc-hue",
+    "name": "Trường Đại học Khoa học – Đại học Huế",
+    "type": "DaiHoc",
+    "city": "Huế",
+    "aliases": [
+      "HUSC"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-khoa-hoc-dai-hoc-thai-nguyen",
+    "name": "Trường Đại học Khoa học – Đại học Thái Nguyên",
+    "type": "DaiHoc",
+    "city": "Thái Nguyên",
+    "aliases": [
+      "TNUS"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-khoa-hoc-suc-khoe-dhqg-tp-hcm",
+    "name": "Trường Đại học Khoa học Sức khoẻ – ĐHQG TP.HCM",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "VNUHCM - UHS",
+      "UHS"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-khoa-hoc-tu-nhien-dhqg-ha-noi",
+    "name": "Trường Đại học Khoa học Tự nhiên – ĐHQG Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VNU - HUS",
+      "HUS"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-khoa-hoc-tu-nhien-dhqg-tp-hcm",
+    "name": "Trường Đại học Khoa học Tự nhiên – ĐHQG TP.HCM",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "VNUHCM - US",
+      "US"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-khoa-hoc-va-cong-nghe-ha-noi",
+    "name": "Trường Đại học Khoa học và Công nghệ Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "USTH"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-khoa-hoc-xa-hoi-va-nhan-van-dhqg-ha-noi",
+    "name": "Trường Đại học Khoa học Xã hội và Nhân văn – ĐHQG Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VNU - USSH",
+      "USSH"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-khoa-hoc-xa-hoi-va-nhan-van-dhqg-tp-hcm",
+    "name": "Trường Đại học Khoa học Xã hội và Nhân văn – ĐHQG TP.HCM",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "VNUHCM - USSH",
+      "USSH"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-kiem-sat",
+    "name": "Trường Đại học Kiểm sát",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VPU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-kien-giang",
+    "name": "Trường Đại học Kiên Giang",
+    "type": "DaiHoc",
+    "city": "An Giang",
+    "aliases": [
+      "KGU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-kien-truc-da-nang",
+    "name": "Trường Đại học Kiến trúc Đà Nẵng",
+    "type": "DaiHoc",
+    "city": "Đà Nẵng",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-kien-truc-ha-noi",
+    "name": "Trường Đại học Kiến trúc Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HAU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-kien-truc-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Kiến trúc Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "UAH"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-kinh-bac",
+    "name": "Trường Đại học Kinh Bắc",
+    "type": "DaiHoc",
+    "city": "Bắc Ninh",
+    "aliases": [
+      "UKB"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-kinh-doanh-va-cong-nghe-ha-noi",
+    "name": "Trường Đại học Kinh doanh và Công nghệ Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HUBT"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-kinh-te-cong-nghe-thai-nguyen",
+    "name": "Trường Đại học Kinh tế – Công nghệ Thái Nguyên",
+    "type": "DaiHoc",
+    "city": "Thái Nguyên",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-kinh-te-cong-nghiep-long-an",
+    "name": "Trường Đại học Kinh tế Công nghiệp Long An",
+    "type": "DaiHoc",
+    "city": "Tây Ninh",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-kinh-te-dai-hoc-da-nang",
+    "name": "Trường Đại học Kinh tế – Đại học Đà Nẵng",
+    "type": "DaiHoc",
+    "city": "Đà Nẵng",
+    "aliases": [
+      "DUE"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-kinh-te-dai-hoc-hue",
+    "name": "Trường Đại học Kinh tế – Đại học Huế",
+    "type": "DaiHoc",
+    "city": "Huế",
+    "aliases": [
+      "HCE"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-kinh-te-dhqg-ha-noi",
+    "name": "Trường Đại học Kinh tế – ĐHQG Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VNU - UEB",
+      "UEB"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-kinh-te-ky-thuat-binh-duong",
+    "name": "Trường Đại học Kinh tế – Kỹ thuật Bình Dương",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "BETU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-kinh-te-ky-thuat-cong-nghiep",
+    "name": "Trường Đại học Kinh tế – Kỹ thuật Công nghiệp",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "UNETI"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-kinh-te-luat-dhqg-tp-hcm",
+    "name": "Trường Đại học Kinh tế – Luật – ĐHQG TP.HCM",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "VNUHCM - UEL",
+      "UEL"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-kinh-te-nghe-an",
+    "name": "Trường Đại học Kinh tế Nghệ An",
+    "type": "DaiHoc",
+    "city": "Nghệ An",
+    "aliases": [
+      "NAUE"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-kinh-te-tai-chinh-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Kinh tế – Tài chính Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "UEF"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-kinh-te-va-quan-tri-kinh-doanh-dai-hoc-thai-nguyen",
+    "name": "Trường Đại học Kinh tế và Quản trị kinh doanh – Đại học Thái Nguyên",
+    "type": "DaiHoc",
+    "city": "Thái Nguyên",
+    "aliases": [
+      "TUEBA"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-ky-thuat-cong-nghe-can-tho",
+    "name": "Trường Đại học Kỹ thuật – Công nghệ Cần Thơ",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": [
+      "CTUT"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-ky-thuat-cong-nghiep-dai-hoc-thai-nguyen",
+    "name": "Trường Đại học Kỹ thuật Công nghiệp – Đại học Thái Nguyên",
+    "type": "DaiHoc",
+    "city": "Thái Nguyên",
+    "aliases": [
+      "TNUT"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-ky-thuat-y-duoc-da-nang",
+    "name": "Trường Đại học Kỹ thuật Y Dược Đà Nẵng",
+    "type": "DaiHoc",
+    "city": "Đà Nẵng",
+    "aliases": [
+      "DUMTP"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-ky-thuat-y-te-hai-duong",
+    "name": "Trường Đại học Kỹ thuật Y tế Hải Dương",
+    "type": "DaiHoc",
+    "city": "Hải Phòng",
+    "aliases": [
+      "HMTU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-lac-hong",
+    "name": "Trường Đại học Lạc Hồng",
+    "type": "DaiHoc",
+    "city": "Đồng Nai",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-lam-nghiep",
+    "name": "Trường Đại học Lâm nghiệp",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VNUF"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-lao-dong-xa-hoi",
+    "name": "Trường Đại học Lao động – Xã hội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "ULSA"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-luat-dai-hoc-hue",
+    "name": "Trường Đại học Luật – Đại học Huế",
+    "type": "DaiHoc",
+    "city": "Huế",
+    "aliases": [
+      "HUL"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-luat-dhqg-ha-noi",
+    "name": "Trường Đại học Luật – ĐHQG Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VNU - UL",
+      "UL"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-luat-ha-noi",
+    "name": "Trường Đại học Luật Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HLU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-luat-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Luật Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "ULaw"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-luong-the-vinh",
+    "name": "Trường Đại học Lương Thế Vinh",
+    "type": "DaiHoc",
+    "city": "Ninh Bình",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-mo-dia-chat",
+    "name": "Trường Đại học Mỏ – Địa chất",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HUMG"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-mo-ha-noi",
+    "name": "Trường Đại học Mở Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HOU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-mo-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Mở Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "HCMOU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-my-tai-viet-nam",
+    "name": "Trường Đại học Mỹ tại Việt Nam",
+    "type": "DaiHoc",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-my-thuat-cong-nghiep",
+    "name": "Trường Đại học Mỹ thuật Công nghiệp",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "UAD"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-my-thuat-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Mỹ thuật Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "HCMUFA"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-my-thuat-viet-nam",
+    "name": "Trường Đại học Mỹ thuật Việt Nam",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VNUFA"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-nam-can-tho",
+    "name": "Trường Đại học Nam Cần Thơ",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-ngan-hang-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Ngân hàng Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "HUB"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-nghe-thuat-dai-hoc-hue",
+    "name": "Trường Đại học Nghệ thuật – Đại học Huế",
+    "type": "DaiHoc",
+    "city": "Huế",
+    "aliases": [
+      "HUA"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-ngo-quyen-truong-dai-hoc-si-quan-cong-binh",
+    "name": "Trường Đại học Ngô Quyền / Trường Đại học Sĩ quan Công Binh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-ngoai-ngu-dai-hoc-da-nang",
+    "name": "Trường Đại học Ngoại ngữ – Đại học Đà Nẵng",
+    "type": "DaiHoc",
+    "city": "Đà Nẵng",
+    "aliases": [
+      "DNUFL"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-ngoai-ngu-dai-hoc-hue",
+    "name": "Trường Đại học Ngoại ngữ – Đại học Huế",
+    "type": "DaiHoc",
+    "city": "Huế",
+    "aliases": [
+      "HUCFL"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-ngoai-ngu-dhqg-ha-noi",
+    "name": "Trường Đại học Ngoại ngữ – ĐHQG Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VNU - ULIS",
+      "ULIS"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-ngoai-ngu-tin-hoc-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Ngoại ngữ – Tin học Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "HUFLIT"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-ngoai-thuong",
+    "name": "Trường Đại học Ngoại thương",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "FTU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-nguyen-hue-truong-dai-hoc-si-quan-luc-quan-2",
+    "name": "Trường Đại học Nguyễn Huệ / Trường Đại học Sĩ quan Lục quân 2",
+    "type": "DaiHoc",
+    "city": "Đồng Nai",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-nguyen-tat-thanh",
+    "name": "Trường Đại học Nguyễn Tất Thành",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "NTTU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-nguyen-trai",
+    "name": "Trường Đại học Nguyễn Trãi",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "NTU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-nha-trang",
+    "name": "Trường Đại học Nha Trang",
+    "type": "DaiHoc",
+    "city": "Khánh Hòa",
+    "aliases": [
+      "NTU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-nong-lam-bac-giang",
+    "name": "Trường Đại học Nông - Lâm Bắc Giang",
+    "type": "DaiHoc",
+    "city": "Bắc Ninh",
+    "aliases": [
+      "BGUAF"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-nong-lam-dai-hoc-hue",
+    "name": "Trường Đại học Nông Lâm – Đại học Huế",
+    "type": "DaiHoc",
+    "city": "Huế",
+    "aliases": [
+      "HUAF"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-nong-lam-dai-hoc-thai-nguyen",
+    "name": "Trường Đại học Nông Lâm – Đại học Thái Nguyên",
+    "type": "DaiHoc",
+    "city": "Thái Nguyên",
+    "aliases": [
+      "TUAF"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-nong-lam-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Nông Lâm Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "NLU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-pham-van-dong",
+    "name": "Trường Đại học Phạm Văn Đồng",
+    "type": "DaiHoc",
+    "city": "Quảng Ngãi",
+    "aliases": [
+      "PDU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-phan-chau-trinh",
+    "name": "Trường Đại học Phan Châu Trinh",
+    "type": "DaiHoc",
+    "city": "Đà Nẵng",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-phan-thiet",
+    "name": "Trường Đại học Phan Thiết",
+    "type": "DaiHoc",
+    "city": "Lâm Đồng",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-phu-xuan",
+    "name": "Trường Đại học Phú Xuân",
+    "type": "DaiHoc",
+    "city": "Huế",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-phu-yen",
+    "name": "Trường Đại học Phú Yên",
+    "type": "DaiHoc",
+    "city": "Đắk Lắk",
+    "aliases": [
+      "PYU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-quan-ly-va-cong-nghe-hai-phong",
+    "name": "Trường Đại học Quản lý và Công nghệ Hải Phòng",
+    "type": "DaiHoc",
+    "city": "Hải Phòng",
+    "aliases": [
+      "HPU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-quan-ly-va-cong-nghe-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Quản lý và Công nghệ Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "UMT"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-quang-binh",
+    "name": "Trường Đại học Quảng Bình",
+    "type": "DaiHoc",
+    "city": "Quảng Trị",
+    "aliases": [
+      "QBU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-quang-nam",
+    "name": "Trường Đại học Quảng Nam",
+    "type": "DaiHoc",
+    "city": "Đà Nẵng",
+    "aliases": [
+      "QNamUni"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-quang-trung",
+    "name": "Trường Đại học Quang Trung",
+    "type": "DaiHoc",
+    "city": "Gia Lai",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-quoc-te-bac-ha",
+    "name": "Trường Đại học Quốc tế Bắc Hà",
+    "type": "DaiHoc",
+    "city": "Bắc Ninh",
+    "aliases": [
+      "BHIU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-quoc-te-dhqg-tp-hcm",
+    "name": "Trường Đại học Quốc tế – ĐHQG TP.HCM",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "VNUHCM - IU",
+      "IU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-quoc-te-hong-bang",
+    "name": "Trường Đại học Quốc tế Hồng Bàng",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "HIU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-quoc-te-mien-dong",
+    "name": "Trường Đại học Quốc tế Miền Đông",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "EIU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-quoc-te-rmit-viet-nam",
+    "name": "Trường Đại học Quốc tế RMIT Việt Nam",
+    "type": "DaiHoc",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-quoc-te-sai-gon",
+    "name": "Trường Đại học Quốc tế Sài Gòn",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "SIU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-quy-nhon",
+    "name": "Trường Đại học Quy Nhơn",
+    "type": "DaiHoc",
+    "city": "Gia Lai",
+    "aliases": [
+      "QNU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-sai-gon",
+    "name": "Trường Đại học Sài Gòn",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "SGU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-san-khau-dien-anh-ha-noi",
+    "name": "Trường Đại học Sân khấu – Điện ảnh Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "SKDA"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-san-khau-dien-anh-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Sân khấu – Điện ảnh Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "SKDAHCM"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-sao-do",
+    "name": "Trường Đại học Sao Đỏ",
+    "type": "DaiHoc",
+    "city": "Hải Phòng",
+    "aliases": [
+      "SDU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-si-quan-chinh-tri",
+    "name": "Trường Đại học Sĩ quan Chính trị",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-si-quan-dac-cong",
+    "name": "Trường Đại học Sĩ quan Đặc công",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-si-quan-phao-binh",
+    "name": "Trường Đại học Sĩ quan Pháo binh",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-si-quan-phong-hoa",
+    "name": "Trường Đại học Sĩ quan Phòng hóa",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-si-quan-tang-thiet-giap",
+    "name": "Trường Đại học Sĩ quan Tăng – Thiết giáp",
+    "type": "DaiHoc",
+    "city": "Phú Thọ",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-si-quan-thong-tin-lien-lac",
+    "name": "Trường Đại học Sĩ quan Thông tin liên lạc",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-su-pham-dai-hoc-da-nang",
+    "name": "Trường Đại học Sư phạm – Đại học Đà Nẵng",
+    "type": "DaiHoc",
+    "city": "Đà Nẵng",
+    "aliases": [
+      "UED"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-su-pham-dai-hoc-hue",
+    "name": "Trường Đại học Sư phạm – Đại học Huế",
+    "type": "DaiHoc",
+    "city": "Huế",
+    "aliases": [
+      "HUCE"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-su-pham-dai-hoc-thai-nguyen",
+    "name": "Trường Đại học Sư phạm – Đại học Thái Nguyên",
+    "type": "DaiHoc",
+    "city": "Thái Nguyên",
+    "aliases": [
+      "TNUE"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-su-pham-ha-noi",
+    "name": "Trường Đại học Sư phạm Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HNUE"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-su-pham-ha-noi-2",
+    "name": "Trường Đại học Sư phạm Hà Nội 2",
+    "type": "DaiHoc",
+    "city": "Phú Thọ",
+    "aliases": [
+      "HPU2"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-su-pham-ky-thuat-dai-hoc-da-nang",
+    "name": "Trường Đại học Sư phạm Kỹ thuật – Đại học Đà Nẵng",
+    "type": "DaiHoc",
+    "city": "Đà Nẵng",
+    "aliases": [
+      "DNUTE"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-su-pham-ky-thuat-nam-dinh",
+    "name": "Trường Đại học Sư phạm Kỹ thuật Nam Định",
+    "type": "DaiHoc",
+    "city": "Ninh Bình",
+    "aliases": [
+      "NUTE"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-su-pham-nghe-thuat-trung-uong",
+    "name": "Trường Đại học Sư phạm Nghệ thuật Trung ương",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "NUAE"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-su-pham-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Sư phạm Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "HCMUE"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-su-pham-the-duc-the-thao-ha-noi",
+    "name": "Trường Đại học Sư phạm Thể dục Thể thao Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HUPES"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-su-pham-the-duc-the-thao-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Sư phạm Thể dục Thể thao Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "HCMUPES"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-tai-chinh-marketing",
+    "name": "Trường Đại học Tài chính – Marketing",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "UFM"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-tai-chinh-ngan-hang-ha-noi",
+    "name": "Trường Đại học Tài chính – Ngân hàng Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "FBU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-tai-chinh-quan-tri-kinh-doanh",
+    "name": "Trường Đại học Tài chính – Quản trị kinh doanh",
+    "type": "DaiHoc",
+    "city": "Hưng Yên",
+    "aliases": [
+      "UFBA"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-tai-nguyen-va-moi-truong-ha-noi",
+    "name": "Trường Đại học Tài nguyên và Môi trường Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HUNRE"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-tai-nguyen-va-moi-truong-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Tài nguyên và Môi trường Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "HCMUNRE"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-tan-tao",
+    "name": "Trường Đại học Tân Tạo",
+    "type": "DaiHoc",
+    "city": "Tây Ninh",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-tan-trao",
+    "name": "Trường Đại học Tân Trào",
+    "type": "DaiHoc",
+    "city": "Tuyên Quang",
+    "aliases": [
+      "TTrU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-tay-bac",
+    "name": "Trường Đại học Tây Bắc",
+    "type": "DaiHoc",
+    "city": "Sơn La",
+    "aliases": [
+      "UTB"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-tay-do",
+    "name": "Trường Đại học Tây Đô",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-tay-nguyen",
+    "name": "Trường Đại học Tây Nguyên",
+    "type": "DaiHoc",
+    "city": "Đắk Lắk",
+    "aliases": [
+      "TTN"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-thai-binh",
+    "name": "Trường Đại học Thái Bình",
+    "type": "DaiHoc",
+    "city": "Hưng Yên",
+    "aliases": [
+      "TBU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-thai-binh-duong",
+    "name": "Trường Đại học Thái Bình Dương",
+    "type": "DaiHoc",
+    "city": "Khánh Hòa",
+    "aliases": [
+      "TBD"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-thang-long",
+    "name": "Trường Đại học Thăng Long",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "TLU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-thanh-do",
+    "name": "Trường Đại học Thành Đô",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "TDU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-thanh-dong",
+    "name": "Trường Đại học Thành Đông",
+    "type": "DaiHoc",
+    "city": "Hải Phòng",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-the-duc-the-thao-bac-ninh",
+    "name": "Trường Đại học Thể dục Thể thao Bắc Ninh",
+    "type": "DaiHoc",
+    "city": "Bắc Ninh",
+    "aliases": [
+      "UPES1"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-the-duc-the-thao-da-nang",
+    "name": "Trường Đại học Thể dục Thể thao Đà Nẵng",
+    "type": "DaiHoc",
+    "city": "Đà Nẵng",
+    "aliases": [
+      "DSU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-the-duc-the-thao-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Thể dục Thể thao Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "USH"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-thu-dau-mot",
+    "name": "Trường Đại học Thủ Dầu Một",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "TDMU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-thu-do-ha-noi",
+    "name": "Trường Đại học Thủ đô Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HNMU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-thuong-mai",
+    "name": "Trường Đại học Thương mại",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "TMU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-thuy-loi",
+    "name": "Trường Đại học Thủy lợi",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "TLU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-tien-giang",
+    "name": "Trường Đại học Tiền Giang",
+    "type": "DaiHoc",
+    "city": "Đồng Tháp",
+    "aliases": [
+      "TGU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-ton-duc-thang",
+    "name": "Trường Đại học Tôn Đức Thắng",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "TDTU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-tran-dai-nghia-truong-dai-hoc-si-quan-ky-thuat-quan-su-vin-hem-pich",
+    "name": "Trường Đại học Trần Đại Nghĩa / Trường Đại học Sĩ quan Kỹ thuật Quân sự Vin - hem - pích",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-tran-quoc-tuan-truong-dai-hoc-si-quan-luc-quan-1",
+    "name": "Trường Đại học Trần Quốc Tuấn / Trường Đại học Sĩ quan Lục quân 1",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-trung-vuong",
+    "name": "Trường Đại học Trưng Vương",
+    "type": "DaiHoc",
+    "city": "Phú Thọ",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-van-hien",
+    "name": "Trường Đại học Văn Hiến",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "VHU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-van-hoa-ha-noi",
+    "name": "Trường Đại học Văn hóa Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HUC"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-van-hoa-nghe-thuat-quan-doi",
+    "name": "Trường Đại học Văn hoá Nghệ thuật Quân đội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-van-hoa-thanh-pho-ho-chi-minh",
+    "name": "Trường Đại học Văn hóa Thành phố Hồ Chí Minh",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "VHS"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-van-lang",
+    "name": "Trường Đại học Văn Lang",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "VLU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-viet-duc",
+    "name": "Trường Đại học Việt Đức",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "VGU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-viet-nhat-dhqg-ha-noi",
+    "name": "Trường Đại học Việt Nhật – ĐHQG Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VNU - VJU",
+      "VJU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-vinh",
+    "name": "Trường Đại học Vinh",
+    "type": "DaiHoc",
+    "city": "Nghệ An",
+    "aliases": [
+      "VinhUni"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-vinuni",
+    "name": "Trường Đại học VinUni",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VinUni"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-vo-truong-toan",
+    "name": "Trường Đại học Võ Trường Toản",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-xay-dung-ha-noi",
+    "name": "Trường Đại học Xây dựng Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HUCE"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-xay-dung-mien-tay",
+    "name": "Trường Đại học Xây dựng Miền Tây",
+    "type": "DaiHoc",
+    "city": "Vĩnh Long",
+    "aliases": [
+      "MTU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-xay-dung-mien-trung",
+    "name": "Trường Đại học Xây dựng Miền Trung",
+    "type": "DaiHoc",
+    "city": "Đắk Lắk",
+    "aliases": [
+      "MUCE"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-y-duoc-buon-ma-thuot",
+    "name": "Trường Đại học Y Dược Buôn Ma Thuột",
+    "type": "DaiHoc",
+    "city": "Đắk Lắk",
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-y-duoc-can-tho",
+    "name": "Trường Đại học Y Dược Cần Thơ",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": [
+      "CTUMP"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-y-duoc-dai-hoc-hue",
+    "name": "Trường Đại học Y Dược – Đại học Huế",
+    "type": "DaiHoc",
+    "city": "Huế",
+    "aliases": [
+      "YDH"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-y-duoc-dai-hoc-thai-nguyen",
+    "name": "Trường Đại học Y Dược – Đại học Thái Nguyên",
+    "type": "DaiHoc",
+    "city": "Thái Nguyên",
+    "aliases": [
+      "TUMP"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-y-duoc-dhqg-ha-noi",
+    "name": "Trường Đại học Y Dược – ĐHQG Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VNU - UMP",
+      "UMP"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-y-duoc-hai-phong",
+    "name": "Trường Đại học Y Dược Hải Phòng",
+    "type": "DaiHoc",
+    "city": "Hải Phòng",
+    "aliases": [
+      "HPMU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-y-duoc-thai-binh",
+    "name": "Trường Đại học Y Dược Thái Bình",
+    "type": "DaiHoc",
+    "city": "Hưng Yên",
+    "aliases": [
+      "TBUMP"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-y-ha-noi",
+    "name": "Trường Đại học Y Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HMU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-y-khoa-pham-ngoc-thach",
+    "name": "Trường Đại học Y khoa Phạm Ngọc Thạch",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "PNTU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-y-khoa-tokyo-viet-nam",
+    "name": "Trường Đại học Y khoa Tokyo Việt Nam",
+    "type": "DaiHoc",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-dai-hoc-y-khoa-vinh",
+    "name": "Trường Đại học Y khoa Vinh",
+    "type": "DaiHoc",
+    "city": "Nghệ An",
+    "aliases": [
+      "VMU"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-y-te-cong-cong",
+    "name": "Trường Đại học Y tế Công cộng",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HUPH"
+    ]
+  },
+  {
+    "code": "truong-dai-hoc-yersin-da-lat",
+    "name": "Trường Đại học Yersin Đà Lạt",
+    "type": "DaiHoc",
+    "city": "Lâm Đồng",
+    "aliases": []
+  },
+  {
+    "code": "truong-du-lich-dai-hoc-hue",
+    "name": "Trường Du lịch – Đại học Huế",
+    "type": "DaiHoc",
+    "city": "Huế",
+    "aliases": [
+      "HUHT"
+    ]
+  },
+  {
+    "code": "truong-khoa-hoc-lien-nganh-va-nghe-thuat-dhqg-ha-noi",
+    "name": "Trường Khoa học liên ngành và Nghệ thuật – ĐHQG Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VNU - SIS",
+      "SIS"
+    ]
+  },
+  {
+    "code": "truong-khoa-hoc-tu-nhien-dai-hoc-can-tho",
+    "name": "Trường Khoa học Tự nhiên – Đại học Cần Thơ",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": [
+      "CNS"
+    ]
+  },
+  {
+    "code": "truong-kinh-te-dai-hoc-can-tho",
+    "name": "Trường Kinh tế – Đại học Cần Thơ",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": [
+      "CSE"
+    ]
+  },
+  {
+    "code": "truong-kinh-te-luat-dai-hoc-tra-vinh",
+    "name": "Trường Kinh tế, Luật – Đại học Trà Vinh",
+    "type": "DaiHoc",
+    "city": "Vĩnh Long",
+    "aliases": [
+      "CEL"
+    ]
+  },
+  {
+    "code": "truong-kinh-thanh-co-doc",
+    "name": "Trường Kinh thánh Cơ Đốc",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "CBC"
+    ]
+  },
+  {
+    "code": "truong-ky-thuat-cong-nghe-dai-hoc-tra-vinh",
+    "name": "Trường Kỹ thuật công nghệ – Đại học Trà Vinh",
+    "type": "DaiHoc",
+    "city": "Vĩnh Long",
+    "aliases": [
+      "CET"
+    ]
+  },
+  {
+    "code": "truong-ky-thuat-va-cong-nghe-dai-hoc-hue",
+    "name": "Trường Kỹ thuật và Công nghệ – Đại học Huế",
+    "type": "DaiHoc",
+    "city": "Huế",
+    "aliases": [
+      "HUET"
+    ]
+  },
+  {
+    "code": "truong-ngoai-ngu-dai-hoc-thai-nguyen",
+    "name": "Trường Ngoại ngữ – Đại học Thái Nguyên",
+    "type": "DaiHoc",
+    "city": "Thái Nguyên",
+    "aliases": []
+  },
+  {
+    "code": "truong-ngon-ngu-van-hoa-nghe-thuat-khmer-nam-bo-nhan-van-dai-hoc-tra-vinh",
+    "name": "Trường Ngôn ngữ - Văn hóa - Nghệ thuật Khmer Nam bộ & Nhân văn – Đại học Trà Vinh",
+    "type": "DaiHoc",
+    "city": "Vĩnh Long",
+    "aliases": [
+      "CLASKA"
+    ]
+  },
+  {
+    "code": "truong-nong-nghiep-dai-hoc-can-tho",
+    "name": "Trường Nông nghiệp – Đại học Cần Thơ",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": [
+      "COA"
+    ]
+  },
+  {
+    "code": "truong-quan-tri-va-kinh-doanh-dhqg-ha-noi",
+    "name": "Trường Quản trị và Kinh doanh – ĐHQG Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VNU - HSB",
+      "HSB"
+    ]
+  },
+  {
+    "code": "truong-quoc-te-dhqg-ha-noi",
+    "name": "Trường Quốc tế – ĐHQG Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "VNU - IS",
+      "IS"
+    ]
+  },
+  {
+    "code": "truong-si-quan-khong-quan",
+    "name": "Trường Sĩ quan Không quân",
+    "type": "DaiHoc",
+    "city": "Khánh Hòa",
+    "aliases": []
+  },
+  {
+    "code": "truong-su-pham-dai-hoc-can-tho",
+    "name": "Trường Sư phạm – Đại học Cần Thơ",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": [
+      "SE"
+    ]
+  },
+  {
+    "code": "truong-thanh-kinh-than-hoc-ha-noi",
+    "name": "Trường Thánh kinh Thần học Hà Nội",
+    "type": "DaiHoc",
+    "city": "Hà Nội",
+    "aliases": [
+      "HBC"
+    ]
+  },
+  {
+    "code": "truong-thuy-san-dai-hoc-can-tho",
+    "name": "Trường Thủy sản – Đại học Cần Thơ",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": [
+      "CAF"
+    ]
+  },
+  {
+    "code": "truong-trung-cap-phat-giao-hoa-hao",
+    "name": "Trường trung cấp phật giáo Hòa Hảo",
+    "type": "DaiHoc",
+    "city": "An Giang",
+    "aliases": []
+  },
+  {
+    "code": "truong-y-duoc-dai-hoc-tra-vinh",
+    "name": "Trường Y - Dược – Đại học Trà Vinh",
+    "type": "DaiHoc",
+    "city": "Vĩnh Long",
+    "aliases": [
+      "CMP"
+    ]
+  },
+  {
+    "code": "vien-cong-nghe-sinh-hoc-va-thuc-pham-dai-hoc-can-tho",
+    "name": "Viện Công nghệ Sinh học và Thực phẩm – Đại học Cần Thơ",
+    "type": "DaiHoc",
+    "city": "Cần Thơ",
+    "aliases": [
+      "IFB"
+    ]
+  },
+  {
+    "code": "vien-thanh-kinh-than-hoc",
+    "name": "Viện Thánh kinh Thần học",
+    "type": "DaiHoc",
+    "city": "TP.HCM",
+    "aliases": [
+      "IBT"
+    ]
+  },
+  {
+    "code": "cao-dang-y-duoc-cong-dong",
+    "name": "Cao đẳng Y - Dược Cộng Đồng",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-bac-giang",
+    "name": "Trường Cao đẳng Bắc Giang",
+    "type": "CaoDang",
+    "city": "Bắc Ninh",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-bach-khoa",
+    "name": "Trường Cao đẳng Bách Khoa",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-bach-khoa-nam-sai-gon",
+    "name": "Trường Cao đẳng Bách khoa Nam Sài Gòn",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-ben-tre",
+    "name": "Trường Cao đẳng Bến Tre",
+    "type": "CaoDang",
+    "city": "Vĩnh Long",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-binh-phuoc",
+    "name": "Trường Cao đẳng Bình Phước",
+    "type": "CaoDang",
+    "city": "Đồng Nai",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-binh-thuan",
+    "name": "Trường Cao đẳng Bình Thuận",
+    "type": "CaoDang",
+    "city": "Lâm Đồng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-can-tho",
+    "name": "Trường Cao đẳng Cần Thơ",
+    "type": "CaoDang",
+    "city": "Cần Thơ",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cao-bang",
+    "name": "Trường Cao đẳng Cao Bằng",
+    "type": "CaoDang",
+    "city": "Cao Bằng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-co-dien-phu-tho",
+    "name": "Trường Cao đẳng Cơ điện Phú Thọ",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-co-dien-va-cong-nghe-thuc-pham-ha-noi",
+    "name": "Trường Cao đẳng Cơ Điện và Công nghệ thực phẩm Hà Nội",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-co-dien-va-nong-nghiep-nam-bo",
+    "name": "Trường Cao đẳng Cơ điện và Nông nghiệp Nam Bộ",
+    "type": "CaoDang",
+    "city": "Cần Thơ",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-co-dien-va-xay-dung-bac-ninh",
+    "name": "Trường Cao đẳng Cơ điện và Xây dựng Bắc Ninh",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-co-dien-xay-dung-va-nong-lam-trung-bo",
+    "name": "Trường Cao đẳng Cơ điện – Xây dựng và Nông Lâm Trung Bộ",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-co-gioi-xay-dung",
+    "name": "Trường Cao đẳng Cơ giới Xây dựng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-co-khi-luyen-kim",
+    "name": "Trường Cao đẳng Cơ khí – Luyện kim",
+    "type": "CaoDang",
+    "city": "Thái Nguyên",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-co-khi-nong-nghiep",
+    "name": "Trường Cao đẳng Cơ khí Nông nghiệp",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-dong-ca-mau",
+    "name": "Trường Cao đẳng Cộng đồng Cà Mau",
+    "type": "CaoDang",
+    "city": "Cà Mau",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-dong-dak-nong",
+    "name": "Trường Cao đẳng Cộng đồng Đắk Nông",
+    "type": "CaoDang",
+    "city": "Lâm Đồng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-dong-dong-thap",
+    "name": "Trường Cao đẳng Cộng đồng Đồng Tháp",
+    "type": "CaoDang",
+    "city": "Đồng Tháp",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-dong-ha-tay",
+    "name": "Trường Cao đẳng Cộng đồng Hà Tây",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-dong-hai-phong",
+    "name": "Trường Cao đẳng Cộng đồng Hải Phòng",
+    "type": "CaoDang",
+    "city": "Hải Phòng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-dong-hau-giang",
+    "name": "Trường Cao đẳng Cộng đồng Hậu Giang",
+    "type": "CaoDang",
+    "city": "Cần Thơ",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-dong-hung-yen",
+    "name": "Trường Cao đẳng Cộng đồng Hưng Yên",
+    "type": "CaoDang",
+    "city": "Hưng Yên",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-dong-soc-trang",
+    "name": "Trường Cao đẳng Cộng đồng Sóc Trăng",
+    "type": "CaoDang",
+    "city": "Cần Thơ",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghe-kinh-te-va-thuy-loi-mien-trung",
+    "name": "Trường Cao đẳng Công nghệ, Kinh tế và Thủy lợi miền Trung",
+    "type": "CaoDang",
+    "city": "Đà Nẵng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghe-quoc-te-lilama-2",
+    "name": "Trường Cao đẳng Công nghệ Quốc tế LILAMA–2",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghe-tay-nguyen",
+    "name": "Trường Cao đẳng Công nghệ Tây Nguyên",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghe-thu-duc",
+    "name": "Trường Cao đẳng Công nghệ Thủ Đức",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghe-va-kinh-te-bao-loc",
+    "name": "Trường Cao đẳng Công nghệ và Kinh tế Bảo Lộc",
+    "type": "CaoDang",
+    "city": "Lâm Đồng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghe-va-kinh-te-cong-nghiep",
+    "name": "Trường Cao đẳng Công nghệ và Kinh tế Công nghiệp",
+    "type": "CaoDang",
+    "city": "Thái Nguyên",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghe-va-kinh-te-ha-noi",
+    "name": "Trường Cao đẳng Công nghệ và Kinh tế Hà Nội",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghe-va-nong-lam-nam-bo",
+    "name": "Trường Cao đẳng Công nghệ và Nông Lâm Nam Bộ",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghe-viettronics",
+    "name": "Trường Cao đẳng Công nghệ Viettronics",
+    "type": "CaoDang",
+    "city": "Hải Phòng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghiep-bac-ninh",
+    "name": "Trường Cao đẳng Công nghiệp Bắc Ninh",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghiep-cao-su",
+    "name": "Trường Cao đẳng Công nghiệp Cao su",
+    "type": "CaoDang",
+    "city": "Đồng Nai",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghiep-det-may-nam-dinh",
+    "name": "Trường Cao đẳng Công nghiệp Dệt – May Nam Định",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghiep-hue",
+    "name": "Trường Cao đẳng Công nghiệp Huế",
+    "type": "CaoDang",
+    "city": "Huế",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghiep-hung-yen",
+    "name": "Trường Cao đẳng Công nghiệp Hưng Yên",
+    "type": "CaoDang",
+    "city": "Hưng Yên",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghiep-nam-dinh",
+    "name": "Trường Cao đẳng Công nghiệp Nam Định",
+    "type": "CaoDang",
+    "city": "Ninh Bình",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghiep-thai-nguyen",
+    "name": "Trường Cao đẳng Công nghiệp Thái Nguyên",
+    "type": "CaoDang",
+    "city": "Thái Nguyên",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghiep-thuc-pham",
+    "name": "Trường Cao đẳng Công nghiệp Thực phẩm",
+    "type": "CaoDang",
+    "city": "Phú Thọ",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghiep-va-thuong-mai",
+    "name": "Trường Cao đẳng Công nghiệp và Thương mại",
+    "type": "CaoDang",
+    "city": "Phú Thọ",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghiep-va-xay-dung",
+    "name": "Trường Cao đẳng Công nghiệp và Xây dựng",
+    "type": "CaoDang",
+    "city": "Quảng Ninh",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-nghiep-viet-duc",
+    "name": "Trường Cao đẳng Công nghiệp Việt Đức",
+    "type": "CaoDang",
+    "city": "Thái Nguyên",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-thuong-mien-trung",
+    "name": "Trường Cao đẳng Công thương Miền Trung",
+    "type": "CaoDang",
+    "city": "Đắk Lắk",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-thuong-thai-nguyen",
+    "name": "Trường Cao đẳng Công Thương Thái Nguyên",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-cong-thuong-thanh-pho-ho-chi-minh",
+    "name": "Trường Cao đẳng Công Thương Thành phố Hồ Chí Minh",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-da-lat",
+    "name": "Trường Cao đẳng Đà Lạt",
+    "type": "CaoDang",
+    "city": "Lâm Đồng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-dau-khi",
+    "name": "Trường Cao đẳng Dầu khí",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-dien-luc-mien-bac",
+    "name": "Trường Cao đẳng Điện lực miền Bắc",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-dien-luc-mien-trung",
+    "name": "Trường Cao đẳng Điện lực miền Trung",
+    "type": "CaoDang",
+    "city": "Đà Nẵng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-dien-luc-thanh-pho-ho-chi-minh",
+    "name": "Trường Cao đẳng Điện lực Thành phố Hồ Chí Minh",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-dien-tu-dien-lanh-ha-noi",
+    "name": "Trường Cao đẳng Điện tử – Điện lạnh Hà Nội",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-dong-khoi",
+    "name": "Trường Cao đẳng Đồng Khởi",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-du-lich-can-tho",
+    "name": "Trường Cao đẳng Du lịch Cần Thơ",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-du-lich-da-lat",
+    "name": "Trường Cao đẳng Du lịch Đà Lạt",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-du-lich-da-nang",
+    "name": "Trường Cao đẳng Du lịch Đà Nẵng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-du-lich-ha-noi",
+    "name": "Trường Cao đẳng Du lịch Hà Nội",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-du-lich-hue",
+    "name": "Trường Cao đẳng Du lịch Huế",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-du-lich-nha-trang",
+    "name": "Trường Cao đẳng Du lịch Nha Trang",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-du-lich-thuong-mai-nghe-an",
+    "name": "Trường Cao đẳng Du lịch – Thương mại Nghệ An",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-du-lich-vung-tau",
+    "name": "Trường Cao đẳng Du lịch Vũng Tàu",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-duoc-trung-uong-hai-duong",
+    "name": "Trường Cao đẳng Dược Trung ương Hải Dương",
+    "type": "CaoDang",
+    "city": "Hải Phòng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-duong-sat",
+    "name": "Trường Cao đẳng Đường sắt",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-giao-thong-van-tai-duong-thuy-ii",
+    "name": "Trường Cao đẳng Giao thông vận tải Đường thủy II",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-giao-thong-van-tai-thanh-pho-ho-chi-minh",
+    "name": "Trường Cao đẳng Giao thông vận tải Thành phố Hồ Chí Minh",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-giao-thong-van-tai-trung-uong-i",
+    "name": "Trường Cao đẳng Giao thông vận tải Trung ương I",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-giao-thong-van-tai-trung-uong-iii",
+    "name": "Trường Cao đẳng Giao thông vận tải Trung ương III",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-giao-thong-van-tai-trung-uong-iv",
+    "name": "Trường Cao đẳng Giao thông vận tải Trung ương IV",
+    "type": "CaoDang",
+    "city": "Nghệ An",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-giao-thong-van-tai-trung-uong-v",
+    "name": "Trường Cao đẳng Giao thông vận tải Trung ương V",
+    "type": "CaoDang",
+    "city": "Đà Nẵng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-giao-thong-van-tai-trung-uong-vi",
+    "name": "Trường Cao đẳng Giao thông vận tải Trung ương VI",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-hang-hai-i",
+    "name": "Trường Cao đẳng Hàng hải I",
+    "type": "CaoDang",
+    "city": "Hải Phòng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-hoa-binh-xuan-loc",
+    "name": "Trường Cao đẳng Hòa Bình Xuân Lộc",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-hue",
+    "name": "Trường Cao đẳng Huế",
+    "type": "CaoDang",
+    "city": "Huế",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kien-giang",
+    "name": "Trường Cao đẳng Kiên Giang",
+    "type": "CaoDang",
+    "city": "An Giang",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-cong-nghe-thanh-pho-ho-chi-minh",
+    "name": "Trường Cao đẳng Kinh tế – Công nghệ Thành phố Hồ Chí Minh",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-cong-nghiep-ha-noi",
+    "name": "Trường Cao đẳng Kinh tế Công nghiệp Hà Nội",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-doi-ngoai",
+    "name": "Trường Cao đẳng Kinh tế Đối ngoại",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-ke-hoach-da-nang",
+    "name": "Trường Cao đẳng Kinh tế – Kế hoạch Đà Nẵng",
+    "type": "CaoDang",
+    "city": "Đà Nẵng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-ky-thuat-bac-lieu",
+    "name": "Trường Cao đẳng Kinh tế – Kỹ thuật Bạc Liêu",
+    "type": "CaoDang",
+    "city": "Cà Mau",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-ky-thuat-can-tho",
+    "name": "Trường Cao đẳng Kinh tế – Kỹ thuật Cần Thơ",
+    "type": "CaoDang",
+    "city": "Cần Thơ",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-ky-thuat-cong-thuong",
+    "name": "Trường Cao đẳng Kinh tế Kỹ thuật Công thương",
+    "type": "CaoDang",
+    "city": "Thanh Hóa",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-ky-thuat-dien-bien",
+    "name": "Trường Cao đẳng Kinh tế Kỹ thuật Điện Biên",
+    "type": "CaoDang",
+    "city": "Điện Biên",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-ky-thuat-phu-tho",
+    "name": "Trường Cao đẳng Kinh tế Kỹ thuật Phú Thọ",
+    "type": "CaoDang",
+    "city": "Phú Thọ",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-ky-thuat-thanh-pho-ho-chi-minh",
+    "name": "Trường Cao đẳng Kinh tế – Kỹ thuật Thành phố Hồ Chí Minh",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-ky-thuat-thu-duc",
+    "name": "Trường Cao đẳng Kinh tế – Kỹ thuật Thủ Đức",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-ky-thuat-thuong-mai",
+    "name": "Trường Cao đẳng Kinh tế – Kỹ thuật Thương mại",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-ky-thuat-trung-uong",
+    "name": "Trường Cao đẳng Kinh tế – Kỹ thuật Trung ương",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-ky-thuat-va-thuy-san",
+    "name": "Trường Cao đẳng Kinh tế, Kỹ thuật và Thủy sản",
+    "type": "CaoDang",
+    "city": "Bắc Ninh",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-ky-thuat-vinatex",
+    "name": "Trường Cao đẳng Kinh tế – Kỹ thuật Vinatex",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-ky-thuat-vinh-phuc",
+    "name": "Trường Cao đẳng Kinh tế – Kỹ thuật Vĩnh Phúc",
+    "type": "CaoDang",
+    "city": "Phú Thọ",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-tai-chinh-thai-nguyen",
+    "name": "Trường Cao đẳng Kinh tế – Tài chính Thái Nguyên",
+    "type": "CaoDang",
+    "city": "Thái Nguyên",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-thanh-pho-ho-chi-minh",
+    "name": "Trường Cao đẳng Kinh tế Thành phố Hồ Chí Minh",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kinh-te-va-cong-nghe-thuc-pham",
+    "name": "Trường Cao đẳng Kinh tế và Công nghệ thực phẩm",
+    "type": "CaoDang",
+    "city": "Hải Phòng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-kon-tum",
+    "name": "Trường Cao đẳng Kon Tum",
+    "type": "CaoDang",
+    "city": "Quảng Ngãi",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-ky-nghe-dung-quat",
+    "name": "Trường Cao đẳng Kỹ nghệ Dung Quất",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-ky-nghe-ii",
+    "name": "Trường Cao đẳng Kỹ nghệ II",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-ky-thuat-cao-thang",
+    "name": "Trường Cao đẳng Kỹ thuật Cao Thắng",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-ky-thuat-cong-nghe-ba-ria-vung-tau",
+    "name": "Trường Cao đẳng Kỹ thuật Công nghệ Bà Rịa – Vũng Tàu",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-ky-thuat-cong-nghe-hoa-binh",
+    "name": "Trường Cao đẳng Kỹ thuật Công nghệ Hòa Bình",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-ky-thuat-cong-nghe-nam-dinh",
+    "name": "Trường Cao đẳng Kỹ thuật Công nghệ Nam Định",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-ky-thuat-cong-nghe-nha-trang",
+    "name": "Trường Cao đẳng Kỹ thuật Công nghệ Nha Trang",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-ky-thuat-cong-nghe-quy-nhon",
+    "name": "Trường Cao đẳng Kỹ thuật Công nghệ Quy Nhơn",
+    "type": "CaoDang",
+    "city": "Gia Lai",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-ky-thuat-cong-nghe-son-la",
+    "name": "Trường Cao đẳng Kỹ thuật công nghệ Sơn La",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-ky-thuat-cong-nghiep",
+    "name": "Trường Cao đẳng Kỹ thuật Công nghiệp",
+    "type": "CaoDang",
+    "city": "Bắc Ninh",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-ky-thuat-cong-nong-nghiep-quang-binh",
+    "name": "Trường Cao đẳng Kỹ thuật Công – Nông nghiệp Quảng Bình",
+    "type": "CaoDang",
+    "city": "Quảng Trị",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-ky-thuat-dak-lak",
+    "name": "Trường Cao đẳng Kỹ thuật Đắk Lắk",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-ky-thuat-dong-nai",
+    "name": "Trường Cao đẳng Kỹ thuật Đồng Nai",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-ky-thuat-nguyen-truong-to",
+    "name": "Trường Cao đẳng Kỹ thuật Nguyễn Trường Tộ",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-ky-thuat-quang-tri",
+    "name": "Trường Cao đẳng Kỹ thuật Quảng Trị",
+    "type": "CaoDang",
+    "city": "Quảng Trị",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-ky-thuat-trang-thiet-bi-y-te",
+    "name": "Trường Cao đẳng Kỹ thuật trang thiết bị Y tế",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-ky-thuat-va-cong-nghe-tinh-ha-giang",
+    "name": "Trường Cao đẳng Kỹ thuật và Công nghệ tỉnh Hà Giang",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-lai-chau",
+    "name": "Trường Cao đẳng Lai Châu",
+    "type": "CaoDang",
+    "city": "Lai Châu",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-lao-cai",
+    "name": "Trường Cao đẳng Lào Cai",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-luat-mien-trung",
+    "name": "Trường Cao đẳng Luật miền Trung",
+    "type": "CaoDang",
+    "city": "Quảng Trị",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-luong-thuc-thuc-pham",
+    "name": "Trường Cao đẳng Lương thực - Thực phẩm",
+    "type": "CaoDang",
+    "city": "Đà Nẵng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-ly-tu-trong-thanh-pho-ho-chi-minh",
+    "name": "Trường Cao đẳng Lý Tự Trọng Thành phố Hồ Chí Minh",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-mua-viet-nam",
+    "name": "Trường Cao đẳng Múa Việt Nam",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-my-thuat-trang-tri-dong-nai",
+    "name": "Trường Cao đẳng Mỹ thuật trang trí Đồng Nai",
+    "type": "CaoDang",
+    "city": "Đồng Nai",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-an-giang",
+    "name": "Trường Cao đẳng nghề An Giang",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-an-nhat-vinh",
+    "name": "Trường Cao đẳng nghề An Nhất Vinh",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-an-ninh-cong-nghe",
+    "name": "Trường Cao đẳng nghề An ninh – Công nghệ",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-bac-giang",
+    "name": "Trường Cao đẳng nghề Bắc Giang",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-bac-lieu",
+    "name": "Trường Cao đẳng nghề Bạc Liêu",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-bac-nam",
+    "name": "Trường Cao đẳng nghề Bắc Nam",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-bach-khoa",
+    "name": "Trường Cao đẳng nghề Bách Khoa",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-bach-khoa-ha-noi",
+    "name": "Trường Cao đẳng nghề Bách khoa Hà Nội",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": [
+      "Hactech"
+    ]
+  },
+  {
+    "code": "truong-cao-dang-nghe-bach-nghe-hai-phong",
+    "name": "Trường Cao đẳng nghề Bách nghệ Hải Phòng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-binh-phuoc",
+    "name": "Trường Cao đẳng nghề Bình Phước",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-binh-thuan",
+    "name": "Trường Cao đẳng nghề Bình Thuận",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-can-tho",
+    "name": "Trường Cao đẳng nghề Cần Thơ",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-co-dien-ha-noi",
+    "name": "Trường Cao đẳng nghề Cơ điện Hà Nội",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-co-dien-tay-bac",
+    "name": "Trường Cao đẳng nghề Cơ điện Tây Bắc",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-co-dien-va-thuy-loi",
+    "name": "Trường Cao đẳng nghề Cơ điện và Thủy lợi",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-co-dien-xay-dung-tam-diep",
+    "name": "Trường Cao đẳng nghề Cơ điện xây dựng Tam Điệp",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-co-gioi-ninh-binh",
+    "name": "Trường Cao đẳng nghề Cơ giới Ninh Bình",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-co-gioi-quang-ngai",
+    "name": "Trường Cao đẳng nghề Cơ giới Quảng Ngãi",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-co-gioi-va-thuy-loi",
+    "name": "Trường Cao đẳng nghề Cơ giới và Thủy lợi",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-cong-nghe-cao-dong-an",
+    "name": "Trường Cao đẳng nghề Công nghệ cao Đồng An",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-cong-nghe-cao-dong-nai",
+    "name": "Trường Cao đẳng nghề Công nghệ cao Đồng Nai",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-cong-nghe-cao-ha-noi",
+    "name": "Trường Cao đẳng nghề Công nghệ cao Hà Nội",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-cong-nghe-giay-va-co-dien",
+    "name": "Trường Cao đẳng nghề Công nghệ Giấy và Cơ điện",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-cong-nghe-ha-tinh",
+    "name": "Trường Cao đẳng nghề Công nghệ Hà Tĩnh",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-cong-nghe-kinh-te-va-che-bien-lam-san",
+    "name": "Trường Cao đẳng nghề Công nghệ, Kinh tế và Chế biến lâm sản",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-cong-nghe-kinh-te-va-thuy-san",
+    "name": "Trường Cao đẳng nghề Công nghệ, Kinh tế và Thủy sản",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-cong-nghe-licogi-thanh-hoa",
+    "name": "Trường Cao đẳng nghề Công nghệ LICOGI Thanh Hóa",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-cong-nghe-sai-gon",
+    "name": "Trường Cao đẳng nghề Công nghệ Sài Gòn",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-cong-nghe-thong-tin-ispace",
+    "name": "Trường Cao đẳng nghề Công nghệ thông tin iSPACE",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-cong-nghe-va-kinh-te-ha-noi",
+    "name": "Trường Cao đẳng nghề Công nghệ và Kinh tế Hà Nội",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-cong-nghe-va-nong-lam-dong-bac",
+    "name": "Trường Cao đẳng nghề Công nghệ và Nông Lâm Đông Bắc",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-cong-nghe-va-nong-lam-phu-tho",
+    "name": "Trường Cao đẳng nghề Công nghệ và Nông Lâm Phú Thọ",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-cong-nghe-viet-han-bac-giang",
+    "name": "Trường Cao đẳng nghề Công nghệ Việt– Hàn Bắc Giang",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-cong-nghiep-ha-noi",
+    "name": "Trường Cao đẳng nghề Công nghiệp Hà Nội",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-cong-nghiep-hai-phong",
+    "name": "Trường Cao đẳng nghề Công nghiệp Hải Phòng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-cong-nghiep-thanh-hoa",
+    "name": "Trường Cao đẳng nghề Công nghiệp Thanh Hóa",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-cong-nghiep-viet-bac-vinacomin",
+    "name": "Trường Cao đẳng nghề Công nghiệp Việt Bắc – Vinacomin",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-cong-thuong-viet-nam",
+    "name": "Trường Cao đẳng nghề Công thương Việt Nam",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-da-lat",
+    "name": "Trường Cao đẳng nghề Đà Lạt",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-da-nang",
+    "name": "Trường Cao đẳng nghề Đà Nẵng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-dai-an",
+    "name": "Trường Cao đẳng nghề Đại An",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-dan-toc-noi-tru-bac-kan",
+    "name": "Trường Cao đẳng nghề dân tộc nội trú Bắc Kạn",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-dich-vu-hang-khong-airserco",
+    "name": "Trường Cao đẳng nghề Dịch vụ Hàng không AIRSERCO",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-dien-bien",
+    "name": "Trường Cao đẳng nghề Điện Biên",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-dong-thap",
+    "name": "Trường Cao đẳng nghề Đồng Tháp",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-du-lich-sai-gon",
+    "name": "Trường Cao đẳng nghề Du lịch Sài Gòn",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-du-lich-va-dich-vu-hai-phong",
+    "name": "Trường Cao đẳng nghề Du lịch và dịch vụ Hải Phòng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-duyen-hai",
+    "name": "Trường Cao đẳng nghề Duyên Hải",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-giao-thong-co-dien-quang-ninh",
+    "name": "Trường Cao đẳng Nghề Giao thông Cơ điện Quảng Ninh",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-giao-thong-van-tai-duong-thuy-i",
+    "name": "Trường Cao đẳng nghề Giao thông Vận tải Đường thủy I",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-giao-thong-van-tai-trung-uong-ii",
+    "name": "Trường Cao đẳng nghề Giao thông vận tải trung ương II",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-ha-nam",
+    "name": "Trường Cao đẳng nghề Hà Nam",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-hai-duong",
+    "name": "Trường Cao đẳng nghề Hải Dương",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-hang-hai-thanh-pho-ho-chi-minh",
+    "name": "Trường Cao đẳng Nghề Hàng hải Thành phố Hồ Chí Minh",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-hoa-sen",
+    "name": "Trường Cao đẳng nghề Hoa Sen",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-hung-vuong",
+    "name": "Trường Cao đẳng nghề Hùng Vương",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-khach-san-du-lich-quoc-te-imperial",
+    "name": "Trường Cao đẳng Nghề Khách sạn Du lịch Quốc tế IMPERIAL",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-kien-giang",
+    "name": "Trường Cao đẳng nghề Kiên Giang",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-kinh-doanh-va-cong-nghe-ha-noi",
+    "name": "Trường Cao đẳng nghề Kinh doanh và Công nghệ Hà Nội",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-kinh-te-cong-nghe-vicet",
+    "name": "Trường Cao đẳng nghề Kinh tế – Công nghệ VICET",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-kinh-te-ky-thuat-bac-bo",
+    "name": "Trường Cao đẳng nghề Kinh tế – Kỹ thuật Bắc Bộ",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-kinh-te-ky-thuat-so-1-nghe-an",
+    "name": "Trường Cao đẳng nghề Kinh tế – Kỹ thuật số 1 Nghệ An",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-kinh-te-ky-thuat-thanh-pho-ho-chi-minh",
+    "name": "Trường Cao đẳng Nghề Kinh tế kỹ thuật Thành phố Hồ Chí Minh",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-kinh-te-ky-thuat-to-hieu",
+    "name": "Trường Cao đẳng nghề Kinh tế – Kỹ thuật Tô Hiệu",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-ky-thuat-cong-nghe",
+    "name": "Trường Cao đẳng nghề Kỹ thuật Công nghệ",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-ky-thuat-cong-nghe-kinh-te-simco-song-da",
+    "name": "Trường Cao đẳng nghề Kỹ thuật – Công nghệ – Kinh tế Simco Sông Đà",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-ky-thuat-cong-nghe-ladec",
+    "name": "Trường Cao đẳng nghề Kỹ thuật Công nghệ LADEC",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-ky-thuat-cong-nghe-lod",
+    "name": "Trường Cao đẳng nghề Kỹ thuật – Công nghệ LOD",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-ky-thuat-cong-nghe-tuyen-quang",
+    "name": "Trường Cao đẳng Nghề Kỹ thuật–Công nghệ Tuyên Quang",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-ky-thuat-cong-nghiep-viet-nam-han-quoc-nghe-an",
+    "name": "Trường Cao đẳng nghề Kỹ thuật Công nghiệp Việt Nam – Hàn Quốc Nghệ An",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-ky-thuat-my-nghe-viet-nam",
+    "name": "Trường Cao đẳng nghề Kỹ thuật Mỹ nghệ Việt Nam",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-ky-thuat-thiet-bi-y-te-binh-duong",
+    "name": "Trường Cao đẳng nghề Kỹ thuật thiết bị Y tế Bình Dương",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-ky-thuat-va-nghiep-vu-ha-noi",
+    "name": "Trường Cao đẳng Nghề Kỹ thuật và Nghiệp vụ Hà Nội",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-ky-thuat-y-te-thang-long",
+    "name": "Trường Cao đẳng Nghề Kỹ thuật y tế Thăng Long",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-lam-kinh",
+    "name": "Trường Cao đẳng nghề Lam Kinh",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-lang-son",
+    "name": "Trường Cao đẳng nghề Lạng Sơn",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-lao-dong-xa-hoi-hai-phong",
+    "name": "Trường Cao đẳng nghề Lao động – Xã hội Hải Phòng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-lilama-1",
+    "name": "Trường Cao đẳng nghề LILAMA–1",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-long-an",
+    "name": "Trường Cao đẳng nghề Long An",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-long-bien",
+    "name": "Trường Cao đẳng nghề Long Biên",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-nguyen-trai",
+    "name": "Trường Cao đẳng nghề Nguyễn Trãi",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-nguyen-tri-phuong",
+    "name": "Trường Cao đẳng nghề Nguyễn Tri Phương",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-nguyen-van-troi",
+    "name": "Trường Cao đẳng nghề Nguyễn Văn Trỗi",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-ninh-thuan",
+    "name": "Trường Cao đẳng nghề Ninh Thuận",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-nong-nghiep-va-phat-trien-nong-thon-thanh-hoa",
+    "name": "Trường Cao đẳng nghề Nông nghiệp và Phát triển nông thôn Thanh Hóa",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-phu-tho",
+    "name": "Trường Cao đẳng nghề Phú Thọ",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-phu-yen",
+    "name": "Trường Cao đẳng nghề Phú Yên",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-quan-ly-va-cong-nghe",
+    "name": "Trường Cao đẳng nghề Quản lý và Công nghệ",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-quang-binh",
+    "name": "Trường Cao đẳng nghề Quảng Bình",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-quang-nam",
+    "name": "Trường Cao đẳng nghề Quảng Nam",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-quoc-te-ha-noi",
+    "name": "Trường Cao đẳng nghề Quốc tế Hà Nội",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-quoc-te-nam-viet",
+    "name": "Trường Cao đẳng nghề Quốc tế Nam Việt",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-sai-gon",
+    "name": "Trường Cao đẳng nghề Sài Gòn",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-so-1-bo-quoc-phong",
+    "name": "Trường Cao đẳng nghề số 1 – Bộ Quốc phòng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-so-13-bo-quoc-phong",
+    "name": "Trường Cao đẳng nghề số 13 – Bộ Quốc phòng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-so-17-bo-quoc-phong",
+    "name": "Trường Cao đẳng nghề số 17 – Bộ Quốc phòng",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-so-19-bo-quoc-phong",
+    "name": "Trường Cao đẳng nghề số 19 – Bộ Quốc phòng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-so-2-bo-quoc-phong",
+    "name": "Trường Cao đẳng nghề số 2 – Bộ Quốc phòng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-so-20-bo-quoc-phong",
+    "name": "Trường Cao đẳng nghề số 20 – Bộ Quốc phòng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-so-21-bo-quoc-phong",
+    "name": "Trường Cao đẳng nghề số 21 – Bộ Quốc phòng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-so-22-bo-quoc-phong",
+    "name": "Trường Cao đẳng nghề số 22 – Bộ Quốc phòng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-so-23-bo-quoc-phong",
+    "name": "Trường Cao đẳng nghề số 23 – Bộ Quốc phòng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-so-3-bo-quoc-phong",
+    "name": "Trường Cao đẳng nghề số 3 – Bộ Quốc phòng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-so-4-bo-quoc-phong",
+    "name": "Trường Cao đẳng nghề số 4 – Bộ Quốc phòng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-so-5-bo-quoc-phong",
+    "name": "Trường Cao đẳng nghề số 5 – Bộ Quốc phòng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-so-7-bo-quoc-phong",
+    "name": "Trường Cao đẳng nghề số 7 – Bộ Quốc phòng",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-so-8-bo-quoc-phong",
+    "name": "Trường Cao đẳng nghề số 8 – Bộ Quốc phòng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-so-9-bo-quoc-phong",
+    "name": "Trường Cao đẳng nghề số 9 – Bộ Quốc phòng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-soc-trang",
+    "name": "Trường Cao đẳng nghề Sóc Trăng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-song-da",
+    "name": "Trường Cao đẳng nghề Sông Đà",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-tay-ninh",
+    "name": "Trường Cao đẳng nghề Tây Ninh",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-tay-sai-gon",
+    "name": "Trường Cao đẳng nghề Tây Sài Gòn",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-thai-binh",
+    "name": "Trường Cao đẳng nghề Thái Bình",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-thang-long",
+    "name": "Trường Cao đẳng nghề Thăng Long",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-thanh-pho-ho-chi-minh",
+    "name": "Trường Cao đẳng Nghề Thành phố Hồ Chí Minh",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-thuat-ha-noi",
+    "name": "Trường Cao đẳng Nghệ thuật Hà Nội",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-thuong-mai-va-cong-nghiep",
+    "name": "Trường Cao đẳng nghề Thương mại và Công nghiệp",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-tien-giang",
+    "name": "Trường Cao đẳng nghề Tiền Giang",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-tra-vinh",
+    "name": "Trường Cao đẳng nghề Trà Vinh",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-tran-dai-nghia",
+    "name": "Trường Cao đẳng nghề Trần Đại Nghĩa",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-tran-hung-dao",
+    "name": "Trường Cao đẳng nghề Trần Hưng Đạo",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-van-lang-ha-noi",
+    "name": "Trường Cao đẳng nghề Văn Lang Hà Nội",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-viet-duc-ha-tinh",
+    "name": "Trường Cao đẳng nghề Việt–Đức Hà Tĩnh",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-viet-han-quang-ninh",
+    "name": "Trường Cao đẳng nghề Việt – Hàn Quảng Ninh",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-viet-nam-han-quoc-ca-mau",
+    "name": "Trường Cao đẳng nghề Việt Nam – Hàn Quốc Cà Mau",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-viet-nam-han-quoc-quang-ngai",
+    "name": "Trường Cao đẳng nghề Việt Nam–Hàn Quốc Quảng Ngãi",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-viet-nam-han-quoc-thanh-pho-ha-noi",
+    "name": "Trường Cao đẳng nghề Việt Nam – Hàn Quốc Thành phố Hà Nội",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-viet-nam-singapore",
+    "name": "Trường Cao đẳng nghề Việt Nam – Singapore",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-viet-uc-da-nang",
+    "name": "Trường Cao đẳng nghề Việt–Úc Đà Nẵng",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-viet-xo-so-1",
+    "name": "Trường Cao đẳng nghề Việt Xô số 1",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-viglacera",
+    "name": "Trường Cao đẳng nghề Viglacera",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-vinh-long",
+    "name": "Trường Cao đẳng nghề Vĩnh Long",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-vinh-phuc",
+    "name": "Trường Cao đẳng nghề Vĩnh Phúc",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nghe-yen-bai",
+    "name": "Trường Cao đẳng nghề Yên Bái",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nguyen-du",
+    "name": "Trường Cao đẳng Nguyễn Du",
+    "type": "CaoDang",
+    "city": "Hà Tĩnh",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nong-lam-dong-bac",
+    "name": "Trường Cao đẳng Nông Lâm Đông Bắc",
+    "type": "CaoDang",
+    "city": "Quảng Ninh",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nong-nghiep-nam-bo",
+    "name": "Trường Cao đẳng Nông nghiệp Nam Bộ",
+    "type": "CaoDang",
+    "city": "Đồng Tháp",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nong-nghiep-thanh-hoa",
+    "name": "Trường Cao đẳng Nông nghiệp Thanh Hóa",
+    "type": "CaoDang",
+    "city": "Thanh Hóa",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-nong-nghiep-va-phat-trien-nong-thon-bac-bo",
+    "name": "Trường Cao đẳng Nông nghiệp và Phát triển nông thôn Bắc Bộ",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-phat-thanh-truyen-hinh-i",
+    "name": "Trường Cao đẳng Phát thanh - Truyền hình I",
+    "type": "CaoDang",
+    "city": "Ninh Bình",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-phat-thanh-truyen-hinh-ii",
+    "name": "Trường Cao đẳng Phát thanh Truyền hình II",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-phu-chau",
+    "name": "Trường Cao đẳng Phú Châu",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-quang-nam",
+    "name": "Trường Cao đẳng Quảng Nam",
+    "type": "CaoDang",
+    "city": "Đà Nẵng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-quoc-te-thanh-pho-ho-chi-minh",
+    "name": "Trường Cao đẳng Quốc tế Thành phố Hồ Chí Minh",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-quoc-te-vabis",
+    "name": "Trường Cao đẳng Quốc tế Vabis",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-son-la",
+    "name": "Trường Cao đẳng Sơn La",
+    "type": "CaoDang",
+    "city": "Sơn La",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-su-pham-ba-ria-vung-tau",
+    "name": "Trường Cao đẳng Sư phạm Bà Rịa – Vũng Tàu",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-su-pham-bac-ninh",
+    "name": "Trường Cao đẳng Sư phạm Bắc Ninh",
+    "type": "CaoDang",
+    "city": "Bắc Ninh",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-su-pham-dak-lak",
+    "name": "Trường Cao đẳng Sư phạm Đắk Lắk",
+    "type": "CaoDang",
+    "city": "Đắk Lắk",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-su-pham-dien-bien",
+    "name": "Trường Cao đẳng Sư phạm Điện Biên",
+    "type": "CaoDang",
+    "city": "Điện Biên",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-su-pham-hoa-binh",
+    "name": "Trường Cao đẳng Sư phạm Hòa Bình",
+    "type": "CaoDang",
+    "city": "Phú Thọ",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-su-pham-kien-giang",
+    "name": "Trường Cao đẳng Sư phạm Kiên Giang",
+    "type": "CaoDang",
+    "city": "An Giang",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-su-pham-lang-son",
+    "name": "Trường Cao đẳng Sư phạm Lạng Sơn",
+    "type": "CaoDang",
+    "city": "Lạng Sơn",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-su-pham-nam-dinh",
+    "name": "Trường Cao đẳng Sư phạm Nam Định",
+    "type": "CaoDang",
+    "city": "Ninh Bình",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-su-pham-quang-tri",
+    "name": "Trường Cao đẳng Sư phạm Quảng Trị",
+    "type": "CaoDang",
+    "city": "Quảng Trị",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-su-pham-tay-ninh",
+    "name": "Trường Cao đẳng Sư phạm Tây Ninh",
+    "type": "CaoDang",
+    "city": "Tây Ninh",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-su-pham-thai-binh",
+    "name": "Trường Cao đẳng Sư phạm Thái Bình",
+    "type": "CaoDang",
+    "city": "Hưng Yên",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-su-pham-trung-uong",
+    "name": "Trường Cao đẳng Sư phạm Trung ương",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-su-pham-trung-uong-nha-trang",
+    "name": "Trường Cao đẳng Sư phạm Trung ương Nha Trang",
+    "type": "CaoDang",
+    "city": "Khánh Hòa",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-su-pham-trung-uong-thanh-pho-ho-chi-minh",
+    "name": "Trường Cao đẳng Sư phạm Trung ương Thành phố Hồ Chí Minh",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-thaco",
+    "name": "Trường Cao đẳng Thaco",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-thai-nguyen",
+    "name": "Trường Cao đẳng Thái Nguyên",
+    "type": "CaoDang",
+    "city": "Thái Nguyên",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-than-khoang-san-viet-nam",
+    "name": "Trường Cao đẳng Than – Khoáng sản Việt Nam",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-the-duc-the-thao-thanh-hoa",
+    "name": "Trường Cao đẳng Thể dục Thể thao Thanh Hóa",
+    "type": "CaoDang",
+    "city": "Thanh Hóa",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-thong-ke",
+    "name": "Trường Cao đẳng Thống kê",
+    "type": "CaoDang",
+    "city": "Bắc Ninh",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-thong-ke-ii",
+    "name": "Trường Cao đẳng Thống kê II",
+    "type": "CaoDang",
+    "city": "Đồng Nai",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-thong-tin-va-truyen-thong",
+    "name": "Trường Cao đẳng Thông tin và Truyền thông",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-thu-thiem-tp-ho-chi-minh",
+    "name": "Trường Cao đẳng Thủ Thiêm – TP. Hồ Chí Minh",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-thuc-hanh-fpt",
+    "name": "Trường Cao đẳng Thực hành FPT",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-thuong-mai",
+    "name": "Trường Cao đẳng Thương mại",
+    "type": "CaoDang",
+    "city": "Đà Nẵng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-thuong-mai-va-du-lich-ha-noi",
+    "name": "Trường Cao đẳng Thương mại và Du lịch Hà Nội",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-thuong-mai-va-du-lich-thai-nguyen",
+    "name": "Trường Cao đẳng Thương mại và Du lịch Thái Nguyên",
+    "type": "CaoDang",
+    "city": "Thái Nguyên",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-thuy-loi-bac-bo",
+    "name": "Trường Cao đẳng Thủy lợi Bắc Bộ",
+    "type": "CaoDang",
+    "city": "Ninh Bình",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-truyen-hinh",
+    "name": "Trường Cao đẳng Truyền hình",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-va-quan-ly-kinh-doanh-ha-noi",
+    "name": "Trường cao đẳng và quản lý kinh doanh Hà Nội",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-van-hoa-nghe-thuat-can-tho",
+    "name": "Trường Cao đẳng Văn hóa Nghệ thuật Cần Thơ",
+    "type": "CaoDang",
+    "city": "Cần Thơ",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-van-hoa-nghe-thuat-da-nang",
+    "name": "Trường Cao đẳng Văn hóa – Nghệ thuật Đà Nẵng",
+    "type": "CaoDang",
+    "city": "Đà Nẵng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-van-hoa-nghe-thuat-dak-lak",
+    "name": "Trường Cao đẳng Văn hóa Nghệ thuật Đắk Lắk",
+    "type": "CaoDang",
+    "city": "Đắk Lắk",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-van-hoa-nghe-thuat-nghe-an",
+    "name": "Trường Cao đẳng Văn hóa Nghệ thuật Nghệ An",
+    "type": "CaoDang",
+    "city": "Nghệ An",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-van-hoa-nghe-thuat-tay-bac",
+    "name": "Trường Cao đẳng Văn hóa Nghệ thuật Tây Bắc",
+    "type": "CaoDang",
+    "city": "Phú Thọ",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-van-hoa-nghe-thuat-thai-binh",
+    "name": "Trường Cao đẳng Văn hóa Nghệ thuật Thái Bình",
+    "type": "CaoDang",
+    "city": "Hưng Yên",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-van-hoa-nghe-thuat-thanh-pho-ho-chi-minh",
+    "name": "Trường Cao đẳng Văn hóa Nghệ thuật Thành phố Hồ Chí Minh",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-van-hoa-nghe-thuat-va-du-lich-ha-long",
+    "name": "Trường Cao đẳng Văn hóa Nghệ thuật và Du lịch Hạ Long",
+    "type": "CaoDang",
+    "city": "Quảng Ninh",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-van-hoa-nghe-thuat-va-du-lich-nam-dinh",
+    "name": "Trường Cao đẳng Văn hóa Nghệ thuật và Du lịch Nam Định",
+    "type": "CaoDang",
+    "city": "Ninh Bình",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-van-hoa-nghe-thuat-viet-bac",
+    "name": "Trường Cao đẳng Văn hóa Nghệ thuật Việt Bắc",
+    "type": "CaoDang",
+    "city": "Thái Nguyên",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-viet-duc-nghe-an",
+    "name": "Trường Cao đẳng Việt Đức Nghệ An",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-viet-nam-han-quoc-binh-duong",
+    "name": "Trường Cao đẳng Việt Nam–Hàn Quốc Bình Dương",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-vinh-long",
+    "name": "Trường Cao đẳng Vĩnh Long",
+    "type": "CaoDang",
+    "city": "Vĩnh Long",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-vinh-phuc",
+    "name": "Trường Cao đẳng Vĩnh Phúc",
+    "type": "CaoDang",
+    "city": "Phú Thọ",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-vmu",
+    "name": "Trường Cao đẳng VMU",
+    "type": "CaoDang",
+    "city": null,
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-xay-dung-cong-trinh-do-thi",
+    "name": "Trường Cao đẳng Xây dựng công trình đô thị",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-xay-dung-nam-dinh",
+    "name": "Trường Cao đẳng Xây dựng Nam Định",
+    "type": "CaoDang",
+    "city": "Ninh Bình",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-xay-dung-so-1",
+    "name": "Trường Cao đẳng Xây dựng số 1",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-xay-dung-thanh-pho-ho-chi-minh",
+    "name": "Trường Cao đẳng Xây dựng Thành phố Hồ Chí Minh",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-duoc-hop-luc",
+    "name": "Trường Cao đẳng Y – Dược Hợp Lực",
+    "type": "CaoDang",
+    "city": "Thanh Hóa",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-bac-lieu",
+    "name": "Trường Cao đẳng Y tế Bạc Liêu",
+    "type": "CaoDang",
+    "city": "Cà Mau",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-bac-ninh",
+    "name": "Trường Cao đẳng Y tế Bắc Ninh",
+    "type": "CaoDang",
+    "city": "Bắc Ninh",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-bach-mai",
+    "name": "Trường Cao đẳng Y tế Bạch Mai",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-binh-dinh",
+    "name": "Trường Cao đẳng Y tế Bình Định",
+    "type": "CaoDang",
+    "city": "Gia Lai",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-binh-duong",
+    "name": "Trường Cao đẳng Y tế Bình Dương",
+    "type": "CaoDang",
+    "city": "TP.HCM",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-ca-mau",
+    "name": "Trường Cao đẳng Y tế Cà Mau",
+    "type": "CaoDang",
+    "city": "Cà Mau",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-can-tho",
+    "name": "Trường Cao đẳng Y tế Cần Thơ",
+    "type": "CaoDang",
+    "city": "Cần Thơ",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-dak-lak",
+    "name": "Trường Cao đẳng Y tế Đắk Lắk",
+    "type": "CaoDang",
+    "city": "Đắk Lắk",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-dang-thuy-tram",
+    "name": "Trường Cao đẳng Y tế Đặng Thùy Trâm",
+    "type": "CaoDang",
+    "city": "Quảng Ngãi",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-dang-van-ngu",
+    "name": "Trường Cao đẳng Y tế Đặng Văn Ngữ",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-dien-bien",
+    "name": "Trường Cao đẳng Y tế Điện Biên",
+    "type": "CaoDang",
+    "city": "Điện Biên",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-dong-nai",
+    "name": "Trường Cao đẳng Y tế Đồng Nai",
+    "type": "CaoDang",
+    "city": "Đồng Nai",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-dong-thap",
+    "name": "Trường Cao đẳng Y tế Đồng Tháp",
+    "type": "CaoDang",
+    "city": "Đồng Tháp",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-ha-dong",
+    "name": "Trường Cao đẳng Y tế Hà Đông",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-ha-nam",
+    "name": "Trường Cao đẳng Y tế Hà Nam",
+    "type": "CaoDang",
+    "city": "Ninh Bình",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-ha-noi",
+    "name": "Trường Cao đẳng Y tế Hà Nội",
+    "type": "CaoDang",
+    "city": "Hà Nội",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-ha-tinh",
+    "name": "Trường Cao đẳng Y tế Hà Tĩnh",
+    "type": "CaoDang",
+    "city": "Hà Tĩnh",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-hai-phong",
+    "name": "Trường Cao đẳng Y tế Hải Phòng",
+    "type": "CaoDang",
+    "city": "Hải Phòng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-hue",
+    "name": "Trường Cao đẳng Y tế Huế",
+    "type": "CaoDang",
+    "city": "Huế",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-hung-yen",
+    "name": "Trường Cao đẳng Y tế Hưng Yên",
+    "type": "CaoDang",
+    "city": "Hưng Yên",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-khanh-hoa",
+    "name": "Trường Cao đẳng Y tế Khánh Hòa",
+    "type": "CaoDang",
+    "city": "Khánh Hòa",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-kien-giang",
+    "name": "Trường Cao đẳng Y tế Kiên Giang",
+    "type": "CaoDang",
+    "city": "An Giang",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-lam-dong",
+    "name": "Trường Cao đẳng Y tế Lâm Đồng",
+    "type": "CaoDang",
+    "city": "Lâm Đồng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-lang-son",
+    "name": "Trường Cao đẳng Y tế Lạng Sơn",
+    "type": "CaoDang",
+    "city": "Lạng Sơn",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-ninh-binh",
+    "name": "Trường Cao đẳng Y tế Ninh Bình",
+    "type": "CaoDang",
+    "city": "Ninh Bình",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-phu-tho",
+    "name": "Trường Cao đẳng Y tế Phú Thọ",
+    "type": "CaoDang",
+    "city": "Phú Thọ",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-phu-yen",
+    "name": "Trường Cao đẳng Y tế Phú Yên",
+    "type": "CaoDang",
+    "city": "Đắk Lắk",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-quang-binh",
+    "name": "Trường Cao đẳng Y tế Quảng Bình",
+    "type": "CaoDang",
+    "city": "Quảng Trị",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-quang-nam",
+    "name": "Trường Cao đẳng Y tế Quảng Nam",
+    "type": "CaoDang",
+    "city": "Đà Nẵng",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-quang-ninh",
+    "name": "Trường Cao đẳng Y tế Quảng Ninh",
+    "type": "CaoDang",
+    "city": "Quảng Ninh",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-quang-tri",
+    "name": "Trường Cao đẳng Y tế Quảng Trị",
+    "type": "CaoDang",
+    "city": "Quảng Trị",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-son-la",
+    "name": "Trường Cao đẳng Y tế Sơn La",
+    "type": "CaoDang",
+    "city": "Sơn La",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-thai-binh",
+    "name": "Trường Cao đẳng Y tế Thái Bình",
+    "type": "CaoDang",
+    "city": "Hưng Yên",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-thai-nguyen",
+    "name": "Trường Cao đẳng Y tế Thái Nguyên",
+    "type": "CaoDang",
+    "city": "Thái Nguyên",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-thanh-hoa",
+    "name": "Trường Cao đẳng Y tế Thanh Hóa",
+    "type": "CaoDang",
+    "city": "Thanh Hóa",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-tien-giang",
+    "name": "Trường Cao đẳng Y tế Tiền Giang",
+    "type": "CaoDang",
+    "city": "Đồng Tháp",
+    "aliases": []
+  },
+  {
+    "code": "truong-cao-dang-y-te-tra-vinh",
+    "name": "Trường Cao đẳng Y tế Trà Vinh",
+    "type": "CaoDang",
+    "city": "Vĩnh Long",
+    "aliases": []
+  }
+]

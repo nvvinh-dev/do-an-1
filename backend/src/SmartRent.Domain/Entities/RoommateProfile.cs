@@ -59,7 +59,15 @@ public class RoommateProfile
 
     public OccupationType OccupationType { get; set; }
 
-    /// <summary>Tên trường hoặc công ty, tối đa 200 ký tự.</summary>
+    /// <summary>
+    /// Mã trường trong danh mục trường (FR-112), chỉ có khi <see cref="OccupationType"/> là Sinh viên. <c>null</c> là
+    /// Trường khác (tên gõ tự do) hoặc đi làm.
+    /// </summary>
+    public string? SchoolCode { get; set; }
+
+    /// <summary>
+    /// Tên trường hoặc công ty, tối đa 200 ký tự. Có <see cref="SchoolCode"/> thì là tên trường theo danh mục lúc lưu.
+    /// </summary>
     public string OrganizationName { get; set; } = string.Empty;
 
     /// <summary>Thời điểm mong muốn chuyển vào.</summary>

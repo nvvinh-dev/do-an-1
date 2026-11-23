@@ -38,6 +38,9 @@ interface RoommateCriteria {
   cooking: CookingFrequency
   noiseLevel: NoiseLevel
   occupationType: OccupationType
+  /** Mã trường trong `GET /schools`; `null` là Trường khác hoặc đi làm (FR-112). */
+  schoolCode: string | null
+  /** Tên trường hoặc công ty; có `schoolCode` thì là tên trường theo danh mục. */
   organizationName: string
   /** Ngày thuần `YYYY-MM-DD`. */
   moveInFrom: string
@@ -57,8 +60,12 @@ export interface RoommatePublicProfile extends RoommateCriteria {
   updatedAt: string
 }
 
-/** Body của `PUT /roommate-profiles/me`. */
-export interface RoommateProfileRequest extends RoommateCriteria {
+/**
+ * Body của `PUT /roommate-profiles/me`. Có `schoolCode` thì gửi `organizationName` là `null`: server lấy tên
+ * trường theo danh mục (FR-112).
+ */
+export interface RoommateProfileRequest extends Omit<RoommateCriteria, 'organizationName'> {
+  organizationName: string | null
   visibility: RoommateProfileVisibility
 }
 

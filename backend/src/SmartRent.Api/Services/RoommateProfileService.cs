@@ -18,11 +18,13 @@ public class RoommateProfileService
 
     private readonly AppDbContext _db;
     private readonly LocationCatalog _locations;
+    private readonly SchoolCatalog _schools;
 
-    public RoommateProfileService(AppDbContext db, LocationCatalog locations)
+    public RoommateProfileService(AppDbContext db, LocationCatalog locations, SchoolCatalog schools)
     {
         _db = db;
         _locations = locations;
+        _schools = schools;
     }
 
     public async Task<ServiceResult<RoommateProfileResponse>> GetMineAsync(
@@ -66,6 +68,27 @@ public class RoommateProfileService
                 "Tỉnh/thành hoặc phường/xã không có trong danh mục địa giới.");
         }
 
+        // FR-112: trường chọn trong danh mục thì lưu tên theo danh mục; Trường khác hay đi làm thì lưu tên đã gõ.
+        string organizationName;
+
+        if (request.SchoolCode is not null)
+        {
+            var school = _schools.Find(request.SchoolCode.Trim());
+
+            if (school is null)
+            {
+                return ServiceResult<UpsertResult>.Fail(
+                    StatusCodes.Status422UnprocessableEntity,
+                    "Trường đã chọn không có trong danh mục trường. Tải lại trang rồi chọn lại.");
+            }
+
+            organizationName = school.Name;
+        }
+        else
+        {
+            organizationName = request.OrganizationName!.Trim();
+        }
+
         var profile = await _db.RoommateProfiles
             .FirstOrDefaultAsync(p => p.TenantUserId == tenantUserId, cancellationToken);
 
@@ -89,7 +112,8 @@ public class RoommateProfileService
         profile.Cooking = request.Cooking!.Value;
         profile.NoiseLevel = request.NoiseLevel!.Value;
         profile.OccupationType = request.OccupationType!.Value;
-        profile.OrganizationName = request.OrganizationName.Trim();
+        profile.SchoolCode = request.SchoolCode?.Trim();
+        profile.OrganizationName = organizationName;
         profile.MoveInFrom = request.MoveInFrom!.Value;
         profile.Visibility = request.Visibility!.Value;
         profile.UpdatedAt = DateTimeOffset.UtcNow;
@@ -180,6 +204,7 @@ public class RoommateProfileService
         profile.Cooking,
         profile.NoiseLevel,
         profile.OccupationType,
+        profile.SchoolCode,
         profile.OrganizationName,
         profile.MoveInFrom,
         profile.UpdatedAt);
@@ -204,6 +229,7 @@ public class RoommateProfileService
         profile.Cooking,
         profile.NoiseLevel,
         profile.OccupationType,
+        profile.SchoolCode,
         profile.OrganizationName,
         profile.MoveInFrom,
         profile.Visibility,

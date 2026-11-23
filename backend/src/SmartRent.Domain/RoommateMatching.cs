@@ -108,8 +108,9 @@ public static class RoommateMatching
         => a.Ward is null || b.Ward is null || string.Equals(a.Ward, b.Ward, StringComparison.Ordinal) ? 1m : 0.5m;
 
     /// <summary>
-    /// FR-112: cùng loại và cùng tên được 1, cùng loại khác tên 0,5, khác loại 0. Tên so không phân biệt hoa thường,
-    /// bỏ khoảng trắng thừa.
+    /// FR-112: khác loại 0; cùng loại và cùng trường hoặc công ty 1, khác 0,5. Hai trường chọn trong danh mục so
+    /// theo mã trường; còn lại so tên, không phân biệt hoa thường, bỏ khoảng trắng thừa. Trường thành viên khác nhau
+    /// của cùng một đại học vẫn là khác trường.
     /// </summary>
     public static decimal OrganizationScore(RoommateProfile a, RoommateProfile b)
     {
@@ -118,7 +119,11 @@ public static class RoommateMatching
             return 0m;
         }
 
-        return NormalizeName(a.OrganizationName) == NormalizeName(b.OrganizationName) ? 1m : 0.5m;
+        var same = a.SchoolCode is not null && b.SchoolCode is not null
+            ? string.Equals(a.SchoolCode, b.SchoolCode, StringComparison.Ordinal)
+            : NormalizeName(a.OrganizationName) == NormalizeName(b.OrganizationName);
+
+        return same ? 1m : 0.5m;
     }
 
     private static bool Accepts(PreferredRoommateGender preferred, Gender gender) => preferred switch
