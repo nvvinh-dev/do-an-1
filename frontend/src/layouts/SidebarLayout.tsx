@@ -1,6 +1,7 @@
-import { CircleUser, LogOut, type LucideIcon } from 'lucide-react'
+import { CircleUser, LogOut, type LucideIcon, Menu } from 'lucide-react'
 import { Link, matchPath, Outlet, useLocation } from 'react-router'
 import AppLogo from '@/components/AppLogo'
+import { Button } from '@/components/ui/button'
 import NavCountBadge from '@/components/NavCountBadge'
 import NavIconChip, { type NavTint } from '@/components/NavIconChip'
 import NotificationBell from '@/components/NotificationBell'
@@ -16,7 +17,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarTrigger,
   useSidebar,
 } from '@/components/ui/sidebar'
 import { useCurrentUser } from '@/hooks/useCurrentUser'
@@ -133,8 +133,18 @@ function SidebarNav({ homePath, groups }: Pick<SidebarLayoutProps, 'homePath' | 
   )
 }
 
+// Nút ba gạch mở sidebar dưới lg. Không dùng SidebarTrigger để khỏi sửa icon trong file shadcn sinh ra.
+function MenuButton() {
+  const { toggleSidebar } = useSidebar()
+  return (
+    <Button variant="ghost" size="icon" className="lg:hidden" onClick={toggleSidebar} aria-label="Mở hoặc đóng menu">
+      <Menu className="size-5" />
+    </Button>
+  )
+}
+
 /**
- * Khung có sidebar của Chủ trọ và Admin (docs/design-system.md mục 5): từ lg sidebar cố định
+ * Khung có sidebar của Người thuê, Chủ trọ và Admin (docs/design-system.md mục 5): từ lg sidebar cố định
  * bên trái, dưới lg sidebar trượt ra từ nút trên thanh trên.
  */
 export default function SidebarLayout({ homePath, groups, showNotificationBell }: SidebarLayoutProps) {
@@ -149,7 +159,7 @@ export default function SidebarLayout({ homePath, groups, showNotificationBell }
             !showNotificationBell && 'lg:hidden',
           )}
         >
-          <SidebarTrigger className="lg:hidden" />
+          <MenuButton />
           <div className="lg:hidden">
             <AppLogo to={homePath} />
           </div>

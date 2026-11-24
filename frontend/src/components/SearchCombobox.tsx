@@ -32,6 +32,11 @@ interface SearchComboboxProps<Item> {
   emptyText: string
   disabled?: boolean
   invalid: boolean
+  /**
+   * Số mục hiện khi mở ô đã chọn mà chưa gõ gì. Lúc đó Base UI bỏ qua kết quả của `search` và liệt kê
+   * `items` từ đầu, nên danh sách dài thì xếp các mục muốn hiện lên đầu `items` rồi truyền số mục này.
+   */
+  limit?: number
 }
 
 /**
@@ -55,6 +60,7 @@ export default function SearchCombobox<Item>({
   emptyText,
   disabled = false,
   invalid,
+  limit,
 }: SearchComboboxProps<Item>) {
   const [open, setOpen] = useState(false)
   // `null` là không gõ gì: ô hiện chữ của mục đang chọn và danh sách hiện đủ.
@@ -81,6 +87,7 @@ export default function SearchCombobox<Item>({
       itemToStringValue={itemToKey}
       isItemEqualToValue={(item: Item, value: Item) => itemToKey(item) === itemToKey(value)}
       disabled={disabled}
+      limit={limit}
       autoHighlight
     >
       <ComboboxInput

@@ -196,6 +196,7 @@ builder.Services.AddScoped<RoommateProfileService>();
 builder.Services.AddScoped<RoommateConnectionService>();
 builder.Services.AddScoped<AssistantService>();
 builder.Services.AddSingleton<LocationCatalog>();
+builder.Services.AddSingleton<SchoolCatalog>();
 builder.Services.AddSingleton<AssistantGuide>();
 
 // Tác vụ định kỳ chạy mỗi giờ trong tiến trình API — docs/architecture.md mục 7.
@@ -248,9 +249,10 @@ var app = builder.Build();
 // Tạo 3 vai trò, tài khoản Admin đầu tiên và danh mục tiện ích nếu chưa có.
 await DatabaseSeeder.SeedAsync(app.Services);
 
-// Nạp danh mục tỉnh/thành – phường/xã và file hỏi đáp của trợ lý ngay khi khởi động: thiếu hoặc hỏng file thì dừng
-// luôn (README mục 12.1).
+// Nạp danh mục tỉnh/thành – phường/xã, danh mục trường và file hỏi đáp của trợ lý ngay khi khởi động: thiếu hoặc hỏng
+// file thì dừng luôn (README mục 12.1).
 app.Services.GetRequiredService<LocationCatalog>();
+app.Services.GetRequiredService<SchoolCatalog>();
 app.Services.GetRequiredService<AssistantGuide>();
 
 // ------------------------------------------------------------ Pipeline

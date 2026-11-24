@@ -619,6 +619,11 @@ public class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
                     "ck_roommate_profiles_occupation_type",
                     $"occupation_type IN ({EnumValues<OccupationType>()})");
 
+                // FR-112: chỉ sinh viên có mã trường trong danh mục.
+                t.HasCheckConstraint(
+                    "ck_roommate_profiles_school_code",
+                    $"school_code IS NULL OR occupation_type = '{nameof(OccupationType.SinhVien)}'");
+
                 t.HasCheckConstraint(
                     "ck_roommate_profiles_visibility",
                     $"visibility IN ({EnumValues<RoommateProfileVisibility>()})");

@@ -26,6 +26,7 @@
 
   <ItemGroup>
     <Content Update="Data\locations.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Update="Data\schools.json" CopyToOutputDirectory="PreserveNewest" />
     <None Update="Data\huong-dan-su-dung.md" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
