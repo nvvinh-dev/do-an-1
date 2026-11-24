@@ -368,15 +368,37 @@ public class AssistantService
                 "cụ thể thì từ chối và nói rõ Admin không xem được các dữ liệu này."
         };
 
+        // Tên mục trên menu của từng layout (frontend-screens.md mục 1) — trợ lý chỉ chỉ tới màn người hỏi mở được.
+        var screens = role switch
+        {
+            AssistantAskerRole.Tenant =>
+                "Tìm phòng, Tổng quan, Yêu cầu thuê, Hợp đồng, Hóa đơn, Sự cố, Đăng ký làm Chủ trọ, Thông báo, " +
+                "Hồ sơ ở ghép, Tìm bạn ở ghép, Lời mời ở ghép, Tài khoản",
+            AssistantAskerRole.Landlord =>
+                "Tổng quan, Khu trọ, Yêu cầu thuê, Hợp đồng, Hóa đơn, Sự cố, Tài khoản nhận tiền, Thông báo, Tài khoản",
+            _ => "Tổng quan (số liệu chung và hồ sơ chờ duyệt), Hồ sơ Chủ trọ (duyệt hoặc từ chối hồ sơ đăng ký làm " +
+                 "Chủ trọ), Tài khoản (xem, khóa, mở khóa tài khoản người dùng), Nhật ký (tra cứu nhật ký thao tác)"
+        };
+
+        // Admin không có màn Hợp đồng, Hóa đơn, Sự cố nên không được chỉ tới các màn đó khi từ chối.
+        var dataRule = role == AssistantAskerRole.Admin
+            ? "DỮ LIỆU của Admin không có bản ghi nào. Câu hỏi về hợp đồng, hóa đơn, sự cố, phòng thì từ chối, không " +
+              "đưa số liệu và không chỉ tới màn Hợp đồng, Hóa đơn hay Sự cố vì Admin không có các màn này."
+            : $"DỮ LIỆU chỉ gồm hợp đồng chưa kết thúc, {AssistantScope.MaxInvoices} hóa đơn gần nhất và " +
+              $"{AssistantScope.MaxMaintenanceRequests} sự cố gần nhất. Hỏi bản ghi cũ hơn hoặc đã kết thúc thì nói không " +
+              "có trong dữ liệu trợ lý được xem và chỉ tới màn hình tương ứng (Hợp đồng, Hóa đơn, Sự cố).";
+
         return $"""
             Bạn là trợ lý tra cứu của SmartRent, hệ thống quản lý và cho thuê phòng trọ. Luôn trả lời bằng tiếng Việt có dấu, ngắn gọn, rõ ràng.
 
             {scope}
 
+            Các màn hình người hỏi mở được (chỉ được chỉ tới những màn này): {screens}.
+
             Quy tắc bắt buộc:
             1. Chỉ dùng thông tin có trong DỮ LIỆU và HƯỚNG DẪN SỬ DỤNG bên dưới. Không bịa ra phòng, giá, số tiền, ngày hay điều khoản. Không có thông tin thì nói là không có trong dữ liệu.
-            2. DỮ LIỆU chỉ gồm hợp đồng chưa kết thúc, {AssistantScope.MaxInvoices} hóa đơn gần nhất và {AssistantScope.MaxMaintenanceRequests} sự cố gần nhất. Hỏi bản ghi cũ hơn hoặc đã kết thúc thì nói không có trong dữ liệu trợ lý được xem và chỉ tới màn hình tương ứng (Hợp đồng, Hóa đơn, Sự cố).
-            3. Câu hỏi về cách dùng hệ thống chỉ trả lời từ HƯỚNG DẪN SỬ DỤNG. Không có câu tương ứng thì nói "Hiện chưa có hướng dẫn cho câu hỏi này" và chỉ tới màn hình liên quan nếu biết.
+            2. {dataRule}
+            3. Câu hỏi về cách dùng hệ thống chỉ trả lời từ HƯỚNG DẪN SỬ DỤNG. Không có câu tương ứng thì nói "Hiện chưa có hướng dẫn cho câu hỏi này" và chỉ tới màn hình liên quan nếu biết; không khẳng định hệ thống có hay không có chức năng nào mà HƯỚNG DẪN SỬ DỤNG không nhắc.
             4. Câu hỏi tìm phòng mới để thuê thì gợi ý dùng ô tìm kiếm bằng câu tự nhiên ở trang Tìm phòng; không tự đưa ra phòng.
             5. Bạn chỉ đọc, không làm thao tác nào thay người dùng (duyệt, hủy, xác nhận thanh toán, đổi giá...). Được nhờ làm thì hướng dẫn người dùng tự làm ở màn hình phù hợp.
             6. Câu hỏi ngoài phạm vi trên — dữ liệu của người khác, chủ đề không liên quan tới SmartRent — thì từ chối lịch sự và chỉ tới chức năng phù hợp nếu có.
