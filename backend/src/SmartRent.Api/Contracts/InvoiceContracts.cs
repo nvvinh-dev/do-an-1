@@ -26,6 +26,41 @@ public record InvoiceAdjustmentLineRequest(
     decimal? Amount,
     long? RelatedInvoiceId);
 
+/// <summary>
+/// GET /contracts/{contractId}/invoices/next-period: kỳ và chỉ số cũ của hóa đơn định kỳ sắp lập (api-design mục 9).
+/// <see cref="DaysCharged"/> nhỏ hơn <see cref="DaysInMonth"/> khi kỳ không trọn tháng.
+/// </summary>
+public record NextInvoicePeriodResponse(
+    DateOnly PeriodStart,
+    DateOnly PeriodEnd,
+    int DaysCharged,
+    int DaysInMonth,
+    decimal PreviousElectricityIndex,
+    decimal PreviousWaterIndex);
+
+/// <summary>
+/// POST /contracts/{contractId}/invoices/preview: cách tính của hóa đơn định kỳ kỳ kế tiếp, không lưu (api-design mục 9).
+/// Cùng tên trường với <see cref="InvoiceDetailResponse"/>; <see cref="AdjustmentAmount"/> là tổng các dòng điều chỉnh.
+/// </summary>
+public record InvoicePreviewResponse(
+    DateOnly PeriodStart,
+    DateOnly PeriodEnd,
+    int DaysCharged,
+    int DaysInMonth,
+    decimal PreviousElectricityIndex,
+    decimal CurrentElectricityIndex,
+    decimal ElectricityUnitPrice,
+    decimal ElectricityAmount,
+    decimal PreviousWaterIndex,
+    decimal CurrentWaterIndex,
+    decimal WaterUnitPrice,
+    decimal WaterAmount,
+    decimal RentAmount,
+    IReadOnlyList<ContractServiceFeeResponse> ServiceFees,
+    decimal ServiceFeeAmount,
+    decimal AdjustmentAmount,
+    decimal TotalAmount);
+
 /// <summary>FR-52: hủy hóa đơn định kỳ mới nhất chưa thu đồng nào, lý do bắt buộc.</summary>
 public record CancelInvoiceRequest(string Reason);
 

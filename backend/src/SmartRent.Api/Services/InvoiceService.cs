@@ -67,57 +67,21 @@ public class InvoiceService
             return ServiceResult<InvoiceDetailResponse>.Fail(StatusCodes.Status404NotFound, ContractNotFoundMessage);
         }
 
-        var today = VietnamTime.DateOf(DateTimeOffset.UtcNow);
-
-        if (!contract.CanCreatePeriodicInvoice(today))
-        {
-            return ServiceResult<InvoiceDetailResponse>.Fail(
-                StatusCodes.Status409Conflict,
-                Contract.OccupyingStatuses.Contains(contract.Status)
-                    ? $"Hợp đồng chưa tới ngày bắt đầu ({contract.StartDate:dd/MM/yyyy}) nên chưa lập được hóa đơn."
-                    : "Chỉ lập được hóa đơn định kỳ khi hợp đồng đang hiệu lực, sắp hết hạn hoặc đang thanh lý.");
-        }
-
         var invoices = await _db.Invoices
             .AsNoTracking()
             .Where(i => i.ContractId == contractId)
             .ToListAsync(cancellationToken);
 
-        if (invoices.Any(i => i.Type == InvoiceType.ThanhLy))
+        var periodResult = ResolveNextPeriod(contract, invoices, VietnamTime.DateOf(DateTimeOffset.UtcNow));
+
+        if (!periodResult.Succeeded)
         {
-            return ServiceResult<InvoiceDetailResponse>.Fail(
-                StatusCodes.Status409Conflict,
-                "Hợp đồng đã có hóa đơn thanh lý, tiền phòng đã tính tới ngày trả phòng thực tế. " +
-                "Không lập thêm hóa đơn định kỳ.");
+            return ServiceResult<InvoiceDetailResponse>.Fail(periodResult.StatusCode, periodResult.Error!);
         }
 
-        if (invoices.Any(i => i.Type == InvoiceType.DinhKy && i.Status == InvoiceStatus.Nhap))
-        {
-            return ServiceResult<InvoiceDetailResponse>.Fail(
-                StatusCodes.Status409Conflict,
-                "Hợp đồng còn hóa đơn định kỳ ở Nháp. Phát hành, sửa hoặc hủy hóa đơn đó trước khi lập kỳ kế tiếp.");
-        }
-
-        var period = contract.NextBillingPeriod(invoices);
-
-        if (contract.IsPeriodicInvoiceBlockedByMoveOut(period))
-        {
-            return ServiceResult<InvoiceDetailResponse>.Fail(
-                StatusCodes.Status409Conflict,
-                $"Hợp đồng có thông báo trả phòng ngày {contract.ExpectedMoveOutDate:dd/MM/yyyy}: hóa đơn định kỳ dừng ở " +
-                $"tháng trước tháng trả phòng, kỳ {period.Start:MM/yyyy} thuộc hóa đơn thanh lý.");
-        }
-
-        // Tới đây hợp đồng đã tới ngày bắt đầu, nên kỳ kế tiếp lập được từ ngày 25 của tháng đó (FR-91).
-        if (!period.CanBeInvoicedOn(today))
-        {
-            return ServiceResult<InvoiceDetailResponse>.Fail(
-                StatusCodes.Status409Conflict,
-                $"Chưa tới lúc lập hóa đơn kỳ {period.Start:dd/MM/yyyy} – {period.End:dd/MM/yyyy}: " +
-                $"lập được từ ngày 25/{period.Start:MM/yyyy}.");
-        }
-
-        var prepared = await PreparePeriodicInvoiceAsync(landlordUserId, contract, invoices, request, cancellationToken);
+        var period = periodResult.Value!;
+        var prepared = await PreparePeriodicInvoiceAsync(
+            landlordUserId, contract, invoices, request, checkMeterPhotos: true, cancellationToken);
 
         if (!prepared.Succeeded)
         {
@@ -127,7 +91,7 @@ public class InvoiceService
         var draft = prepared.Value!;
         var amounts = InvoiceCalculator.CalculatePeriodic(contract, period, draft.Electricity, draft.Water, draft.Lines);
 
-        if (AmountsError(amounts) is { } amountsError)
+        if (AmountsError<InvoiceDetailResponse>(amounts) is { } amountsError)
         {
             return amountsError;
         }
@@ -176,6 +140,110 @@ public class InvoiceService
     }
 
     /// <summary>
+    /// Kỳ và chỉ số cũ của hóa đơn định kỳ mà <see cref="CreatePeriodicInvoiceAsync"/> sẽ lập nếu gọi lúc này
+    /// (api-design mục 9). Không lập được thì trả đúng 409 của lúc lập.
+    /// </summary>
+    public async Task<ServiceResult<NextInvoicePeriodResponse>> GetNextPeriodAsync(
+        long landlordUserId,
+        long contractId,
+        CancellationToken cancellationToken = default)
+    {
+        var contract = await _db.Contracts
+            .AsNoTracking()
+            .Include(c => c.Invoices)
+            .FirstOrDefaultAsync(
+                c => c.Id == contractId && c.Room.Property.LandlordUserId == landlordUserId,
+                cancellationToken);
+
+        if (contract is null)
+        {
+            return ServiceResult<NextInvoicePeriodResponse>.Fail(StatusCodes.Status404NotFound, ContractNotFoundMessage);
+        }
+
+        var invoices = contract.Invoices.ToList();
+        var periodResult = ResolveNextPeriod(contract, invoices, VietnamTime.DateOf(DateTimeOffset.UtcNow));
+
+        if (!periodResult.Succeeded)
+        {
+            return ServiceResult<NextInvoicePeriodResponse>.Fail(periodResult.StatusCode, periodResult.Error!);
+        }
+
+        var period = periodResult.Value!;
+        var (electricity, water) = contract.LatestMeterIndexes(invoices);
+
+        return ServiceResult<NextInvoicePeriodResponse>.Ok(new NextInvoicePeriodResponse(
+            period.Start, period.End, period.DaysCharged, period.DaysInMonth, electricity, water));
+    }
+
+    /// <summary>
+    /// Tính thử hóa đơn định kỳ kỳ kế tiếp với body của lúc lập: cùng kiểm tra và cùng công thức (BR-14, BR-15) nhưng
+    /// không lưu, không ghi nhật ký, không gửi thông báo, không kiểm tra ảnh đồng hồ (api-design mục 9).
+    /// </summary>
+    public async Task<ServiceResult<InvoicePreviewResponse>> PreviewPeriodicInvoiceAsync(
+        long landlordUserId,
+        long contractId,
+        PeriodicInvoiceRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var contract = await _db.Contracts
+            .AsNoTracking()
+            .Include(c => c.ServiceFees)
+            .Include(c => c.Invoices)
+            .FirstOrDefaultAsync(
+                c => c.Id == contractId && c.Room.Property.LandlordUserId == landlordUserId,
+                cancellationToken);
+
+        if (contract is null)
+        {
+            return ServiceResult<InvoicePreviewResponse>.Fail(StatusCodes.Status404NotFound, ContractNotFoundMessage);
+        }
+
+        var invoices = contract.Invoices.ToList();
+        var periodResult = ResolveNextPeriod(contract, invoices, VietnamTime.DateOf(DateTimeOffset.UtcNow));
+
+        if (!periodResult.Succeeded)
+        {
+            return ServiceResult<InvoicePreviewResponse>.Fail(periodResult.StatusCode, periodResult.Error!);
+        }
+
+        var prepared = await PreparePeriodicInvoiceAsync(
+            landlordUserId, contract, invoices, request, checkMeterPhotos: false, cancellationToken);
+
+        if (!prepared.Succeeded)
+        {
+            return ServiceResult<InvoicePreviewResponse>.Fail(prepared.StatusCode, prepared.Error!);
+        }
+
+        var period = periodResult.Value!;
+        var draft = prepared.Value!;
+        var amounts = InvoiceCalculator.CalculatePeriodic(contract, period, draft.Electricity, draft.Water, draft.Lines);
+
+        if (AmountsError<InvoicePreviewResponse>(amounts) is { } amountsError)
+        {
+            return amountsError;
+        }
+
+        return ServiceResult<InvoicePreviewResponse>.Ok(new InvoicePreviewResponse(
+            period.Start,
+            period.End,
+            period.DaysCharged,
+            period.DaysInMonth,
+            draft.Electricity.Previous,
+            draft.Electricity.Current,
+            contract.ElectricityUnitPrice,
+            amounts.ElectricityAmount,
+            draft.Water.Previous,
+            draft.Water.Current,
+            contract.WaterUnitPrice,
+            amounts.WaterAmount,
+            amounts.RentAmount,
+            contract.ServiceFees.Select(f => new ContractServiceFeeResponse(f.Name, f.Amount)).ToList(),
+            amounts.ServiceFeeAmount,
+            amounts.AdjustmentAmount,
+            amounts.TotalAmount));
+    }
+
+    /// <summary>
     /// FR-49, FR-50, BR-16: Chủ trọ sửa hóa đơn định kỳ mới nhất của hợp đồng khi chưa thu đồng nào, body giống lúc lập;
     /// kỳ giữ nguyên, server tính lại chỉ số cũ và mọi số tiền. Hóa đơn đã phát hành có lại trọn hạn thanh toán tính từ
     /// ngày sửa, hoặc sang Đã thanh toán nếu tổng mới bằng 0, và người thuê nhận thông báo. Ghi nhật ký giá trị cũ và mới
@@ -214,7 +282,8 @@ public class InvoiceService
 
         var contract = invoice.Contract;
         var otherInvoices = contractInvoices.Where(i => i.Id != invoice.Id).ToList();
-        var prepared = await PreparePeriodicInvoiceAsync(landlordUserId, contract, otherInvoices, request, cancellationToken);
+        var prepared = await PreparePeriodicInvoiceAsync(
+            landlordUserId, contract, otherInvoices, request, checkMeterPhotos: true, cancellationToken);
 
         if (!prepared.Succeeded)
         {
@@ -225,7 +294,7 @@ public class InvoiceService
         var period = new BillingPeriod(invoice.PeriodStart, invoice.PeriodEnd);
         var amounts = InvoiceCalculator.CalculatePeriodic(contract, period, draft.Electricity, draft.Water, draft.Lines);
 
-        if (AmountsError(amounts) is { } amountsError)
+        if (AmountsError<InvoiceDetailResponse>(amounts) is { } amountsError)
         {
             return amountsError;
         }
@@ -925,18 +994,73 @@ public class InvoiceService
               "dòng điều chỉnh ở hóa đơn kỳ kế tiếp.";
     }
 
+    /// <summary>
+    /// Kỳ kế tiếp của hợp đồng nếu lập được hóa đơn định kỳ hôm nay, hoặc 409 kèm lý do (FR-91, FR-93, BR-17) — dùng chung
+    /// cho lập, xem trước và GET next-period để ba nơi luôn cùng một câu trả lời.
+    /// </summary>
+    /// <param name="invoices">Mọi hóa đơn của hợp đồng, kể cả đã hủy.</param>
+    private static ServiceResult<BillingPeriod> ResolveNextPeriod(
+        Contract contract,
+        IReadOnlyList<Invoice> invoices,
+        DateOnly today)
+    {
+        if (!contract.CanCreatePeriodicInvoice(today))
+        {
+            return ServiceResult<BillingPeriod>.Fail(
+                StatusCodes.Status409Conflict,
+                Contract.OccupyingStatuses.Contains(contract.Status)
+                    ? $"Hợp đồng chưa tới ngày bắt đầu ({contract.StartDate:dd/MM/yyyy}) nên chưa lập được hóa đơn."
+                    : "Chỉ lập được hóa đơn định kỳ khi hợp đồng đang hiệu lực, sắp hết hạn hoặc đang thanh lý.");
+        }
+
+        if (invoices.Any(i => i.Type == InvoiceType.ThanhLy))
+        {
+            return ServiceResult<BillingPeriod>.Fail(
+                StatusCodes.Status409Conflict,
+                "Hợp đồng đã có hóa đơn thanh lý, tiền phòng đã tính tới ngày trả phòng thực tế. " +
+                "Không lập thêm hóa đơn định kỳ.");
+        }
+
+        if (invoices.Any(i => i.Type == InvoiceType.DinhKy && i.Status == InvoiceStatus.Nhap))
+        {
+            return ServiceResult<BillingPeriod>.Fail(
+                StatusCodes.Status409Conflict,
+                "Hợp đồng còn hóa đơn định kỳ ở Nháp. Phát hành, sửa hoặc hủy hóa đơn đó trước khi lập kỳ kế tiếp.");
+        }
+
+        var period = contract.NextBillingPeriod(invoices);
+
+        if (contract.IsPeriodicInvoiceBlockedByMoveOut(period))
+        {
+            return ServiceResult<BillingPeriod>.Fail(
+                StatusCodes.Status409Conflict,
+                $"Hợp đồng có thông báo trả phòng ngày {contract.ExpectedMoveOutDate:dd/MM/yyyy}: hóa đơn định kỳ dừng ở " +
+                $"tháng trước tháng trả phòng, kỳ {period.Start:MM/yyyy} thuộc hóa đơn thanh lý.");
+        }
+
+        // Tới đây hợp đồng đã tới ngày bắt đầu, nên kỳ kế tiếp lập được từ ngày 25 của tháng đó (FR-91).
+        if (!period.CanBeInvoicedOn(today))
+        {
+            return ServiceResult<BillingPeriod>.Fail(
+                StatusCodes.Status409Conflict,
+                $"Chưa tới lúc lập hóa đơn kỳ {period.Start:dd/MM/yyyy} – {period.End:dd/MM/yyyy}: " +
+                $"lập được từ ngày 25/{period.Start:MM/yyyy}.");
+        }
+
+        return ServiceResult<BillingPeriod>.Ok(period);
+    }
+
     /// <summary>422 khi số tiền tính ra vượt cột tiền, hoặc tổng hóa đơn định kỳ âm (FR-41); null khi hợp lệ.</summary>
-    private static ServiceResult<InvoiceDetailResponse>? AmountsError(PeriodicInvoiceAmounts amounts)
+    private static ServiceResult<T>? AmountsError<T>(PeriodicInvoiceAmounts amounts)
     {
         if (!amounts.FitsMoneyColumns)
         {
-            return ServiceResult<InvoiceDetailResponse>.Fail(
-                StatusCodes.Status422UnprocessableEntity, AmountTooLargeMessage);
+            return ServiceResult<T>.Fail(StatusCodes.Status422UnprocessableEntity, AmountTooLargeMessage);
         }
 
         return amounts.IsTotalAllowed
             ? null
-            : ServiceResult<InvoiceDetailResponse>.Fail(
+            : ServiceResult<T>.Fail(
                 StatusCodes.Status422UnprocessableEntity,
                 "Tổng hóa đơn định kỳ không được âm. Khoản giảm lớn hơn tiền tháng thì chia sang các kỳ sau.");
     }
@@ -947,11 +1071,13 @@ public class InvoiceService
     /// Storage.
     /// </summary>
     /// <param name="otherInvoices">Các hóa đơn khác của hợp đồng — tính chỉ số cũ và đối chiếu hóa đơn được điều chỉnh.</param>
+    /// <param name="checkMeterPhotos">False khi xem trước: ảnh đồng hồ bị bỏ qua.</param>
     private async Task<ServiceResult<PeriodicInvoiceDraft>> PreparePeriodicInvoiceAsync(
         long landlordUserId,
         Contract contract,
         IReadOnlyList<Invoice> otherInvoices,
         PeriodicInvoiceRequest request,
+        bool checkMeterPhotos,
         CancellationToken cancellationToken)
     {
         var lines = new List<InvoiceLine>();
@@ -1000,7 +1126,8 @@ public class InvoiceService
                 $"Chỉ số mới không được nhỏ hơn chỉ số cũ (điện {electricity.Previous}, nước {water.Previous}).");
         }
 
-        if (!await AreMeterPhotosOwnedAsync(landlordUserId, request, cancellationToken))
+        // Xem trước không lưu ảnh nên không cần gọi Storage (api-design mục 9).
+        if (checkMeterPhotos && !await AreMeterPhotosOwnedAsync(landlordUserId, request, cancellationToken))
         {
             return ServiceResult<PeriodicInvoiceDraft>.Fail(
                 StatusCodes.Status422UnprocessableEntity,
