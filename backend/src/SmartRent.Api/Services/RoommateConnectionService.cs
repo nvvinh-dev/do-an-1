@@ -22,7 +22,8 @@ public class RoommateConnectionService
 
     private const string ProfileNotFoundMessage = "Không tìm thấy hồ sơ ở ghép.";
     private const string InvitationNotFoundMessage = "Không tìm thấy lời mời kết nối.";
-    private const string NoProfileMessage = "Bạn cần tạo hồ sơ ở ghép trước.";
+    /// <summary>Dùng chung với giải thích điểm (RoommateMatchExplanationService) để cùng một thông điệp.</summary>
+    internal const string NoProfileMessage = "Bạn cần tạo hồ sơ ở ghép trước.";
     private const string NoPhoneMessage =
         "Bạn cần cập nhật số điện thoại trong tài khoản trước: số này chỉ hiện cho bên kia sau khi hai bên kết nối.";
     private const string BlockingContractMessage =
@@ -528,8 +529,11 @@ public class RoommateConnectionService
         return ServiceResult.Ok();
     }
 
-    /// <summary>FR-107, FR-116: người gọi phải có hồ sơ và không có hợp đồng Đang hiệu lực.</summary>
-    private async Task<ServiceResult?> CheckCallerCanUseAsync(long userId, CancellationToken cancellationToken)
+    /// <summary>
+    /// FR-107, FR-116, FR-120: người gọi phải có hồ sơ và không có hợp đồng Đang hiệu lực — dùng chung cho lời mời và
+    /// giải thích điểm. Hợp lệ thì <c>null</c>.
+    /// </summary>
+    public async Task<ServiceResult?> CheckCallerCanUseAsync(long userId, CancellationToken cancellationToken)
     {
         if (!await _db.RoommateProfiles.AnyAsync(p => p.TenantUserId == userId, cancellationToken))
         {

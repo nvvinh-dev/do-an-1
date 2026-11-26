@@ -20,11 +20,16 @@ public class RoommateProfilesController : ControllerBase
 
     private readonly RoommateProfileService _service;
     private readonly RoommateConnectionService _connections;
+    private readonly RoommateMatchExplanationService _explanations;
 
-    public RoommateProfilesController(RoommateProfileService service, RoommateConnectionService connections)
+    public RoommateProfilesController(
+        RoommateProfileService service,
+        RoommateConnectionService connections,
+        RoommateMatchExplanationService explanations)
     {
         _service = service;
         _connections = connections;
+        _explanations = explanations;
     }
 
     [HttpGet("me")]
@@ -90,6 +95,18 @@ public class RoommateProfilesController : ControllerBase
     public async Task<IActionResult> Detail(long id, CancellationToken cancellationToken)
     {
         var result = await _connections.GetProfileAsync(this.CurrentUserId(), id, cancellationToken);
+
+        return result.Succeeded
+            ? Ok(result.Value)
+            : Problem(detail: result.Error, statusCode: result.StatusCode);
+    }
+
+    /// <summary>Giải thích điểm phù hợp bằng AI (FR-120); AI lỗi thì <c>503</c>, điểm ở <c>/matches</c> không đổi.</summary>
+    [HttpGet("{id:long}/match-explanation")]
+    [EnableRateLimiting(RateLimitPolicies.Ai)]
+    public async Task<IActionResult> MatchExplanation(long id, CancellationToken cancellationToken)
+    {
+        var result = await _explanations.ExplainAsync(this.CurrentUserId(), id, cancellationToken);
 
         return result.Succeeded
             ? Ok(result.Value)
