@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea'
 import type { MeterReading } from '@/types/contractTypes'
 import type { ContractInvoiceListItem, PeriodicInvoiceRequest } from '@/types/invoiceTypes'
 import { normalizeMeterIndex, validateMeterIndex } from '@/utils/contractForm'
+import { estimateMeterAmount } from '@/utils/estimateMeterAmount'
 import { formatDate } from '@/utils/formatDate'
 import { formatMeterIndex } from '@/utils/formatMeterIndex'
 import { emptyAdjustmentLine, toPeriodicInvoiceRequest, type InvoiceFormValues } from '@/utils/invoiceForm'
@@ -179,10 +180,10 @@ function MeterFields({ control, kind, previous, unitPrice, disabled, onUploading
   const text = METER_TEXT[kind]
   const id = `invoice-${kind}`
   const current = useWatch({ control, name: text.index })
-  const used =
-    previous !== null && validateMeterIndex(current) === true
-      ? Number(normalizeMeterIndex(current)) - previous
-      : null
+  const isCurrentValid = previous !== null && validateMeterIndex(current) === true
+  const used = isCurrentValid ? Number(normalizeMeterIndex(current)) - previous : null
+  // Chỉ để Chủ trọ đối chiếu ngay khi nhập; số trên hóa đơn do server tính lúc lưu (docs/frontend-screens.md mục 1).
+  const estimate = isCurrentValid ? estimateMeterAmount(previous, normalizeMeterIndex(current), unitPrice) : null
 
   return (
     <div className="flex min-w-0 flex-col gap-4">
@@ -224,6 +225,14 @@ function MeterFields({ control, kind, previous, unitPrice, disabled, onUploading
               )}
               Đơn giá <MoneyText amount={unitPrice} /> / {text.unit}
             </FieldDescription>
+            <p aria-live="polite" className="text-sm font-medium">
+              {estimate !== null && used !== null && (
+                <>
+                  Tạm tính: {formatMeterIndex(used)} {text.unit} × <MoneyText amount={unitPrice} /> ={' '}
+                  <MoneyText amount={estimate} />
+                </>
+              )}
+            </p>
             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
           </Field>
         )}

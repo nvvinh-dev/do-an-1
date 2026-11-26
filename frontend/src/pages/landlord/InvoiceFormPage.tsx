@@ -142,7 +142,8 @@ function CreateInvoiceContent({ contract }: { contract: ContractDetail }) {
         <AlertDescription>
           <p>
             Kỳ đầu tính từ ngày bắt đầu hợp đồng tới cuối tháng; các kỳ sau là tháng liền sau kỳ gần nhất, lập được từ
-            ngày 25 của tháng đó. Nhập chỉ số mới rồi bấm Lưu nháp để xem tổng tiền và cách tính; người thuê chỉ thấy
+            ngày 25 của tháng đó. Nhập chỉ số mới thì thấy ngay tiền điện, nước tạm tính; bấm Lưu nháp để xem tổng tiền
+            và cách tính; người thuê chỉ thấy
             hóa đơn sau khi bạn bấm Phát hành.
           </p>
         </AlertDescription>
