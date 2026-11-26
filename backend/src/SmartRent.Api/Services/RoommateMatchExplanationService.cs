@@ -29,10 +29,10 @@ public class RoommateMatchExplanationService
     private static readonly string SystemInstruction = $"""
         Bạn viết đoạn giải thích vì sao hai người thuê phù hợp để ở ghép trên SmartRent, hệ thống quản lý và cho thuê phòng trọ. Người đọc là "bạn" (trường "mine"); người kia là chủ hồ sơ ứng viên (trường "theirs").
 
-        Điểm phù hợp do hệ thống tính bằng công thức cố định: ngân sách {RoommateMatching.BudgetWeight}%, thói quen sinh hoạt {RoommateMatching.HabitsWeight}%, khu vực {RoommateMatching.AreaWeight}%, trường học hoặc nơi làm việc {RoommateMatching.OrganizationWeight}%. Mỗi tiêu chí có điểm từ 0 tới 1 ("score") và điểm quy ra trên thang 100 ("points" = trọng số × điểm tiêu chí). Cách chấm: ngân sách là phần trùng nhau của hai khoảng chia cho khoảng hẹp hơn; mỗi mục thói quen giống nhau được 1, lệch một bậc được 0,5, còn lại 0, điểm thói quen là trung bình năm mục; khu vực cùng phường/xã hoặc một bên không chọn phường/xã được 1, khác phường/xã được 0,5; trường hoặc nơi làm việc cùng loại và cùng nơi được 1, cùng loại khác nơi được 0,5, khác loại được 0.
+        Điểm phù hợp do hệ thống tính bằng công thức cố định: ngân sách {RoommateMatching.BudgetWeight}%, thói quen sinh hoạt {RoommateMatching.HabitsWeight}%, khu vực {RoommateMatching.AreaWeight}%, trường học hoặc nơi làm việc {RoommateMatching.OrganizationWeight}%. Điểm phù hợp tổng nằm ở "totalScore", trên thang 100. Mỗi tiêu chí trong "criteria" có điểm tiêu chí từ 0 tới 1 ("score") và điểm quy ra trên thang 100 ("points" = trọng số × điểm tiêu chí). Cách chấm: ngân sách là phần trùng nhau của hai khoảng chia cho khoảng hẹp hơn; mỗi mục thói quen giống nhau được 1, lệch một bậc được 0,5, còn lại 0, điểm thói quen là trung bình năm mục; khu vực cùng phường/xã hoặc một bên không chọn phường/xã được 1, khác phường/xã được 0,5; trường hoặc nơi làm việc cùng loại và cùng nơi được 1, cùng loại khác nơi được 0,5, khác loại được 0.
 
         Quy tắc bắt buộc:
-        1. Chỉ diễn giải điểm trong DỮ LIỆU. Không tự chấm lại, không đổi hay làm tròn khác điểm tổng ("score") và điểm từng tiêu chí; nhắc điểm tổng thì ghi đúng "<score>%".
+        1. Chỉ diễn giải điểm trong DỮ LIỆU. Không tự chấm lại, không đổi hay làm tròn khác điểm tổng ("totalScore") và điểm từng tiêu chí; nhắc điểm tổng thì ghi đúng "<totalScore>%". Không viết điểm tiêu chí ("score", từ 0 tới 1) thành phần trăm; muốn nêu thì dùng "points" kèm trọng số, ví dụ "ngân sách được 15/30 điểm".
         2. Chỉ dùng thông tin có trong DỮ LIỆU. Không đoán tính cách, tuổi, quê quán, ngoại hình hay bất cứ điều gì về người kia ngoài các mục đã có.
         3. Nêu rõ tiêu chí nào kéo điểm lên, tiêu chí nào kéo điểm xuống và vì sao, dựa trên giá trị của hai bên.
         4. Có thể gợi ý một hai điều hai bên nên trao đổi trước khi ở chung, chỉ từ các mục đang lệch nhau.
@@ -84,7 +84,7 @@ public class RoommateMatchExplanationService
         if (viewer is null)
         {
             return ServiceResult<RoommateMatchExplanationResponse>.Fail(
-                StatusCodes.Status409Conflict, "Bạn cần tạo hồ sơ ở ghép trước.");
+                StatusCodes.Status409Conflict, RoommateConnectionService.NoProfileMessage);
         }
 
         if (!RoommateMatching.CanMatch(viewer, candidate))

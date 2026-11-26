@@ -99,8 +99,11 @@ public static class RoommateMatchExplanation
     };
 }
 
-/// <summary>Điểm phù hợp (số nguyên phần trăm) và các tiêu chí đã tính, theo thứ tự trọng số của BR-19.</summary>
-public record RoommateMatchFacts(int Score, string City, IReadOnlyList<RoommateCriterionFact> Criteria);
+/// <summary>
+/// Điểm phù hợp trên thang 100 (<c>TotalScore</c>, số nguyên phần trăm) và các tiêu chí đã tính, theo thứ tự trọng số
+/// của BR-19. Tên khác <see cref="RoommateCriterionFact.Score"/> (thang 0 tới 1) để AI không lẫn hai thang.
+/// </summary>
+public record RoommateMatchFacts(int TotalScore, string City, IReadOnlyList<RoommateCriterionFact> Criteria);
 
 /// <summary>
 /// Một tiêu chí: trọng số (phần trăm), điểm tiêu chí từ 0 tới 1, điểm quy ra trên thang 100 và giá trị của hai bên.

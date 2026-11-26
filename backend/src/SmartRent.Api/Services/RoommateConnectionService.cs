@@ -22,7 +22,8 @@ public class RoommateConnectionService
 
     private const string ProfileNotFoundMessage = "Không tìm thấy hồ sơ ở ghép.";
     private const string InvitationNotFoundMessage = "Không tìm thấy lời mời kết nối.";
-    private const string NoProfileMessage = "Bạn cần tạo hồ sơ ở ghép trước.";
+    /// <summary>Dùng chung với giải thích điểm (RoommateMatchExplanationService) để cùng một thông điệp.</summary>
+    internal const string NoProfileMessage = "Bạn cần tạo hồ sơ ở ghép trước.";
     private const string NoPhoneMessage =
         "Bạn cần cập nhật số điện thoại trong tài khoản trước: số này chỉ hiện cho bên kia sau khi hai bên kết nối.";
     private const string BlockingContractMessage =

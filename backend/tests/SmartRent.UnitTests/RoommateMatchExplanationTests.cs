@@ -59,8 +59,8 @@ public class RoommateMatchExplanationTests
     {
         var facts = RoommateMatchExplanation.Build(Profile(), Candidate);
 
-        Assert.Equal(53, facts.Score);
-        Assert.Equal(RoommateMatching.Calculate(Profile(), Candidate).Score, facts.Score);
+        Assert.Equal(53, facts.TotalScore);
+        Assert.Equal(RoommateMatching.Calculate(Profile(), Candidate).Score, facts.TotalScore);
         Assert.Equal(Hcm, facts.City);
         Assert.Equal(
             [
@@ -127,6 +127,6 @@ public class RoommateMatchExplanationTests
             .ToHashSet();
 
         Assert.True(names.SetEquals(
-            ["Score", "City", "Criteria", "Criterion", "Weight", "Points", "Items", "Item", "Mine", "Theirs"]));
+            ["TotalScore", "City", "Criteria", "Score", "Criterion", "Weight", "Points", "Items", "Item", "Mine", "Theirs"]));
     }
 }
