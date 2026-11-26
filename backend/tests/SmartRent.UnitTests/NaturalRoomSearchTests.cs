@@ -263,4 +263,33 @@ public class NaturalRoomSearchTests
         Assert.Equal(NaturalRoomSearch.MaxUnsupportedLength, result.Unsupported[1].Length);
         Assert.Equal(NaturalRoomSearch.MaxUnsupportedItems, result.Unsupported.Count);
     }
+
+    [Fact]
+    public void Tien_ich_bi_bo_chi_ghi_10_ten_dau_khac_nhau_cac_gia_tri_bo_khac_van_co()
+    {
+        // "phòng có hồ bơi, phòng gym, sân tennis, ..." — AI trả 12 tiện ích không có trong danh mục, trùng một tên.
+        var names = Enumerable.Range(1, 12).Select(i => $"Tiện ích lạ {i}").Prepend("Tiện ích lạ 1").ToList();
+
+        var result = NaturalRoomSearch.Sanitize(
+            Raw(minPrice: 5_000_000, maxPrice: 3_000_000, amenities: [.. names, "Gác lửng"]), Catalog);
+
+        Assert.Equal([10L], result.Filters.AmenityIds);
+        Assert.Equal(
+            [.. Enumerable.Range(1, NaturalRoomSearch.MaxDroppedAmenities).Select(i => $"Tiện ích \"Tiện ích lạ {i}\""), "Khoảng giá"],
+            result.Unsupported);
+    }
+
+    [Fact]
+    public void Ten_server_bo_bi_cat_con_200_ky_tu_truoc_khi_boc()
+    {
+        var longName = new string('a', 250);
+
+        var result = NaturalRoomSearch.Sanitize(
+            Raw(maxPrice: 3_000_000, city: longName, ward: longName, amenities: [longName]), Catalog);
+
+        var cut = new string('a', NaturalRoomSearch.MaxUnsupportedLength);
+        Assert.Equal(
+            [$"Tỉnh/thành \"{cut}\"", $"Phường/xã \"{cut}\"", $"Tiện ích \"{cut}\""],
+            result.Unsupported);
+    }
 }

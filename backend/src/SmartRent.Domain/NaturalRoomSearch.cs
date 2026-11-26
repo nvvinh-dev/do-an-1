@@ -71,8 +71,17 @@ public static class NaturalRoomSearch
     /// <summary>Số ý AI tự báo tối đa được giữ trong <c>unsupported</c>.</summary>
     public const int MaxUnsupportedItems = 10;
 
-    /// <summary>Độ dài tối đa của một ý AI tự báo; dài hơn thì cắt.</summary>
+    /// <summary>
+    /// Độ dài tối đa của một ý AI tự báo, và của tên AI trả mà server bỏ trước khi bọc thành
+    /// <c>Tiện ích "..."</c>, <c>Tỉnh/thành "..."</c>, <c>Phường/xã "..."</c>; dài hơn thì cắt.
+    /// </summary>
     public const int MaxUnsupportedLength = 200;
+
+    /// <summary>
+    /// Số tiện ích bị bỏ tối đa được ghi vào <c>unsupported</c>, tính các tên khác nhau theo thứ tự AI trả. Các giá trị
+    /// server bỏ khác mỗi loại tối đa một mục nên không cần giới hạn.
+    /// </summary>
+    public const int MaxDroppedAmenities = 10;
 
     private static readonly string[] SortFields = ["price", "area"];
 
@@ -163,7 +172,7 @@ public static class NaturalRoomSearch
 
             if (city is null)
             {
-                unsupported.Add($"Tỉnh/thành \"{cityName}\"");
+                unsupported.Add($"Tỉnh/thành \"{Truncate(cityName)}\"");
             }
         }
 
@@ -182,7 +191,7 @@ public static class NaturalRoomSearch
 
         if (match == default)
         {
-            unsupported.Add($"Phường/xã \"{wardName}\"");
+            unsupported.Add($"Phường/xã \"{Truncate(wardName)}\"");
             return (city?.City, null);
         }
 
@@ -195,6 +204,7 @@ public static class NaturalRoomSearch
         List<string> unsupported)
     {
         var ids = new HashSet<long>();
+        var dropped = new List<string>();
 
         foreach (var raw in rawNames ?? [])
         {
@@ -207,13 +217,18 @@ public static class NaturalRoomSearch
 
             if (amenity is null)
             {
-                AddOnce(unsupported, $"Tiện ích \"{name}\"");
+                if (dropped.Count < MaxDroppedAmenities)
+                {
+                    AddOnce(dropped, $"Tiện ích \"{Truncate(name)}\"");
+                }
             }
             else
             {
                 ids.Add(amenity.Id);
             }
         }
+
+        unsupported.AddRange(dropped);
 
         // Theo thứ tự danh mục, như các danh sách tiện ích khác.
         return amenities.Where(a => ids.Contains(a.Id)).Select(a => a.Id).ToList();
@@ -286,7 +301,7 @@ public static class NaturalRoomSearch
 
             if (Clean(raw) is { } item)
             {
-                AddOnce(merged, item.Length > MaxUnsupportedLength ? item[..MaxUnsupportedLength] : item);
+                AddOnce(merged, Truncate(item));
             }
         }
 
@@ -330,6 +345,9 @@ public static class NaturalRoomSearch
 
         return name;
     }
+
+    private static string Truncate(string text)
+        => text.Length > MaxUnsupportedLength ? text[..MaxUnsupportedLength] : text;
 
     private static void AddOnce(List<string> items, string item)
     {
