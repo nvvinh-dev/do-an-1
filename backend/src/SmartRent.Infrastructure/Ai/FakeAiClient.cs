@@ -14,6 +14,10 @@ public class FakeAiClient : IAiClient
     private static readonly IReadOnlyDictionary<string, string> CannedResponses =
         new Dictionary<string, string>
         {
+            // Hợp đồng #1 chỉ còn trong response khi thuộc người hỏi — dùng để thấy server lọc references (FR-129).
+            [AiOperations.AssistantQuestion] =
+                """{"answer":"[AI giả] Đây là câu trả lời mẫu của trợ lý, không gọi Gemini.","references":[{"type":"Contract","id":1}]}""",
+
             // Câu mẫu ở api-design mục 16: phường không kèm tỉnh để thấy server tự suy tỉnh, một tiện ích không có
             // trong danh mục để thấy server đưa vào unsupported (FR-125).
             [AiOperations.SearchInterpret] =
