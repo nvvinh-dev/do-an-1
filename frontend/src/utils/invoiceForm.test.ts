@@ -4,6 +4,7 @@ import {
   getInvoiceFormValues,
   getLatestPeriodicInvoiceId,
   getNewInvoiceFormValues,
+  getPreviewRequest,
   getRelatedInvoiceOptions,
   toPeriodicInvoiceRequest,
   validatePaymentAmount,
@@ -145,5 +146,47 @@ describe('getRelatedInvoiceOptions', () => {
       54,
     )
     expect(options.map((invoice) => invoice.id)).toEqual([50])
+  })
+})
+
+describe('getPreviewRequest', () => {
+  const previous = { electricityIndex: 700, waterIndex: 53 }
+  const filled = {
+    ...getNewInvoiceFormValues(),
+    currentElectricityIndex: '780',
+    currentWaterIndex: '57,5',
+    electricityPhoto: [{ path: 'landlord/1/a.jpg', url: 'https://x/a.jpg' }],
+  }
+
+  it('đủ hai chỉ số hợp lệ thì gửi chỉ số và dòng điều chỉnh, không gửi ảnh', () => {
+    expect(getPreviewRequest(filled, previous)).toEqual({
+      currentElectricityIndex: 780,
+      currentWaterIndex: 57.5,
+      electricityMeterPhotoPath: null,
+      waterMeterPhotoPath: null,
+      adjustmentLines: [],
+    })
+  })
+
+  it('thiếu một chỉ số hoặc chỉ số sai dạng thì chưa gọi', () => {
+    expect(getPreviewRequest({ ...filled, currentWaterIndex: '' }, previous)).toBeNull()
+    expect(getPreviewRequest({ ...filled, currentElectricityIndex: '78,123' }, previous)).toBeNull()
+  })
+
+  it('chỉ số mới nhỏ hơn chỉ số cũ 700 kWh thì chưa gọi', () => {
+    expect(getPreviewRequest({ ...filled, currentElectricityIndex: '699' }, previous)).toBeNull()
+  })
+
+  it('dòng điều chỉnh chưa có mô tả hoặc số tiền thì chưa gọi; đủ thì gửi kèm', () => {
+    const line = { description: 'Tháng 8 ghi dư 20 số điện', amount: '-70.000', relatedInvoiceId: '30' }
+    expect(getPreviewRequest({ ...filled, adjustmentLines: [{ ...line, description: ' ' }] }, previous)).toBeNull()
+    expect(getPreviewRequest({ ...filled, adjustmentLines: [{ ...line, amount: '' }] }, previous)).toBeNull()
+    expect(getPreviewRequest({ ...filled, adjustmentLines: [line] }, previous)?.adjustmentLines).toEqual([
+      { category: 'DieuChinhKhac', description: 'Tháng 8 ghi dư 20 số điện', amount: -70000, relatedInvoiceId: 30 },
+    ])
+  })
+
+  it('chưa tải được chỉ số cũ thì vẫn gọi, server tự kiểm tra', () => {
+    expect(getPreviewRequest(filled, null)).not.toBeNull()
   })
 })

@@ -4,6 +4,7 @@ import { Controller, useFieldArray, useForm, useWatch, type Control } from 'reac
 import { Link } from 'react-router'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import ImageUploader from '@/components/ImageUploader'
+import InvoicePreviewCard from '@/components/InvoicePreviewCard'
 import MoneyText from '@/components/MoneyText'
 import { Button } from '@/components/ui/button'
 import { Field, FieldDescription, FieldError, FieldLabel, FieldLegend, FieldSet } from '@/components/ui/field'
@@ -17,7 +18,12 @@ import { normalizeMeterIndex, validateMeterIndex } from '@/utils/contractForm'
 import { estimateMeterAmount } from '@/utils/estimateMeterAmount'
 import { formatDate } from '@/utils/formatDate'
 import { formatMeterIndex } from '@/utils/formatMeterIndex'
-import { emptyAdjustmentLine, toPeriodicInvoiceRequest, type InvoiceFormValues } from '@/utils/invoiceForm'
+import {
+  emptyAdjustmentLine,
+  getPreviewRequest,
+  toPeriodicInvoiceRequest,
+  type InvoiceFormValues,
+} from '@/utils/invoiceForm'
 import {
   normalizeLineAmount,
   validateLineAmount,
@@ -39,12 +45,14 @@ interface PeriodicInvoiceFormProps {
   isPending: boolean
   error: unknown
   onSubmit: (request: PeriodicInvoiceRequest) => void
+  /** Có thì hiện khối Tạm tính hóa đơn do server tính cho hợp đồng này — chỉ khi lập mới (L7). */
+  previewContractId?: number
 }
 
 /**
  * Form L7 (docs/frontend-screens.md mục 6): chỉ số mới và ảnh đồng hồ, các dòng điều chỉnh (mô tả, số tiền, hóa
- * đơn gốc). Chỉ hiện số điện, nước đã dùng (mới − cũ), không tự tính tiền (security-design mục 5.2): tổng tiền và
- * cách tính xem ở L8 sau khi lưu nháp. Kiểm tra ở đây chỉ để báo sớm; `409`, `422` hiện `detail` trên nút lưu và
+ * đơn gốc). Dưới mỗi ô hiện số đã dùng và tiền điện, nước tạm tính chỉ để đối chiếu; tổng tạm tính do server tính
+ * (`InvoicePreviewCard`, khi lập mới), không gửi số tiền nào lên (security-design mục 5.2). Kiểm tra ở đây chỉ để báo sớm; `409`, `422` hiện `detail` trên nút lưu và
  * giữ nguyên dữ liệu đã nhập.
  */
 export default function PeriodicInvoiceForm({
@@ -57,8 +65,10 @@ export default function PeriodicInvoiceForm({
   isPending,
   error,
   onSubmit,
+  previewContractId,
 }: PeriodicInvoiceFormProps) {
   const { control, handleSubmit } = useForm<InvoiceFormValues>({ mode: 'onTouched', defaultValues })
+  const values = useWatch({ control })
   const lineArray = useFieldArray({ control, name: 'adjustmentLines' })
   // Hai ô ảnh có thể tải cùng lúc; gửi khi ảnh chưa tải xong thì thiếu `path` của ảnh đó.
   const [uploadingCount, setUploadingCount] = useState(0)
@@ -124,6 +134,13 @@ export default function PeriodicInvoiceForm({
           Thêm dòng điều chỉnh
         </Button>
       </FormSection>
+
+      {previewContractId !== undefined && (
+        <InvoicePreviewCard
+          contractId={previewContractId}
+          request={getPreviewRequest(values as InvoiceFormValues, previousReading)}
+        />
+      )}
 
       <ApiErrorAlert error={error} />
 

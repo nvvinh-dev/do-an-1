@@ -1,5 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { ChevronLeft } from 'lucide-react'
+import { CalendarRange, ChevronLeft } from 'lucide-react'
 import { Link, useMatch, useNavigate, useParams } from 'react-router'
 import { toast } from 'sonner'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
@@ -12,8 +12,8 @@ import { useContract } from '@/hooks/useContract'
 import { useContractInvoices } from '@/hooks/useContractInvoices'
 import { invoiceQueryKey, useInvoice } from '@/hooks/useInvoice'
 import { useInvoiceMutation } from '@/hooks/useInvoiceMutation'
-import { useLatestContractMeterReading } from '@/hooks/useLatestContractMeterReading'
-import { isNotFoundError } from '@/lib/apiError'
+import { useNextInvoicePeriod } from '@/hooks/useNextInvoicePeriod'
+import { getApiErrorInfo, isNotFoundError } from '@/lib/apiError'
 import NotFoundPage from '@/pages/public/NotFoundPage'
 import { createInvoice, updateInvoice } from '@/services/invoiceService'
 import type { ContractDetail } from '@/types/contractTypes'
@@ -31,9 +31,9 @@ import {
 
 /**
  * L7 — Chốt chỉ số, lập và sửa hóa đơn (docs/frontend-screens.md mục 6). Lập mới mở từ L6
- * (`/landlord/contracts/:id/invoices/new`), sửa mở từ L8 (`/landlord/invoices/:id/edit`). Màn không tự tính
- * tiền và không có endpoint xem trước: bấm Lưu nháp thì sang L8 với tổng tiền và cách tính do server trả, từ đó
- * Sửa (quay về đây) hoặc Phát hành (chốt ngày 23/10).
+ * (`/landlord/contracts/:id/invoices/new`), sửa mở từ L8 (`/landlord/invoices/:id/edit`). Lập mới hiện kỳ sắp lập
+ * (`GET …/invoices/next-period`) và tổng tạm tính do server tính (`POST …/invoices/preview`, chốt 26/11); bấm Lưu
+ * nháp thì sang L8, từ đó Sửa (quay về đây) hoặc Phát hành. Sửa giữ kỳ của hóa đơn, không có tổng tạm tính.
  */
 export default function InvoiceFormPage() {
   const isEdit = useMatch('/landlord/invoices/:id/edit') !== null
@@ -68,9 +68,10 @@ function CreateInvoiceContent({ contract }: { contract: ContractDetail }) {
   const navigate = useNavigate()
   // `hasActiveInvoice` chỉ ảnh hưởng nút sửa chỉ số đầu, không ảnh hưởng quyền lập hóa đơn.
   const canCreate = getLandlordContractActions(contract, getVietnamToday(), new Date(), true).canCreateInvoice
-  const readingQuery = useLatestContractMeterReading(contract.id, canCreate)
   const invoicesQuery = useContractInvoices(contract.id, canCreate)
   const draft = invoicesQuery.data?.find((invoice) => invoice.type === 'DinhKy' && invoice.status === 'Nhap')
+  // Còn nháp thì đã có lối mở nháp ở dưới, không cần hỏi kỳ (server cũng trả 409 vì còn nháp).
+  const periodQuery = useNextInvoicePeriod(contract.id, canCreate && invoicesQuery.isSuccess && !draft)
   const mutation = useInvoiceMutation((request: PeriodicInvoiceRequest) => createInvoice(contract.id, request), {
     // Đặt sẵn chi tiết vừa tạo để L8 hiện ngay tổng tiền, không chờ tải lại.
     onSuccess: (created) => {
@@ -105,7 +106,7 @@ function CreateInvoiceContent({ contract }: { contract: ContractDetail }) {
   }
 
   // Chờ danh sách hóa đơn để biết còn nháp không, tránh hiện form rồi đổi sang thông báo.
-  if (invoicesQuery.isPending) {
+  if (invoicesQuery.isPending || (!draft && invoicesQuery.isSuccess && periodQuery.isPending)) {
     return (
       <>
         {header}
@@ -134,25 +135,52 @@ function CreateInvoiceContent({ contract }: { contract: ContractDetail }) {
     )
   }
 
+  if (periodQuery.isError) {
+    const info = getApiErrorInfo(periodQuery.error)
+    return (
+      <>
+        {header}
+        {info.status === 409 ? (
+          // Kỳ kế tiếp chưa tới (trước ngày 25), tháng trả phòng, đã có hóa đơn thanh lý: câu do server viết.
+          <Alert>
+            <AlertTitle>Chưa lập được hóa đơn lúc này</AlertTitle>
+            <AlertDescription>
+              <p>{info.message}</p>
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <ApiErrorAlert error={periodQuery.error} onRetry={() => void periodQuery.refetch()} />
+        )}
+      </>
+    )
+  }
+
+  const period = periodQuery.data
   return (
     <>
       {header}
-      <Alert>
-        <AlertTitle>Kỳ hóa đơn do hệ thống xác định</AlertTitle>
-        <AlertDescription>
-          <p>
-            Kỳ đầu tính từ ngày bắt đầu hợp đồng tới cuối tháng; các kỳ sau là tháng liền sau kỳ gần nhất, lập được từ
-            ngày 25 của tháng đó. Nhập chỉ số mới thì thấy ngay tiền điện, nước tạm tính; bấm Lưu nháp để xem tổng tiền
-            và cách tính; người thuê chỉ thấy
-            hóa đơn sau khi bạn bấm Phát hành.
-          </p>
-        </AlertDescription>
-      </Alert>
-      <ApiErrorAlert error={readingQuery.error} onRetry={() => void readingQuery.refetch()} />
+      {period && (
+        <Alert>
+          <CalendarRange />
+          <AlertTitle>
+            Kỳ {formatDate(period.periodStart)} – {formatDate(period.periodEnd)}
+            {period.daysCharged < period.daysInMonth &&
+              ` · tính tiền phòng ${period.daysCharged}/${period.daysInMonth} ngày`}
+          </AlertTitle>
+          <AlertDescription>
+            <p>
+              Kỳ do hệ thống xác định theo hợp đồng. Nhập chỉ số mới thì thấy ngay tiền điện, nước và tổng tạm tính;
+              người thuê chỉ thấy hóa đơn sau khi bạn lưu nháp rồi bấm Phát hành.
+            </p>
+          </AlertDescription>
+        </Alert>
+      )}
       <ApiErrorAlert error={invoicesQuery.error} onRetry={() => void invoicesQuery.refetch()} />
       <PeriodicInvoiceForm
         defaultValues={getNewInvoiceFormValues()}
-        previousReading={readingQuery.data ?? null}
+        previousReading={
+          period ? { electricityIndex: period.previousElectricityIndex, waterIndex: period.previousWaterIndex } : null
+        }
         unitPrices={{ electricity: contract.electricityUnitPrice, water: contract.waterUnitPrice }}
         relatedInvoices={getRelatedInvoiceOptions(invoicesQuery.data ?? [], null)}
         submitLabel="Lưu nháp"
@@ -160,6 +188,7 @@ function CreateInvoiceContent({ contract }: { contract: ContractDetail }) {
         isPending={mutation.isPending}
         error={mutation.error}
         onSubmit={(request) => mutation.mutate(request)}
+        previewContractId={contract.id}
       />
     </>
   )
