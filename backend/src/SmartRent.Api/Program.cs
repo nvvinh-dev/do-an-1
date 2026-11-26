@@ -194,6 +194,7 @@ builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<MaintenanceRequestService>();
 builder.Services.AddScoped<RoommateProfileService>();
 builder.Services.AddScoped<RoommateConnectionService>();
+builder.Services.AddScoped<RoommateMatchExplanationService>();
 builder.Services.AddSingleton<LocationCatalog>();
 builder.Services.AddSingleton<SchoolCatalog>();
 
