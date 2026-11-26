@@ -190,6 +190,7 @@ builder.Services.AddScoped<InvoiceService>();
 builder.Services.AddScoped<InvoiceDetailBuilder>();
 builder.Services.AddScoped<PropertyService>();
 builder.Services.AddScoped<RoomSearchService>();
+builder.Services.AddScoped<NaturalRoomSearchService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<MaintenanceRequestService>();
 builder.Services.AddScoped<RoommateProfileService>();
