@@ -12,7 +12,13 @@ namespace SmartRent.Infrastructure.Ai;
 public class FakeAiClient : IAiClient
 {
     private static readonly IReadOnlyDictionary<string, string> CannedResponses =
-        new Dictionary<string, string>();
+        new Dictionary<string, string>
+        {
+            // Câu mẫu ở api-design mục 16: phường không kèm tỉnh để thấy server tự suy tỉnh, một tiện ích không có
+            // trong danh mục để thấy server đưa vào unsupported (FR-125).
+            [AiOperations.SearchInterpret] =
+                """{"maxPrice":3000000,"ward":"Linh Xuân","amenities":["Gác lửng","Hồ bơi"],"unsupported":["gần Đại học Công nghệ Thông tin"]}"""
+        };
 
     private const string DefaultTextResponse = "[AI giả] Đây là câu trả lời mẫu, không gọi Gemini.";
 
