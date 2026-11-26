@@ -31,6 +31,7 @@ import type { InvoiceDetail, PaymentReport } from '@/types/invoiceTypes'
 import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDate } from '@/utils/formatDate'
 import { getLandlordInvoiceActions } from '@/utils/getInvoiceActions'
+import { getInvoiceDisplayStatus } from '@/utils/getInvoiceDisplayStatus'
 import { getLatestPeriodicInvoiceId, validatePaymentAmount } from '@/utils/invoiceForm'
 import { getInvoiceTypeLabel } from '@/utils/invoiceTypeLabels'
 import { normalizeRoomMoney } from '@/utils/validateRoomInput'
@@ -168,7 +169,7 @@ function InvoiceDetailContent({ invoice }: { invoice: InvoiceDetail }) {
     <>
       <DetailHeader
         title={contract ? `Hóa đơn phòng ${contract.room.code}` : `Hóa đơn #${invoice.id}`}
-        status={<StatusBadge kind="invoice" status={invoice.status} />}
+        status={<StatusBadge kind="invoice" status={getInvoiceDisplayStatus(invoice)} />}
         subtitle={
           <>
             {contract ? `${typeLabel} · ${contract.room.propertyName} · Người thuê: ${contract.tenant.fullName}` : typeLabel}

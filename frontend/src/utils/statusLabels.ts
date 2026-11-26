@@ -64,6 +64,8 @@ const STATUS_DISPLAYS = {
     DaChuyenThanhLy: info('Đã chuyển vào thanh lý'),
     ChoNguoiThueXacNhan: pending('Chờ người thuê xác nhận'),
     ChoHoanCoc: pending('Chờ hoàn cọc'),
+    // Chỉ có ở giao diện: hóa đơn thanh lý số dư âm đã hoàn cọc (`getInvoiceDisplayStatus`), server vẫn trả `DaThanhToan`.
+    DaHoanCoc: success('Đã hoàn cọc'),
   },
   // Lượt báo thanh toán của Người thuê.
   paymentReport: {

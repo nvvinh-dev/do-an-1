@@ -17,6 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { InvoiceListItem } from '@/types/invoiceTypes'
 import { formatDate } from '@/utils/formatDate'
+import { getInvoiceDisplayStatus } from '@/utils/getInvoiceDisplayStatus'
 import { getInvoiceTypeLabel } from '@/utils/invoiceTypeLabels'
 
 interface InvoiceListViewProps {
@@ -51,7 +52,19 @@ function InvoicePeriod({ invoice }: { invoice: InvoiceListItem }) {
 }
 
 function InvoiceAmount({ invoice, className }: { invoice: InvoiceListItem; className?: string }) {
-  return <MoneyText amount={invoice.totalAmount} settlementBalance={invoice.type === 'ThanhLy'} className={className} />
+  return (
+    <MoneyText
+      amount={invoice.totalAmount}
+      settlementBalance={invoice.type === 'ThanhLy'}
+      settled={invoice.status === 'DaThanhToan'}
+      className={className}
+    />
+  )
+}
+
+/** Hóa đơn thanh lý số dư âm là tiền Chủ trọ hoàn, không có khoản thu nào, nên không hiện "Đã thu 0 đ". */
+function isRefundInvoice(invoice: InvoiceListItem): boolean {
+  return invoice.type === 'ThanhLy' && invoice.totalAmount < 0
 }
 
 function InvoiceCards({ invoices, basePath, listSearch, showTenant }: InvoiceListViewProps) {
@@ -66,7 +79,7 @@ function InvoiceCards({ invoices, basePath, listSearch, showTenant }: InvoiceLis
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="font-semibold wrap-anywhere">Phòng {invoice.roomCode}</span>
-              <StatusBadge kind="invoice" status={invoice.status} />
+              <StatusBadge kind="invoice" status={getInvoiceDisplayStatus(invoice)} />
             </div>
             <p className="text-sm text-muted-foreground wrap-anywhere">{invoice.propertyName}</p>
             <p className="text-sm">
@@ -120,15 +133,17 @@ function InvoiceTable({ invoices, basePath, listSearch, showTenant }: InvoiceLis
               </TableCell>
               {showTenant && <TableCell className="py-3 whitespace-normal wrap-anywhere">{invoice.tenantName}</TableCell>}
               <TableCell className="py-3">
-                <StatusBadge kind="invoice" status={invoice.status} />
+                <StatusBadge kind="invoice" status={getInvoiceDisplayStatus(invoice)} />
               </TableCell>
               {/* Gộp tổng, đã thu và hạn vào một cột để bảng vừa màn 768px. */}
               <TableCell className="px-4 py-3 text-right">
                 <div className="flex flex-col items-end gap-1">
                   <InvoiceAmount invoice={invoice} className="font-medium" />
-                  <span className="text-muted-foreground">
-                    Đã thu <MoneyText amount={invoice.paidAmount} />
-                  </span>
+                  {!isRefundInvoice(invoice) && (
+                    <span className="text-muted-foreground">
+                      Đã thu <MoneyText amount={invoice.paidAmount} />
+                    </span>
+                  )}
                   {invoice.dueDate && <span className="text-muted-foreground">Hạn {formatDate(invoice.dueDate)}</span>}
                 </div>
               </TableCell>
