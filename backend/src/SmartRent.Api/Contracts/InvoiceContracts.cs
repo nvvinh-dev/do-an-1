@@ -39,6 +39,26 @@ public record NextInvoicePeriodResponse(
     decimal PreviousWaterIndex);
 
 /// <summary>
+/// Một dòng của GET /invoices/billing-queue (api-design mục 9). Hợp đồng lập được hóa đơn định kỳ hôm nay có kỳ và chỉ
+/// số cũ như <see cref="NextInvoicePeriodResponse"/>, <see cref="DraftInvoiceId"/> null; hợp đồng còn hóa đơn định kỳ
+/// Nháp có <see cref="DraftInvoiceId"/>, sáu trường kỳ và chỉ số cũ null.
+/// </summary>
+public record BillingQueueItemResponse(
+    long ContractId,
+    string RoomCode,
+    string PropertyName,
+    string TenantName,
+    decimal ElectricityUnitPrice,
+    decimal WaterUnitPrice,
+    DateOnly? PeriodStart,
+    DateOnly? PeriodEnd,
+    int? DaysCharged,
+    int? DaysInMonth,
+    decimal? PreviousElectricityIndex,
+    decimal? PreviousWaterIndex,
+    long? DraftInvoiceId);
+
+/// <summary>
 /// POST /contracts/{contractId}/invoices/preview: cách tính của hóa đơn định kỳ kỳ kế tiếp, không lưu (api-design mục 9).
 /// Cùng tên trường với <see cref="InvoiceDetailResponse"/>; <see cref="AdjustmentAmount"/> là tổng các dòng điều chỉnh.
 /// </summary>
