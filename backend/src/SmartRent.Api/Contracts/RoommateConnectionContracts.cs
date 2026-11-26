@@ -35,3 +35,9 @@ public record RoommateConnectionResponse(
 
 /// <summary>Một lượt chặn của chính người gọi. <c>ProfileId</c> là <c>null</c> khi người bị chặn không còn hồ sơ.</summary>
 public record RoommateBlockResponse(long Id, DateTimeOffset BlockedAt, long? ProfileId);
+
+/// <summary>
+/// Đoạn giải thích điểm phù hợp do AI viết — <c>GET /roommate-profiles/{id}/match-explanation</c> (FR-120). Không lưu;
+/// điểm vẫn lấy từ <c>/matches</c>.
+/// </summary>
+public record RoommateMatchExplanationResponse(string Explanation);

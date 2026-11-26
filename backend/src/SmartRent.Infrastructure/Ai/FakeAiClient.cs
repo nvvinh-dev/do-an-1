@@ -16,7 +16,12 @@ public class FakeAiClient : IAiClient
         {
             // Hợp đồng #1 chỉ còn trong response khi thuộc người hỏi — dùng để thấy server lọc references (FR-129).
             [AiOperations.AssistantQuestion] =
-                """{"answer":"[AI giả] Đây là câu trả lời mẫu của trợ lý, không gọi Gemini.","references":[{"type":"Contract","id":1}]}"""
+                """{"answer":"[AI giả] Đây là câu trả lời mẫu của trợ lý, không gọi Gemini.","references":[{"type":"Contract","id":1}]}""",
+
+            // Câu mẫu ở api-design mục 16: phường không kèm tỉnh để thấy server tự suy tỉnh, một tiện ích không có
+            // trong danh mục để thấy server đưa vào unsupported (FR-125).
+            [AiOperations.SearchInterpret] =
+                """{"maxPrice":3000000,"ward":"Linh Xuân","amenities":["Gác lửng","Hồ bơi"],"unsupported":["gần Đại học Công nghệ Thông tin"]}"""
         };
 
     private const string DefaultTextResponse = "[AI giả] Đây là câu trả lời mẫu, không gọi Gemini.";
