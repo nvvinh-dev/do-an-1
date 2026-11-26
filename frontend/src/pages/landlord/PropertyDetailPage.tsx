@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router'
 import { toast } from 'sonner'
 import ApiErrorAlert from '@/components/ApiErrorAlert'
 import ConfirmDialog from '@/components/ConfirmDialog'
+import MoreActionsMenu from '@/components/MoreActionsMenu'
 import PageHeader from '@/components/PageHeader'
 import PhotoGrid from '@/components/PhotoGrid'
 import PropertyRoomList from '@/components/PropertyRoomList'
@@ -117,8 +118,9 @@ function PropertyDetailContent({ property }: { property: PropertyDetail }) {
         </dl>
       </div>
 
-      <PropertyImages property={property} />
+      {/* Danh sách phòng là phần Chủ trọ dùng hằng ngày nên đứng trước ảnh khu trọ. */}
       <PropertyRoomList propertyId={property.id} isArchived={isArchived} />
+      <PropertyImages property={property} />
     </>
   )
 }
@@ -135,10 +137,13 @@ function PropertyActions({ property }: { property: PropertyDetail }) {
           Sửa
         </Link>
       </Button>
-      <Button type="button" variant="destructive" size="page" onClick={() => setConfirmOpen(true)}>
-        <Archive />
-        Lưu trữ
-      </Button>
+      {/* Lưu trữ không hoàn tác và hiếm khi dùng: nằm trong Thao tác khác, không đứng cạnh nút Sửa. */}
+      <MoreActionsMenu
+        size="page"
+        actions={[
+          { key: 'archive', label: 'Lưu trữ khu trọ', icon: Archive, onSelect: () => setConfirmOpen(true), destructive: true },
+        ]}
+      />
 
       {/* Còn phòng đang giữ chỗ hoặc đang thuê thì server trả 409; hộp thoại hiện `detail` (BR-10). */}
       <ConfirmDialog

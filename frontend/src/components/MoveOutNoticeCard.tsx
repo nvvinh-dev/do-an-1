@@ -13,15 +13,17 @@ interface MoveOutNoticeCardProps {
   today: string
   /** Có thì hiện liên kết tới bảng thanh lý (T4 → hóa đơn thanh lý ở T5). L6 đã có nút ở đầu trang nên bỏ trống. */
   settlementLink?: { to: string; label: string } | null
+  /** Nút **Gửi thông báo trả phòng**, **Rút thông báo** của trang, đặt ngay trong khối cạnh câu hướng dẫn. */
+  actions?: ReactNode
 }
 
 /**
  * Khối "Trả phòng" dùng chung cho T4 và L6 (docs/frontend-screens.md mục 5, 6). Hợp đồng đang hiệu lực
  * từ ngày bắt đầu hoặc sắp hết hạn mà chưa có thông báo: câu hướng dẫn gửi thông báo. Đã có thông báo
  * (Đang thanh lý, Đã thanh lý): bên gửi, ngày gửi, ngày trả phòng dự kiến, lý do, `noticeDays` và
- * `penaltyAllowed` do server trả. Trạng thái khác không hiện. Nút gửi và rút nằm ở đầu trang.
+ * `penaltyAllowed` do server trả. Trạng thái khác không hiện. Nút gửi và rút do trang truyền vào `actions`.
  */
-export default function MoveOutNoticeCard({ contract, viewer, today, settlementLink }: MoveOutNoticeCardProps) {
+export default function MoveOutNoticeCard({ contract, viewer, today, settlementLink, actions }: MoveOutNoticeCardProps) {
   const notice = contract.moveOutNotice
 
   if (notice) {
@@ -61,6 +63,7 @@ export default function MoveOutNoticeCard({ contract, viewer, today, settlementL
             </Link>
           </Button>
         )}
+        {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
       </CardShell>
     )
   }
@@ -74,6 +77,7 @@ export default function MoveOutNoticeCard({ contract, viewer, today, settlementL
             ? `Hợp đồng sắp hết hạn ngày ${formatDate(contract.endDate)}. Muốn trả phòng thì bấm Gửi thông báo trả phòng; không bên nào gửi thì hợp đồng vẫn hiệu lực theo điều khoản đã chốt.`
             : 'Chưa có thông báo trả phòng. Muốn kết thúc hợp đồng thì bấm Gửi thông báo trả phòng và chọn ngày trả phòng dự kiến; nên báo trước ít nhất 30 ngày.'}
         </p>
+        {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
       </CardShell>
     )
   }
