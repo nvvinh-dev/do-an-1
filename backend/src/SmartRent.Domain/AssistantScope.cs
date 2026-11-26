@@ -1,3 +1,4 @@
+using SmartRent.Domain.Entities;
 using SmartRent.Domain.Enums;
 
 namespace SmartRent.Domain;
@@ -24,6 +25,23 @@ public static class AssistantScope
         MaintenanceRequestStatus.DangXuLy,
         MaintenanceRequestStatus.ChoNguoiThueXacNhan
     ];
+
+    /// <summary>Hóa đơn thanh lý chờ Người thuê xác nhận hoặc chờ hoàn cọc vẫn còn khoản phải thu hoặc phải hoàn.</summary>
+    private static readonly InvoiceStatus[] PendingSettlementStatuses =
+        [InvoiceStatus.ChoNguoiThueXacNhan, InvoiceStatus.ChoHoanCoc];
+
+    /// <summary>
+    /// Số còn phải trả gửi cho AI; <c>null</c> khi hóa đơn không còn khoản phải thu: Nháp (chưa phát hành), Đã thanh
+    /// toán, Đã hủy, Đã chuyển vào thanh lý (phần nợ đã nằm trong hóa đơn thanh lý — FR-92, gửi cả hai thì trợ lý tính
+    /// trùng nợ). Hóa đơn thanh lý ở Chờ người thuê xác nhận hoặc Chờ hoàn cọc vẫn gửi; số âm là Chủ trọ phải hoàn lại.
+    /// </summary>
+    public static decimal? RemainingToReport(InvoiceType type, InvoiceStatus status, decimal totalAmount, decimal paidAmount)
+    {
+        var outstanding = Invoice.OutstandingStatuses.Contains(status)
+            || (type == InvoiceType.ThanhLy && PendingSettlementStatuses.Contains(status));
+
+        return outstanding ? totalAmount - paidAmount : null;
+    }
 
     /// <summary>
     /// FR-129, BR-18: chuyển danh sách AI trả về thành dẫn chiếu, chỉ giữ bản ghi có trong <paramref name="sent"/> — dữ

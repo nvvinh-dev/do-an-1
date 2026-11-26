@@ -78,4 +78,40 @@ public class AssistantScopeTests
             [new AssistantReference(AssistantReferenceType.MaintenanceRequest, 7), new AssistantReference(AssistantReferenceType.Contract, 12)],
             kept);
     }
+
+    [Theory]
+    [InlineData(InvoiceType.DinhKy, InvoiceStatus.ChuaThanhToan, 3_000_000, 0, 3_000_000)]
+    [InlineData(InvoiceType.DinhKy, InvoiceStatus.ChoXacNhan, 3_000_000, 0, 3_000_000)]
+    [InlineData(InvoiceType.DinhKy, InvoiceStatus.ThanhToanMotPhan, 3_000_000, 1_000_000, 2_000_000)]
+    [InlineData(InvoiceType.DinhKy, InvoiceStatus.QuaHan, 2_492_500, 0, 2_492_500)]
+    [InlineData(InvoiceType.ThanhLy, InvoiceStatus.ChuaThanhToan, 500_000, 0, 500_000)]
+    [InlineData(InvoiceType.ThanhLy, InvoiceStatus.ChoNguoiThueXacNhan, 1_200_000, 0, 1_200_000)]
+    [InlineData(InvoiceType.ThanhLy, InvoiceStatus.ChoHoanCoc, -1_500_000, 0, -1_500_000)]
+    public void RemainingToReport_GuiSoConPhaiTra_KhiHoaDonConPhaiThu(
+        InvoiceType type, InvoiceStatus status, long total, long paid, long expected)
+    {
+        Assert.Equal(expected, AssistantScope.RemainingToReport(type, status, total, paid));
+    }
+
+    [Theory]
+    [InlineData(InvoiceType.DinhKy, InvoiceStatus.Nhap, 3_000_000, 0)]
+    [InlineData(InvoiceType.DinhKy, InvoiceStatus.DaThanhToan, 3_000_000, 3_000_000)]
+    [InlineData(InvoiceType.DinhKy, InvoiceStatus.DaHuy, 3_000_000, 0)]
+    [InlineData(InvoiceType.DinhKy, InvoiceStatus.DaChuyenThanhLy, 2_492_500, 0)]
+    [InlineData(InvoiceType.ThanhLy, InvoiceStatus.Nhap, -1_500_000, 0)]
+    [InlineData(InvoiceType.ThanhLy, InvoiceStatus.DaThanhToan, -1_500_000, 0)]
+    public void RemainingToReport_KhongGui_KhiHoaDonKhongConPhaiThu(
+        InvoiceType type, InvoiceStatus status, long total, long paid)
+    {
+        // Đã chuyển vào thanh lý: phần nợ đã nằm trong hóa đơn thanh lý (FR-92), gửi cả hai thì trợ lý tính trùng nợ.
+        Assert.Null(AssistantScope.RemainingToReport(type, status, total, paid));
+    }
+
+    [Theory]
+    [InlineData(InvoiceStatus.ChoNguoiThueXacNhan)]
+    [InlineData(InvoiceStatus.ChoHoanCoc)]
+    public void RemainingToReport_TrangThaiCuaThanhLy_KhongApChoHoaDonDinhKy(InvoiceStatus status)
+    {
+        Assert.Null(AssistantScope.RemainingToReport(InvoiceType.DinhKy, status, 3_000_000, 0));
+    }
 }

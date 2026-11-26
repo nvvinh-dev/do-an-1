@@ -6,7 +6,7 @@ File hỏi đáp cho trợ lý AI (FR-130). Trợ lý chỉ trả lời câu h�
 
 ### 1. Tôi quên mật khẩu thì làm sao?
 
-Ở màn **Đăng nhập**, bấm **Quên mật khẩu**, nhập email đã đăng ký. Hệ thống gửi email có đường dẫn đặt lại mật khẩu; mở đường dẫn đó và nhập mật khẩu mới. Mỗi giờ chỉ gửi được 3 lần yêu cầu. Đã đăng nhập thì đổi mật khẩu ở màn **Tài khoản**.
+Ở màn **Đăng nhập**, bấm **Quên mật khẩu**, nhập email đã đăng ký. Hệ thống gửi email có đường dẫn đặt lại mật khẩu; mở đường dẫn đó và nhập mật khẩu mới. Mỗi giờ chỉ gửi được 3 lần yêu cầu. Đã đăng nhập thì đổi mật khẩu ở màn **Tài khoản** của mình (liên kết tài khoản trên layout).
 
 ### 2. Tôi đổi họ tên hoặc số điện thoại ở đâu?
 
