@@ -42,6 +42,7 @@ import type { PaymentMethod } from '@/types/paymentTypes'
 import type { CompleteSettlementRequest, RoomNextStatus, SettlementInvoiceRequest } from '@/types/settlementTypes'
 import { formatDate } from '@/utils/formatDate'
 import { formatDateTime } from '@/utils/formatDateTime'
+import { getInvoiceDisplayStatus } from '@/utils/getInvoiceDisplayStatus'
 import { getSettlementActions, type SettlementActions } from '@/utils/getSettlementActions'
 import { getVietnamToday } from '@/utils/getVietnamToday'
 import { getPaymentMethodLabel } from '@/utils/paymentMethodLabels'
@@ -159,7 +160,7 @@ function SettlementContent({ contract, invoice }: { contract: ContractDetail; in
         title={`Thanh lý phòng ${contract.room.code}`}
         status={
           invoice ? (
-            <StatusBadge kind="invoice" status={invoice.status} />
+            <StatusBadge kind="invoice" status={getInvoiceDisplayStatus(invoice)} />
           ) : (
             <StatusBadge kind="contract" status={contract.status} />
           )

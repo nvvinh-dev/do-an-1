@@ -22,6 +22,7 @@ export default function AdminLayout() {
           tint: 'indigo',
           count: dashboard?.pendingLandlordApplications,
           countLabel: 'hồ sơ chờ duyệt',
+          countSearch: '?status=ChoDuyet',
         },
         { label: 'Tài khoản', to: '/admin/users', icon: UsersRound, tint: 'emerald' },
         { label: 'Nhật ký', to: '/admin/audit-logs', icon: History, tint: 'slate' },

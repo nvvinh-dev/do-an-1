@@ -38,6 +38,11 @@ export interface SidebarNavItem {
   count?: number
   /** Đọc kèm số đếm cho trình đọc màn hình. */
   countLabel?: string
+  /**
+   * Query mở sẵn bộ lọc của các việc đang chờ, ví dụ `?status=ChoDuyet`: chỉ dùng khi `count` > 0, để bấm mục
+   * có số là thấy ngay đúng các việc đó (docs/frontend-screens.md mục 1).
+   */
+  countSearch?: string
 }
 
 export interface SidebarNavGroup {
@@ -89,7 +94,7 @@ function SidebarNav({ homePath, groups }: Pick<SidebarLayoutProps, 'homePath' | 
                   return (
                     <SidebarMenuItem key={item.to}>
                       <Link
-                        to={item.to}
+                        to={{ pathname: item.to, search: (item.count ?? 0) > 0 ? item.countSearch : undefined }}
                         onClick={closeOnMobile}
                         aria-current={isActive ? 'page' : undefined}
                         className={cn(navLinkClass, isActive && activeLinkClass)}

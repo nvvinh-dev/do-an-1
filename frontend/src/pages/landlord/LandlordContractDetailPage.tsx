@@ -21,6 +21,7 @@ import ConfirmDialog from '@/components/ConfirmDialog'
 import CountdownText from '@/components/CountdownText'
 import FormDialog, { FormDialogBody } from '@/components/FormDialog'
 import MoneyText from '@/components/MoneyText'
+import MoreActionsMenu, { type MoreAction } from '@/components/MoreActionsMenu'
 import DetailCard, { DetailRow } from '@/components/DetailCard'
 import DetailHeader from '@/components/DetailHeader'
 import DetailLayout from '@/components/DetailLayout'
@@ -64,6 +65,7 @@ import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDate } from '@/utils/formatDate'
 import { formatDateTime } from '@/utils/formatDateTime'
 import { formatMeterIndex } from '@/utils/formatMeterIndex'
+import { getInvoiceDisplayStatus } from '@/utils/getInvoiceDisplayStatus'
 import { canShowContractInvoices, getLandlordContractActions } from '@/utils/getLandlordContractActions'
 import { getMoveOutNoticeActions } from '@/utils/getMoveOutNoticeActions'
 import { getVietnamToday } from '@/utils/getVietnamToday'
@@ -164,8 +166,11 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
     onOpenChange: (open: boolean) => setOpenDialog(open ? dialog : null),
   })
 
-  // Ba nút việc chính (gửi, nhận cọc, hoàn cọc) nằm trong khối "Cần bạn làm gì"; các nút còn lại ở đầu trang.
+  // Ba nút việc chính (gửi, nhận cọc, hoàn cọc) nằm trong khối "Cần bạn làm gì"; nút trả phòng nằm trong khối
+  // Trả phòng; đầu trang giữ lập hóa đơn, thanh lý, sửa, còn thao tác ít dùng và hủy vào Thao tác khác.
   const buttons: ReactNode[] = []
+  const moreActions: MoreAction[] = []
+  const moveOutButtons: ReactNode[] = []
   const primaryButtons: ReactNode[] = []
   if (actions.canSend) {
     primaryButtons.push(
@@ -212,7 +217,7 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
     )
   }
   if (moveOutActions.canSend) {
-    buttons.push(
+    moveOutButtons.push(
       <Button
         key="moveOutNotice"
         type="button"
@@ -225,7 +230,7 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
     )
   }
   if (moveOutActions.canWithdraw) {
-    buttons.push(
+    moveOutButtons.push(
       <Button
         key="withdrawMoveOutNotice"
         type="button"
@@ -248,31 +253,33 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
     )
   }
   if (actions.canEditInitialMeter) {
-    buttons.push(
-      <Button key="meter" type="button" variant="outline" onClick={() => setOpenDialog('initialMeter')}>
-        <Gauge />
-        Sửa chỉ số đầu
-      </Button>,
-    )
+    moreActions.push({ key: 'meter', label: 'Sửa chỉ số đầu', icon: Gauge, onSelect: () => setOpenDialog('initialMeter') })
   }
   if (actions.canRecall) {
-    buttons.push(
-      <Button key="recall" type="button" variant="outline" onClick={() => setOpenDialog('recall')}>
-        <Undo2 />
-        Thu hồi để sửa
-      </Button>,
-    )
+    moreActions.push({ key: 'recall', label: 'Thu hồi để sửa', icon: Undo2, onSelect: () => setOpenDialog('recall') })
   }
   if (actions.canCancel) {
-    buttons.push(
-      <Button key="cancel" type="button" variant="destructive" onClick={() => setOpenDialog('cancel')}>
-        <CircleX />
-        Hủy hợp đồng
-      </Button>,
-    )
+    moreActions.push({
+      key: 'cancel',
+      label: 'Hủy hợp đồng',
+      icon: CircleX,
+      onSelect: () => setOpenDialog('cancel'),
+      destructive: true,
+    })
+  }
+  if (moreActions.length > 0) {
+    buttons.push(<MoreActionsMenu key="more" actions={moreActions} />)
   }
 
   const primaryActions = primaryButtons.length > 0 ? <>{primaryButtons}</> : null
+  const moveOutCard = (
+    <MoveOutNoticeCard
+      contract={contract}
+      viewer="Landlord"
+      today={today}
+      actions={moveOutButtons.length > 0 ? <>{moveOutButtons}</> : null}
+    />
+  )
 
   return (
     <>
@@ -324,8 +331,9 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
 
         {contract.status === 'DaHuy' && <DepositRefundSection contract={contract} refundAction={primaryActions} />}
 
-        {/* Lối vào bảng thanh lý đã có ở đầu trang (`getSettlementLink`), nên khối này không lặp lại. */}
-        <MoveOutNoticeCard contract={contract} viewer="Landlord" today={today} />
+        {/* Đã có thông báo thì đây là việc đang diễn ra, đứng trước hóa đơn; chưa có thì chỉ là lối gửi thông báo,
+            xếp sau hóa đơn. Lối vào bảng thanh lý đã có ở đầu trang (`getSettlementLink`), nên khối này không lặp lại. */}
+        {contract.moveOutNotice && moveOutCard}
 
         {actions.showInvoices && (
           <ContractInvoicesSection
@@ -335,6 +343,8 @@ function ContractDetailContent({ contract }: { contract: ContractDetail }) {
             onRetry={() => void invoicesQuery.refetch()}
           />
         )}
+
+        {!contract.moveOutNotice && moveOutCard}
 
         <DetailCard title="Điều khoản">
           <Fact label="Phòng">
@@ -639,10 +649,20 @@ function ContractInvoicesSection({ invoices, isPending, error, onRetry }: Contra
                   </span>
                 </span>
                 <span className="flex flex-wrap items-center gap-3 text-sm">
-                  <span className="tabular-nums">
-                    Đã thu <MoneyText amount={invoice.paidAmount} /> / <MoneyText amount={invoice.totalAmount} />
-                  </span>
-                  <StatusBadge kind="invoice" status={invoice.status} />
+                  {invoice.type === 'ThanhLy' ? (
+                    // Số dư thanh lý kèm chiều (FR-58): số âm là tiền Chủ trọ hoàn, không phải "Đã thu 0 đ / −… đ".
+                    <MoneyText
+                      amount={invoice.totalAmount}
+                      settlementBalance
+                      settled={invoice.status === 'DaThanhToan'}
+                      className="font-medium"
+                    />
+                  ) : (
+                    <span className="tabular-nums">
+                      Đã thu <MoneyText amount={invoice.paidAmount} /> / <MoneyText amount={invoice.totalAmount} />
+                    </span>
+                  )}
+                  <StatusBadge kind="invoice" status={getInvoiceDisplayStatus(invoice)} />
                 </span>
               </Link>
             </li>

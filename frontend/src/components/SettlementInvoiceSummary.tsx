@@ -6,6 +6,7 @@ import StatusBadge from '@/components/StatusBadge'
 import type { InvoiceDetail } from '@/types/invoiceTypes'
 import { formatDate } from '@/utils/formatDate'
 import { formatMeterIndex } from '@/utils/formatMeterIndex'
+import { getInvoiceDisplayStatus } from '@/utils/getInvoiceDisplayStatus'
 import { getInvoiceLineCategoryLabel } from '@/utils/invoiceLineCategoryLabels'
 
 interface SettlementInvoiceSummaryProps {
@@ -29,7 +30,7 @@ export default function SettlementInvoiceSummary({ invoice, invoicePath }: Settl
         <dl className="grid gap-4 text-sm md:grid-cols-[12rem_1fr]">
           <dt className="text-muted-foreground">Trạng thái</dt>
           <dd>
-            <StatusBadge kind="invoice" status={invoice.status} />
+            <StatusBadge kind="invoice" status={getInvoiceDisplayStatus(invoice)} />
           </dd>
 
           <dt className="text-muted-foreground">Ngày trả phòng thực tế</dt>
@@ -122,7 +123,12 @@ export default function SettlementInvoiceSummary({ invoice, invoicePath }: Settl
         {invoice.totalAmount === 0 ? (
           <p className="text-sm">Hai bên không còn khoản nào phải trả.</p>
         ) : (
-          <MoneyText amount={invoice.totalAmount} settlementBalance className="text-2xl font-bold" />
+          <MoneyText
+            amount={invoice.totalAmount}
+            settlementBalance
+            settled={invoice.status === 'DaThanhToan'}
+            className="text-2xl font-bold"
+          />
         )}
         {invoice.totalAmount > 0 && invoice.status !== 'Nhap' && invoice.status !== 'ChoNguoiThueXacNhan' && (
           <p className="text-sm text-muted-foreground">
