@@ -176,6 +176,79 @@ public class InvoiceService
     }
 
     /// <summary>
+    /// Danh sách cho màn Chốt số tháng này (api-design mục 9): hợp đồng của Chủ trọ lập được hóa đơn định kỳ hôm nay —
+    /// cùng <see cref="ResolveNextPeriod"/> với lúc lập — hoặc còn hóa đơn định kỳ Nháp chờ phát hành. Xếp theo tên khu
+    /// trọ rồi mã phòng. Khu trọ không thuộc Chủ trọ cho danh sách rỗng, như bộ lọc của <see cref="ListAsync"/>.
+    /// </summary>
+    public async Task<IReadOnlyList<BillingQueueItemResponse>> GetBillingQueueAsync(
+        long landlordUserId,
+        long? propertyId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = _db.Contracts
+            .AsNoTracking()
+            .Where(c => c.Room.Property.LandlordUserId == landlordUserId)
+            .Where(c => Contract.OccupyingStatuses.Contains(c.Status)
+                || c.Invoices.Any(i => i.Type == InvoiceType.DinhKy && i.Status == InvoiceStatus.Nhap));
+
+        if (propertyId is { } id)
+        {
+            query = query.Where(c => c.Room.PropertyId == id);
+        }
+
+        var contracts = await query
+            .Include(c => c.Invoices)
+            .Include(c => c.Room)
+            .ThenInclude(r => r.Property)
+            .OrderBy(c => c.Room.Property.Name)
+            .ThenBy(c => c.Room.Code)
+            .ThenBy(c => c.Id)
+            .AsSplitQuery()
+            .ToListAsync(cancellationToken);
+
+        var tenantIds = contracts.Select(c => c.TenantUserId).Distinct().ToList();
+        var tenantNames = await _db.Users
+            .AsNoTracking()
+            .Where(u => tenantIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.FullName, cancellationToken);
+
+        var today = VietnamTime.DateOf(DateTimeOffset.UtcNow);
+        var items = new List<BillingQueueItemResponse>();
+
+        foreach (var contract in contracts)
+        {
+            var invoices = contract.Invoices.ToList();
+            var draft = invoices.FirstOrDefault(i => i.Type == InvoiceType.DinhKy && i.Status == InvoiceStatus.Nhap);
+            var periodResult = draft is null ? ResolveNextPeriod(contract, invoices, today) : null;
+
+            if (draft is null && periodResult is not { Succeeded: true })
+            {
+                continue;
+            }
+
+            var period = periodResult?.Value;
+            (decimal Electricity, decimal Water)? previous = period is null ? null : contract.LatestMeterIndexes(invoices);
+
+            items.Add(new BillingQueueItemResponse(
+                contract.Id,
+                contract.Room.Code,
+                contract.Room.Property.Name,
+                tenantNames.GetValueOrDefault(contract.TenantUserId) ?? string.Empty,
+                contract.ElectricityUnitPrice,
+                contract.WaterUnitPrice,
+                period?.Start,
+                period?.End,
+                period?.DaysCharged,
+                period?.DaysInMonth,
+                previous?.Electricity,
+                previous?.Water,
+                draft?.Id));
+        }
+
+        return items;
+    }
+
+    /// <summary>
     /// Tính thử hóa đơn định kỳ kỳ kế tiếp với body của lúc lập: cùng kiểm tra và cùng công thức (BR-14, BR-15) nhưng
     /// không lưu, không ghi nhật ký, không gửi thông báo, không kiểm tra ảnh đồng hồ (api-design mục 9).
     /// </summary>
