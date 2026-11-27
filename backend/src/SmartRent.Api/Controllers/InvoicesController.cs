@@ -120,6 +120,15 @@ public class InvoicesController : ControllerBase
         return Ok(result);
     }
 
+    /// <summary>
+    /// Danh sách chốt số tháng này: hợp đồng của Chủ trọ lập được hóa đơn định kỳ hôm nay hoặc còn hóa đơn định kỳ Nháp,
+    /// lọc theo propertyId nếu có.
+    /// </summary>
+    [HttpGet("invoices/billing-queue")]
+    [Authorize(Roles = AppRoles.Landlord)]
+    public async Task<IActionResult> BillingQueue([FromQuery] long? propertyId, CancellationToken cancellationToken)
+        => Ok(await _service.GetBillingQueueAsync(this.CurrentUserId(), propertyId, cancellationToken));
+
     /// <summary>Chi tiết hóa đơn, gồm chỉ số, đơn giá, cách tính và mã VietQR cho người thuê khi còn phải trả.</summary>
     [HttpGet("invoices/{id:long}")]
     [Authorize(Roles = $"{AppRoles.Tenant},{AppRoles.Landlord}")]

@@ -40,7 +40,15 @@ export default function LandlordLayout() {
           countLabel: 'báo thanh toán chờ xác nhận',
           countSearch: '?status=ChoXacNhan',
         },
-        { label: 'Sự cố', to: '/landlord/maintenance-requests', icon: Wrench, tint: 'rose' },
+        {
+          label: 'Sự cố',
+          to: '/landlord/maintenance-requests',
+          icon: Wrench,
+          tint: 'rose',
+          count: pending?.newMaintenanceRequests,
+          countLabel: 'sự cố mới',
+          countSearch: '?status=Moi',
+        },
       ],
     },
     {

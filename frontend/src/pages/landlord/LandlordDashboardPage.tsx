@@ -32,6 +32,7 @@ import { formatGreetingDate } from '@/utils/formatGreetingDate'
 import { formatMonth } from '@/utils/formatMonth'
 import { formatPercentChange, getMonthOverMonthChange } from '@/utils/getMonthOverMonthChange'
 import { getOccupancyPercent } from '@/utils/getOccupancyPercent'
+import { sumPendingActions } from '@/utils/sumPendingActions'
 
 const NEW_PROPERTY_PATH = '/landlord/properties/new'
 /** Số thẻ khu trọ tối đa trên Tổng quan; xem hết ở L2. */
@@ -46,7 +47,7 @@ const MAX_PROPERTY_CARDS = 4
 export default function LandlordDashboardPage() {
   const dashboardQuery = useLandlordDashboard()
   const { data: user } = useCurrentUser()
-  const pendingTotal = dashboardQuery.data ? sumPendingActions(dashboardQuery.data) : null
+  const pendingTotal = dashboardQuery.data ? sumPendingActions(dashboardQuery.data.pendingActions) : null
 
   return (
     <section className="flex flex-col gap-6">
@@ -85,10 +86,6 @@ export default function LandlordDashboardPage() {
       )}
     </section>
   )
-}
-
-function sumPendingActions({ pendingActions }: LandlordDashboard): number {
-  return pendingActions.rentalRequests + pendingActions.paymentReports + pendingActions.contractsAwaitingDeposit
 }
 
 function DashboardContent({ dashboard }: { dashboard: LandlordDashboard }) {
@@ -176,7 +173,10 @@ function StatCards({ dashboard }: { dashboard: LandlordDashboard }) {
   )
 }
 
-/** Việc cần xử lý (docs/design-system.md mục 5); bộ lọc nằm trên query của URL để danh sách mở đúng trạng thái. */
+/**
+ * Việc cần xử lý (docs/frontend-screens.md mục 6, docs/design-system.md mục 5), xếp theo luồng cho thuê: yêu cầu
+ * thuê → hợp đồng, cọc → hóa đơn → sự cố → trả phòng. Bộ lọc nằm trên query của URL để danh sách mở đúng trạng thái.
+ */
 function PendingActions({ dashboard }: { dashboard: LandlordDashboard }) {
   const { pendingActions } = dashboard
   const items: PendingActionItem[] = [
@@ -185,24 +185,64 @@ function PendingActions({ dashboard }: { dashboard: LandlordDashboard }) {
       count: pendingActions.rentalRequests,
       title: 'Yêu cầu thuê chờ duyệt',
       hint: 'Người thuê đang chờ bạn phản hồi',
-      emptyHint: 'Không có yêu cầu nào đang chờ duyệt',
       verb: 'Duyệt',
     },
     {
-      to: '/landlord/invoices?status=ChoXacNhan',
-      count: pendingActions.paymentReports,
-      title: 'Báo thanh toán chờ xác nhận',
-      hint: 'Người thuê đã báo chuyển tiền',
-      emptyHint: 'Không có báo thanh toán nào',
-      verb: 'Xác nhận',
+      to: '/landlord/rental-requests?status=DaDuyet',
+      count: pendingActions.approvedRentalRequests,
+      title: 'Yêu cầu đã duyệt chờ lập hợp đồng',
+      hint: 'Lập hợp đồng trước khi hết hạn giữ chỗ',
+      verb: 'Lập',
     },
     {
       to: '/landlord/contracts?status=ChoNhanCoc',
       count: pendingActions.contractsAwaitingDeposit,
       title: 'Hợp đồng chờ nhận cọc',
       hint: 'Xác nhận khi đã nhận tiền cọc',
-      emptyHint: 'Không có hợp đồng nào chờ cọc',
       verb: 'Xem',
+    },
+    {
+      to: '/landlord/invoices?status=ChoXacNhan',
+      count: pendingActions.paymentReports,
+      title: 'Báo thanh toán chờ xác nhận',
+      hint: 'Người thuê đã báo chuyển tiền',
+      verb: 'Xác nhận',
+    },
+    {
+      // Chưa có màn Chốt số tháng này nên tạm mở các hợp đồng đang hiệu lực (docs/frontend-screens.md mục 6).
+      to: '/landlord/contracts?status=DangHieuLuc',
+      count: pendingActions.invoicesToCreate,
+      title: 'Hợp đồng cần lập hóa đơn tháng này',
+      hint: 'Chốt số điện nước rồi lập, phát hành hóa đơn',
+      verb: 'Lập',
+    },
+    {
+      to: '/landlord/invoices?status=QuaHan',
+      count: pendingActions.overdueInvoices,
+      title: 'Hóa đơn quá hạn',
+      hint: 'Đã qua hạn thanh toán mà chưa trả đủ',
+      verb: 'Xem',
+    },
+    {
+      to: '/landlord/maintenance-requests?status=Moi',
+      count: pendingActions.newMaintenanceRequests,
+      title: 'Sự cố mới',
+      hint: 'Người thuê vừa báo, chưa được tiếp nhận',
+      verb: 'Xử lý',
+    },
+    {
+      to: '/landlord/contracts?status=DangThanhLy',
+      count: pendingActions.settlementsToPrepare,
+      title: 'Hợp đồng cần lập bảng thanh lý',
+      hint: 'Chốt số cuối, khấu trừ rồi gửi Người thuê',
+      verb: 'Lập',
+    },
+    {
+      to: '/landlord/contracts?status=DaHuy',
+      count: pendingActions.depositsToRefund,
+      title: 'Khoản cọc cần hoàn',
+      hint: 'Hoàn tiền cọc rồi ghi nhận đã hoàn',
+      verb: 'Hoàn',
     },
   ]
 

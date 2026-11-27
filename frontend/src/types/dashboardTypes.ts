@@ -29,11 +29,21 @@ export interface MonthlyRevenue {
   amount: number
 }
 
-/** Việc cần xử lý của Chủ trọ — chỉ là số đếm, giao diện dẫn tới danh sách tương ứng. */
+/**
+ * Việc cần xử lý của Chủ trọ — chỉ là số đếm, giao diện dẫn tới danh sách tương ứng (docs/api-design.md mục 12).
+ * `invoicesToCreate` là số dòng của danh sách Chốt số tháng này; `depositsToRefund` gồm hợp đồng `DaHuy` chưa hoàn
+ * cọc và hóa đơn thanh lý `ChoHoanCoc`.
+ */
 export interface LandlordPendingActions {
   rentalRequests: number
   paymentReports: number
   contractsAwaitingDeposit: number
+  approvedRentalRequests: number
+  invoicesToCreate: number
+  overdueInvoices: number
+  newMaintenanceRequests: number
+  settlementsToPrepare: number
+  depositsToRefund: number
 }
 
 /**
@@ -58,10 +68,16 @@ export interface TenantDashboardContract {
   rentPrice: number
 }
 
-/** Việc cần xử lý của Người thuê — hợp đồng chờ mình xác nhận và bảng thanh lý chờ mình đồng ý. */
+/**
+ * Việc cần xử lý của Người thuê (docs/api-design.md mục 12). `invoicesToPay` không gồm hóa đơn `ChoXacNhan` — đã
+ * báo thanh toán, đang chờ Chủ trọ.
+ */
 export interface TenantPendingActions {
   contractsToConfirm: number
   settlementsToConfirm: number
+  invoicesToPay: number
+  depositsToTransfer: number
+  maintenanceToConfirm: number
 }
 
 /** `GET /dashboard/tenant`. `totalPaid` là tổng đã được Chủ trọ xác nhận thu, không tính tiền cọc. */

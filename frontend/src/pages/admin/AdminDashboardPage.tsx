@@ -79,7 +79,6 @@ function DashboardContent({ dashboard }: { dashboard: AdminDashboard }) {
       count: pendingLandlordApplications,
       title: 'Hồ sơ Chủ trọ chờ duyệt',
       hint: 'Gọi điện xác minh số điện thoại trước khi duyệt',
-      emptyHint: 'Không có hồ sơ nào chờ duyệt',
       verb: 'Duyệt',
     },
   ]
