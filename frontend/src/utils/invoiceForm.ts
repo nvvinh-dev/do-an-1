@@ -1,7 +1,15 @@
 import type { UploadedImage } from '@/types/fileTypes'
 import type { ContractInvoiceListItem, InvoiceDetail, PeriodicInvoiceRequest } from '@/types/invoiceTypes'
-import { normalizeMeterIndex } from '@/utils/contractForm'
-import { normalizeLineAmount, photoOf, toMeterInput } from '@/utils/settlementForm'
+import type { MeterReading } from '@/types/contractTypes'
+import { normalizeMeterIndex, validateMeterIndex } from '@/utils/contractForm'
+import {
+  normalizeLineAmount,
+  photoOf,
+  toMeterInput,
+  validateLineAmount,
+  validateLineDescription,
+  validateNotBelowPrevious,
+} from '@/utils/settlementForm'
 import { normalizeRoomMoney } from '@/utils/validateRoomInput'
 
 const MAX_AMOUNT = 999999999999
@@ -70,6 +78,38 @@ export function toPeriodicInvoiceRequest(values: InvoiceFormValues): PeriodicInv
       amount: Number(normalizeLineAmount(line.amount)),
       relatedInvoiceId: line.relatedInvoiceId === '' ? null : Number(line.relatedInvoiceId),
     })),
+  }
+}
+
+/**
+ * Body gửi `POST /contracts/{id}/invoices/preview` khi form đã đủ để server tính thử: hai chỉ số hợp lệ, không nhỏ
+ * hơn chỉ số cũ, mọi dòng điều chỉnh có mô tả và số tiền hợp lệ; chưa đủ thì `null` để không gọi. Không gửi ảnh vì
+ * xem trước bỏ qua ảnh (api-design mục 9), nhờ vậy tải ảnh xong không làm form gọi lại.
+ */
+export function getPreviewRequest(
+  values: InvoiceFormValues,
+  previous: MeterReading | null,
+): PeriodicInvoiceRequest | null {
+  const meterValid = (input: string, previousIndex: number | null) =>
+    validateMeterIndex(input) === true && validateNotBelowPrevious(input, previousIndex) === true
+
+  if (
+    !meterValid(values.currentElectricityIndex, previous?.electricityIndex ?? null) ||
+    !meterValid(values.currentWaterIndex, previous?.waterIndex ?? null)
+  ) {
+    return null
+  }
+
+  const linesValid = values.adjustmentLines.every(
+    (line) =>
+      validateLineDescription(line.description) === true && validateLineAmount(line.amount, 'DieuChinhKhac') === true,
+  )
+  if (!linesValid) return null
+
+  return {
+    ...toPeriodicInvoiceRequest(values),
+    electricityMeterPhotoPath: null,
+    waterMeterPhotoPath: null,
   }
 }
 

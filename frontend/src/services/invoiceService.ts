@@ -4,6 +4,8 @@ import type {
   InvoiceDetail,
   InvoiceListItem,
   InvoiceListParams,
+  InvoicePreview,
+  NextInvoicePeriod,
   PaymentReport,
   PeriodicInvoiceRequest,
   ReportPaymentRequest,
@@ -29,6 +31,18 @@ export async function getInvoice(id: number): Promise<InvoiceDetail> {
 // có chỉ số đầu. Chỉ Chủ trọ sở hữu gọi được.
 export async function getLatestContractMeterReading(contractId: number): Promise<MeterReading> {
   const response = await api.get<MeterReading>(`/contracts/${contractId}/meter-readings/latest`)
+  return response.data
+}
+
+// Kỳ và chỉ số cũ của hóa đơn định kỳ sắp lập. Chưa lập được lúc này trả `409` với đúng `detail` của lúc lập.
+export async function getNextInvoicePeriod(contractId: number): Promise<NextInvoicePeriod> {
+  const response = await api.get<NextInvoicePeriod>(`/contracts/${contractId}/invoices/next-period`)
+  return response.data
+}
+
+// Tính thử hóa đơn kỳ kế tiếp với body của lúc lập, không lưu; cùng các lỗi `409`, `422` như `createInvoice`.
+export async function previewInvoice(contractId: number, request: PeriodicInvoiceRequest): Promise<InvoicePreview> {
+  const response = await api.post<InvoicePreview>(`/contracts/${contractId}/invoices/preview`, request)
   return response.data
 }
 

@@ -149,6 +149,43 @@ export interface PeriodicInvoiceRequest {
   adjustmentLines: InvoiceAdjustmentLineRequest[]
 }
 
+/**
+ * `GET /contracts/{contractId}/invoices/next-period`: kỳ và chỉ số cũ của hóa đơn định kỳ sắp lập (docs/api-design.md
+ * mục 9). Ngày thuần `YYYY-MM-DD`; `daysCharged` nhỏ hơn `daysInMonth` khi kỳ không trọn tháng.
+ */
+export interface NextInvoicePeriod {
+  periodStart: string
+  periodEnd: string
+  daysCharged: number
+  daysInMonth: number
+  previousElectricityIndex: number
+  previousWaterIndex: number
+}
+
+/**
+ * `POST /contracts/{contractId}/invoices/preview`: cách tính do server tính thử, không lưu. Cùng tên trường với
+ * `InvoiceDetail`; `adjustmentAmount` là tổng các dòng điều chỉnh.
+ */
+export interface InvoicePreview {
+  periodStart: string
+  periodEnd: string
+  daysCharged: number
+  daysInMonth: number
+  previousElectricityIndex: number
+  currentElectricityIndex: number
+  electricityUnitPrice: number
+  electricityAmount: number
+  previousWaterIndex: number
+  currentWaterIndex: number
+  waterUnitPrice: number
+  waterAmount: number
+  rentAmount: number
+  serviceFees: { name: string; amount: number }[]
+  serviceFeeAmount: number
+  adjustmentAmount: number
+  totalAmount: number
+}
+
 /** Body của `POST /invoices/{id}/payment-reports`: số đồng nguyên và ảnh minh chứng (`MinhChungThanhToan`). */
 export interface ReportPaymentRequest {
   reportedAmount: number

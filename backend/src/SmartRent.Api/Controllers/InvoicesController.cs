@@ -45,6 +45,34 @@ public class InvoicesController : ControllerBase
             : Problem(detail: result.Error, statusCode: result.StatusCode);
     }
 
+    /// <summary>Kỳ và chỉ số cũ của hóa đơn định kỳ sắp lập; chưa lập được thì 409 như lúc lập.</summary>
+    [HttpGet("contracts/{contractId:long}/invoices/next-period")]
+    [Authorize(Roles = AppRoles.Landlord)]
+    public async Task<IActionResult> NextPeriod(long contractId, CancellationToken cancellationToken)
+    {
+        var result = await _service.GetNextPeriodAsync(this.CurrentUserId(), contractId, cancellationToken);
+
+        return result.Succeeded
+            ? Ok(result.Value)
+            : Problem(detail: result.Error, statusCode: result.StatusCode);
+    }
+
+    /// <summary>Tính thử hóa đơn định kỳ kỳ kế tiếp với body của lúc lập; không lưu, không ghi nhật ký.</summary>
+    [HttpPost("contracts/{contractId:long}/invoices/preview")]
+    [Authorize(Roles = AppRoles.Landlord)]
+    public async Task<IActionResult> PreviewPeriodicInvoice(
+        long contractId,
+        PeriodicInvoiceRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _service.PreviewPeriodicInvoiceAsync(
+            this.CurrentUserId(), contractId, request, cancellationToken);
+
+        return result.Succeeded
+            ? Ok(result.Value)
+            : Problem(detail: result.Error, statusCode: result.StatusCode);
+    }
+
     /// <summary>Hóa đơn của một hợp đồng, kỳ mới trước, không phân trang — người thuê đứng tên hoặc Chủ trọ sở hữu.</summary>
     [HttpGet("contracts/{contractId:long}/invoices")]
     [Authorize(Roles = $"{AppRoles.Tenant},{AppRoles.Landlord}")]
