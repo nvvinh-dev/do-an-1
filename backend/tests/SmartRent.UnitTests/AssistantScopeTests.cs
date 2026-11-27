@@ -160,6 +160,39 @@ public class AssistantScopeTests
         Assert.Equal([9L, 5], ordered);
     }
 
+    public static TheoryData<InvoiceType, InvoiceStatus> AllInvoiceTypeStatusPairs()
+    {
+        var data = new TheoryData<InvoiceType, InvoiceStatus>();
+
+        foreach (var type in Enum.GetValues<InvoiceType>())
+        {
+            foreach (var status in Enum.GetValues<InvoiceStatus>())
+            {
+                data.Add(type, status);
+            }
+        }
+
+        return data;
+    }
+
+    [Theory]
+    [MemberData(nameof(AllInvoiceTypeStatusPairs))]
+    public void OrderInvoicesToSend_XepTruoc_DungKhiIsOutstandingToReport(InvoiceType type, InvoiceStatus status)
+    {
+        // Điều kiện "còn phải thu" viết hai chỗ: IsOutstandingToReport và biểu thức EF Core dịch được trong
+        // OrderInvoicesToSend. Hóa đơn cần kiểm ở kỳ cũ (tháng 1) chỉ đứng trước hóa đơn đã trả kỳ mới (tháng 12) khi
+        // được coi là còn phải thu, nên mọi cặp loại × trạng thái phải cho cùng kết quả ở hai chỗ.
+        var invoices = new List<Invoice>
+        {
+            NewInvoice(1, type, status, 1),
+            NewInvoice(2, InvoiceType.DinhKy, InvoiceStatus.DaThanhToan, 12)
+        };
+
+        var ordered = AssistantScope.OrderInvoicesToSend(invoices.AsQueryable()).ToList();
+
+        Assert.Equal(AssistantScope.IsOutstandingToReport(type, status), ordered[0].Id == 1);
+    }
+
     [Theory]
     [InlineData(0, 12)]
     [InlineData(3, 12)]

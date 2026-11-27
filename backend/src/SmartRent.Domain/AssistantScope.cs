@@ -15,7 +15,7 @@ public static class AssistantScope
     /// <summary>
     /// Gửi ít nhất 12 hóa đơn (FR-128): hóa đơn còn phải thu ít hơn 12 thì bù bằng hóa đơn kỳ mới hơn cho đủ 12.
     /// </summary>
-    public const int MaxInvoices = 12;
+    public const int MinInvoices = 12;
 
     /// <summary>
     /// Hóa đơn còn phải thu gửi hết, tối đa 50 (FR-128) — đủ cho khu trọ vài chục phòng chưa đóng tiền mà câu gửi AI
@@ -76,11 +76,11 @@ public static class AssistantScope
     /// <summary>
     /// Số hóa đơn gửi AI khi đầu danh sách xếp theo <see cref="OrderInvoicesToSend"/> có
     /// <paramref name="outstandingCount"/> hóa đơn còn phải thu: gửi hết, tối đa <see cref="MaxOutstandingInvoices"/>,
-    /// và không ít hơn <see cref="MaxInvoices"/>.
+    /// và không ít hơn <see cref="MinInvoices"/>.
     /// </summary>
     public static int InvoicesToSend(int outstandingCount)
     {
-        return Math.Max(MaxInvoices, Math.Min(outstandingCount, MaxOutstandingInvoices));
+        return Math.Max(MinInvoices, Math.Min(outstandingCount, MaxOutstandingInvoices));
     }
 
     /// <summary>

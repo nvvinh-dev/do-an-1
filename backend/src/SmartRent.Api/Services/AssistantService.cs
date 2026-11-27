@@ -391,7 +391,7 @@ public class AssistantService
             ? "DỮ LIỆU của Admin không có bản ghi nào. Câu hỏi về hợp đồng, hóa đơn, sự cố, phòng thì từ chối, không " +
               "đưa số liệu và không chỉ tới màn Hợp đồng, Hóa đơn hay Sự cố vì Admin không có các màn này."
             : "DỮ LIỆU chỉ gồm hợp đồng chưa kết thúc; mọi hóa đơn còn phải thu (tối đa " +
-              $"{AssistantScope.MaxOutstandingInvoices}) cùng các hóa đơn gần nhất cho đủ {AssistantScope.MaxInvoices} " +
+              $"{AssistantScope.MaxOutstandingInvoices}) cùng các hóa đơn gần nhất cho đủ {AssistantScope.MinInvoices} " +
               $"hóa đơn; {AssistantScope.MaxMaintenanceRequests} sự cố gần nhất. Hỏi bản ghi cũ hơn hoặc đã kết thúc thì nói không " +
               "có trong dữ liệu trợ lý được xem và chỉ tới màn hình tương ứng (Hợp đồng, Hóa đơn, Sự cố).";
 
