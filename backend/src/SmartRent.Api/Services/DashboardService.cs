@@ -17,10 +17,12 @@ namespace SmartRent.Api.Services;
 public class DashboardService
 {
     private readonly AppDbContext _db;
+    private readonly InvoiceService _invoiceService;
 
-    public DashboardService(AppDbContext db)
+    public DashboardService(AppDbContext db, InvoiceService invoiceService)
     {
         _db = db;
+        _invoiceService = invoiceService;
     }
 
     /// <summary>FR-65: số tài khoản theo vai trò, khu trọ, phòng và hồ sơ Chủ trọ chờ duyệt của toàn hệ thống.</summary>
@@ -132,6 +134,41 @@ public class DashboardService
                      && (c.RentalRequest == null
                          || c.RentalRequest.ProcessedAt == null
                          || c.RentalRequest.ProcessedAt >= holdFrom),
+                cancellationToken),
+            // Đã duyệt mà chưa lập hợp đồng: còn hạn giữ chỗ thì Chủ trọ còn lập được — cùng điều kiện với
+            // RentalRequest.IsHoldingRoom.
+            await _db.RentalRequests.CountAsync(
+                r => r.Room.Property.LandlordUserId == landlordUserId
+                     && r.Status == RentalRequestStatus.DaDuyet
+                     && r.ProcessedAt >= holdFrom,
+                cancellationToken),
+            await _invoiceService.CountBillingQueueAsync(landlordUserId, cancellationToken),
+            // Chỉ trạng thái đã gắn, để số khớp danh sách lọc Quá hạn; gắn cờ trễ không chặn thao tác nào.
+            await _db.Invoices.CountAsync(
+                i => i.Contract.Room.Property.LandlordUserId == landlordUserId
+                     && i.Status == InvoiceStatus.QuaHan,
+                cancellationToken),
+            await _db.MaintenanceRequests.CountAsync(
+                m => m.Contract.Room.Property.LandlordUserId == landlordUserId
+                     && m.Status == MaintenanceRequestStatus.Moi,
+                cancellationToken),
+            // Bảng thanh lý còn Nháp vẫn là việc của Chủ trọ — chưa gửi cho người thuê.
+            await _db.Contracts.CountAsync(
+                c => c.Room.Property.LandlordUserId == landlordUserId
+                     && c.Status == ContractStatus.DangThanhLy
+                     && !c.Invoices.Any(i => i.Type == InvoiceType.ThanhLy && i.Status != InvoiceStatus.Nhap),
+                cancellationToken),
+            // Cùng điều kiện với Contract.IsAwaitingDepositRefund, cộng bảng thanh lý chờ hoàn phần cọc còn dư.
+            await _db.Contracts.CountAsync(
+                c => c.Room.Property.LandlordUserId == landlordUserId
+                     && c.Status == ContractStatus.DaHuy
+                     && c.DepositReceivedAt != null
+                     && c.DepositRefundedAt == null,
+                cancellationToken)
+            + await _db.Invoices.CountAsync(
+                i => i.Contract.Room.Property.LandlordUserId == landlordUserId
+                     && i.Type == InvoiceType.ThanhLy
+                     && i.Status == InvoiceStatus.ChoHoanCoc,
                 cancellationToken));
 
         return new LandlordDashboardResponse(roomCounts, unpaidInvoices, monthlyRevenue, pendingActions);
@@ -194,6 +231,24 @@ public class DashboardService
                 i => i.Contract.TenantUserId == tenantUserId
                      && i.Type == InvoiceType.ThanhLy
                      && i.Status == InvoiceStatus.ChoNguoiThueXacNhan,
+                cancellationToken),
+            // Không gồm Chờ xác nhận — người thuê đã báo thanh toán, việc đang ở phía Chủ trọ.
+            await _db.Invoices.CountAsync(
+                i => i.Contract.TenantUserId == tenantUserId && Invoice.AwaitingPaymentStatuses.Contains(i.Status),
+                cancellationToken),
+            // Cùng điều kiện với Contract.CanTransferDeposit.
+            await _db.Contracts.CountAsync(
+                c => c.TenantUserId == tenantUserId
+                     && c.Status == ContractStatus.ChoNhanCoc
+                     && c.DepositAmount > 0
+                     && (c.RentalRequest == null
+                         || c.RentalRequest.ProcessedAt == null
+                         || c.RentalRequest.ProcessedAt >= holdFrom),
+                cancellationToken),
+            // Quá 168 giờ mà tác vụ chưa tự đóng thì vẫn xác nhận được (MaintenanceRequest.CanConfirm), nên vẫn tính.
+            await _db.MaintenanceRequests.CountAsync(
+                m => m.Contract.TenantUserId == tenantUserId
+                     && m.Status == MaintenanceRequestStatus.ChoNguoiThueXacNhan,
                 cancellationToken));
 
         return new TenantDashboardResponse(contracts, unpaidInvoices, totalPaid, pendingActions);
