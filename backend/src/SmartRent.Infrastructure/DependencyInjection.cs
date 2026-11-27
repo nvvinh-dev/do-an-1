@@ -56,7 +56,8 @@ public static class DependencyInjection
             services.AddHttpClient<IAiClient, GeminiClient>(client =>
             {
                 client.BaseAddress = new Uri(GeminiClient.BaseAddress);
-                client.Timeout = GeminiClient.Timeout;
+                // GeminiClient tự hủy từng lần gọi (tối đa 10 giây); HttpClient.Timeout chỉ là chặn dự phòng.
+                client.Timeout = GeminiClient.TotalTimeout;
             });
         }
 
