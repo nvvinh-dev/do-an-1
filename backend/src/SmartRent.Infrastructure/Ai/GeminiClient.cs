@@ -15,8 +15,14 @@ namespace SmartRent.Infrastructure.Ai;
 /// </summary>
 public class GeminiClient : IAiClient
 {
-    /// <summary>Chờ AI quá 10 giây thì coi như AI lỗi (FR-122).</summary>
-    public static readonly TimeSpan Timeout = TimeSpan.FromSeconds(10);
+    /// <summary>Mỗi lần gọi Gemini chờ tối đa 10 giây (FR-122).</summary>
+    public static readonly TimeSpan AttemptTimeout = TimeSpan.FromSeconds(10);
+
+    /// <summary>Tổng thời gian chờ, tính cả lần gọi lại, không quá 15 giây (FR-122).</summary>
+    public static readonly TimeSpan TotalTimeout = TimeSpan.FromSeconds(15);
+
+    /// <summary>Gemini trả 500 hoặc 503 thì chờ 1 giây rồi gọi lại đúng một lần (FR-122).</summary>
+    public static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(1);
 
     public const string BaseAddress = "https://generativelanguage.googleapis.com/v1beta/";
 
@@ -42,7 +48,7 @@ public class GeminiClient : IAiClient
 
         try
         {
-            var text = await CallAsync(request, cancellationToken);
+            var text = await CallWithRetryAsync(request, stopwatch, cancellationToken);
 
             // Chỉ ghi thời điểm (có sẵn trong log), endpoint và kết quả — không ghi câu hỏi, câu trả lời (FR-123).
             _logger.LogInformation(
@@ -60,7 +66,38 @@ public class GeminiClient : IAiClient
         }
     }
 
-    private async Task<string> CallAsync(AiRequest request, CancellationToken cancellationToken)
+    private async Task<string> CallWithRetryAsync(
+        AiRequest request, Stopwatch stopwatch, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await CallAsync(request, AttemptTimeout, cancellationToken);
+        }
+        catch (GeminiServerErrorException ex)
+        {
+            // Gemini quá tải hoặc lỗi máy chủ thường trả về ngay và hết sau vài giây, nên gọi lại một lần.
+            // Quá thời gian chờ, 429, 400, 401, 403, 404 không gọi lại: lần sau cũng không khác.
+            _logger.LogWarning(
+                "Goi AI {Operation} loi sau {ElapsedMs} ms: {Reason}, goi lai sau {DelayMs} ms",
+                request.Operation, stopwatch.ElapsedMilliseconds, ex.Message, RetryDelay.TotalMilliseconds);
+        }
+
+        await Task.Delay(RetryDelay, cancellationToken);
+
+        // Lần gọi lại chỉ dùng phần còn lại của tổng 15 giây; lần đầu chờ tối đa 10 giây nên luôn còn ít nhất 4 giây.
+        var remaining = TotalTimeout - stopwatch.Elapsed;
+
+        if (remaining <= TimeSpan.Zero)
+        {
+            throw new AiUnavailableException("Qua thoi gian cho Gemini");
+        }
+
+        return await CallAsync(
+            request, remaining < AttemptTimeout ? remaining : AttemptTimeout, cancellationToken);
+    }
+
+    private async Task<string> CallAsync(
+        AiRequest request, TimeSpan attemptTimeout, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(_options.ApiKey))
         {
@@ -88,15 +125,18 @@ public class GeminiClient : IAiClient
         message.Headers.Add("x-goog-api-key", _options.ApiKey);
         message.Content = JsonContent.Create(body, options: SerializerOptions);
 
+        // Hết thời gian của lần gọi này thì hủy; người gọi tự hủy thì để OperationCanceledException đi tiếp.
+        using var attempt = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        attempt.CancelAfter(attemptTimeout);
+
         HttpResponseMessage response;
 
         try
         {
-            response = await _http.SendAsync(message, cancellationToken);
+            response = await _http.SendAsync(message, attempt.Token);
         }
-        catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
-            // Hết HttpClient.Timeout (10 giây); người gọi tự hủy thì để OperationCanceledException đi tiếp.
             throw new AiUnavailableException("Qua thoi gian cho Gemini", ex);
         }
         catch (HttpRequestException ex)
@@ -109,6 +149,11 @@ public class GeminiClient : IAiClient
             if (!response.IsSuccessStatusCode)
             {
                 // Không ghi body lỗi: chỉ cần mã trạng thái để biết hết hạn mức hay sai key.
+                if (response.StatusCode is HttpStatusCode.InternalServerError or HttpStatusCode.ServiceUnavailable)
+                {
+                    throw new GeminiServerErrorException($"Gemini loi ({(int)response.StatusCode})");
+                }
+
                 throw new AiUnavailableException(response.StatusCode switch
                 {
                     HttpStatusCode.TooManyRequests => "Gemini het han muc (429)",
@@ -123,9 +168,9 @@ public class GeminiClient : IAiClient
             try
             {
                 result = await response.Content.ReadFromJsonAsync<GenerateContentResponse>(
-                    SerializerOptions, cancellationToken);
+                    SerializerOptions, attempt.Token);
             }
-            catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+            catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
             {
                 throw new AiUnavailableException("Qua thoi gian cho Gemini", ex);
             }
@@ -168,6 +213,9 @@ public class GeminiClient : IAiClient
 
         return text.ToString();
     }
+
+    /// <summary>Gemini trả 500 hoặc 503 — lỗi duy nhất được gọi lại một lần.</summary>
+    private sealed class GeminiServerErrorException(string message) : AiUnavailableException(message);
 
     // ------------------------------------------------------- Body gửi đi và nhận về
 

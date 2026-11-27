@@ -5,7 +5,7 @@ namespace SmartRent.Infrastructure.Ai;
 /// không biết đang gọi Gemini thật hay bản giả (<c>Gemini:UseFake</c>).
 /// </summary>
 /// <remarks>
-/// Mọi kiểu thất bại — chưa cấu hình key, quá 10 giây, hết hạn mức, Gemini lỗi, câu trả lời rỗng
+/// Mọi kiểu thất bại — chưa cấu hình key, quá thời gian chờ (FR-122), hết hạn mức, Gemini lỗi, câu trả lời rỗng
 /// hoặc bị chặn — đều ném <see cref="AiUnavailableException"/>. Service bắt exception này và trả
 /// <c>ServiceResult.Fail(503, AiUnavailableException.UserMessage)</c>; không để lọt ra ngoài thành 500.
 /// Lớp này không lưu câu hỏi, câu trả lời và không ghi nội dung vào log (FR-123): dữ liệu đưa vào
