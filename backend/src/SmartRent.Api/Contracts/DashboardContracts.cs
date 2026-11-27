@@ -32,10 +32,20 @@ public record UnpaidInvoicesResponse(int Count, decimal Amount);
 public record MonthlyRevenueResponse(string Month, decimal Amount);
 
 /// <summary>
-/// Việc cần xử lý — chỉ là số đếm, giao diện dẫn tới danh sách tương ứng. Yêu cầu thuê đã quá hạn duyệt và hợp đồng
-/// đã quá hạn giữ chỗ không tính, dù tác vụ định kỳ chưa kịp chuyển trạng thái.
+/// Việc cần xử lý của Chủ trọ (api-design mục 12) — chỉ là số đếm, giao diện dẫn tới danh sách tương ứng. Việc đã quá
+/// hạn mà không còn thao tác được (quá hạn duyệt, quá hạn giữ chỗ) không tính, dù tác vụ định kỳ chưa kịp chuyển trạng
+/// thái. <see cref="InvoicesToCreate"/> bằng số dòng của danh sách Chốt số tháng này.
 /// </summary>
-public record LandlordPendingActionsResponse(int RentalRequests, int PaymentReports, int ContractsAwaitingDeposit);
+public record LandlordPendingActionsResponse(
+    int RentalRequests,
+    int PaymentReports,
+    int ContractsAwaitingDeposit,
+    int ApprovedRentalRequests,
+    int InvoicesToCreate,
+    int OverdueInvoices,
+    int NewMaintenanceRequests,
+    int SettlementsToPrepare,
+    int DepositsToRefund);
 
 /// <summary>
 /// Dashboard Người thuê — FR-68, api-design mục 12. <see cref="TotalPaid"/> là tổng đã được Chủ trọ xác nhận thu trên các
@@ -58,7 +68,12 @@ public record TenantDashboardContractResponse(
     decimal RentPrice);
 
 /// <summary>
-/// Việc cần xử lý của Người thuê — hợp đồng chờ mình xác nhận và bảng thanh lý chờ mình đồng ý. Hợp đồng đã quá hạn giữ
-/// chỗ không tính, dù tác vụ định kỳ chưa kịp hủy.
+/// Việc cần xử lý của Người thuê (api-design mục 12). Hợp đồng đã quá hạn giữ chỗ không tính, dù tác vụ định kỳ chưa kịp
+/// hủy; <see cref="InvoicesToPay"/> không gồm hóa đơn Chờ xác nhận — đã báo thanh toán, đang chờ Chủ trọ.
 /// </summary>
-public record TenantPendingActionsResponse(int ContractsToConfirm, int SettlementsToConfirm);
+public record TenantPendingActionsResponse(
+    int ContractsToConfirm,
+    int SettlementsToConfirm,
+    int InvoicesToPay,
+    int DepositsToTransfer,
+    int MaintenanceToConfirm);

@@ -185,11 +185,7 @@ public class InvoiceService
         long? propertyId,
         CancellationToken cancellationToken = default)
     {
-        var query = _db.Contracts
-            .AsNoTracking()
-            .Where(c => c.Room.Property.LandlordUserId == landlordUserId)
-            .Where(c => Contract.OccupyingStatuses.Contains(c.Status)
-                || c.Invoices.Any(i => i.Type == InvoiceType.DinhKy && i.Status == InvoiceStatus.Nhap));
+        var query = BillingQueueCandidates(landlordUserId);
 
         if (propertyId is { } id)
         {
@@ -218,15 +214,16 @@ public class InvoiceService
         foreach (var contract in contracts)
         {
             var invoices = contract.Invoices.ToList();
-            var draft = invoices.FirstOrDefault(i => i.Type == InvoiceType.DinhKy && i.Status == InvoiceStatus.Nhap);
-            var periodResult = draft is null ? ResolveNextPeriod(contract, invoices, today) : null;
 
-            if (draft is null && periodResult is not { Succeeded: true })
+            var entry = BillingQueueEntryOf(contract, invoices, today);
+
+            if (entry is null)
             {
                 continue;
             }
 
-            var period = periodResult?.Value;
+            var (draft, period) = entry.Value;
+
             (decimal Electricity, decimal Water)? previous = period is null ? null : contract.LatestMeterIndexes(invoices);
 
             items.Add(new BillingQueueItemResponse(
@@ -246,6 +243,50 @@ public class InvoiceService
         }
 
         return items;
+    }
+
+    /// <summary>
+    /// Số dòng của <see cref="GetBillingQueueAsync"/> trên mọi khu trọ của Chủ trọ — <c>invoicesToCreate</c> ở dashboard
+    /// (api-design mục 12), cùng điều kiện để số trên dashboard bằng số dòng màn Chốt số tháng này mở ra.
+    /// </summary>
+    public async Task<int> CountBillingQueueAsync(long landlordUserId, CancellationToken cancellationToken = default)
+    {
+        var contracts = await BillingQueueCandidates(landlordUserId)
+            .Include(c => c.Invoices)
+            .ToListAsync(cancellationToken);
+
+        var today = VietnamTime.DateOf(DateTimeOffset.UtcNow);
+
+        return contracts.Count(c => BillingQueueEntryOf(c, c.Invoices.ToList(), today) is not null);
+    }
+
+    /// <summary>Hợp đồng có thể nằm trong danh sách Chốt số: đang ở phòng hoặc còn hóa đơn định kỳ Nháp.</summary>
+    private IQueryable<Contract> BillingQueueCandidates(long landlordUserId)
+        => _db.Contracts
+            .AsNoTracking()
+            .Where(c => c.Room.Property.LandlordUserId == landlordUserId)
+            .Where(c => Contract.OccupyingStatuses.Contains(c.Status)
+                || c.Invoices.Any(i => i.Type == InvoiceType.DinhKy && i.Status == InvoiceStatus.Nhap));
+
+    /// <summary>
+    /// Hóa đơn định kỳ Nháp chờ phát hành, hoặc kỳ kế tiếp lập được hôm nay theo <see cref="ResolveNextPeriod"/>; null khi
+    /// hợp đồng không thuộc danh sách Chốt số.
+    /// </summary>
+    private static (Invoice? Draft, BillingPeriod? Period)? BillingQueueEntryOf(
+        Contract contract,
+        IReadOnlyList<Invoice> invoices,
+        DateOnly today)
+    {
+        var draft = invoices.FirstOrDefault(i => i.Type == InvoiceType.DinhKy && i.Status == InvoiceStatus.Nhap);
+
+        if (draft is not null)
+        {
+            return (draft, null);
+        }
+
+        var periodResult = ResolveNextPeriod(contract, invoices, today);
+
+        return periodResult.Succeeded ? (null, periodResult.Value) : null;
     }
 
     /// <summary>
