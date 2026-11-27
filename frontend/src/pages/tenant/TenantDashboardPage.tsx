@@ -17,6 +17,7 @@ import { useTenantDashboard } from '@/hooks/useTenantDashboard'
 import type { TenantDashboard, TenantDashboardContract } from '@/types/dashboardTypes'
 import { formatDate } from '@/utils/formatDate'
 import { formatGreetingDate } from '@/utils/formatGreetingDate'
+import { sumPendingActions } from '@/utils/sumPendingActions'
 
 /** Lối tắt tới các màn đã có của Người thuê (docs/frontend-screens.md mục 5, T1). */
 const QUICK_ACTIONS: QuickAction[] = [
@@ -33,7 +34,7 @@ const QUICK_ACTIONS: QuickAction[] = [
 export default function TenantDashboardPage() {
   const dashboardQuery = useTenantDashboard()
   const { data: user } = useCurrentUser()
-  const pendingTotal = dashboardQuery.data ? sumPendingActions(dashboardQuery.data) : null
+  const pendingTotal = dashboardQuery.data ? sumPendingActions(dashboardQuery.data.pendingActions) : null
 
   return (
     <section className="flex flex-col gap-6">
@@ -66,10 +67,6 @@ export default function TenantDashboardPage() {
   )
 }
 
-function sumPendingActions({ pendingActions }: TenantDashboard): number {
-  return pendingActions.contractsToConfirm + pendingActions.settlementsToConfirm
-}
-
 function DashboardContent({ dashboard }: { dashboard: TenantDashboard }) {
   const { pendingActions, contracts, unpaidInvoices, totalPaid } = dashboard
 
@@ -80,15 +77,35 @@ function DashboardContent({ dashboard }: { dashboard: TenantDashboard }) {
       count: pendingActions.contractsToConfirm,
       title: 'Hợp đồng chờ bạn xác nhận',
       hint: 'Đọc kỹ điều khoản rồi xác nhận hoặc yêu cầu sửa',
-      emptyHint: 'Không có hợp đồng nào chờ bạn xác nhận',
       verb: 'Xem',
+    },
+    {
+      to: '/tenant/contracts?status=ChoNhanCoc',
+      count: pendingActions.depositsToTransfer,
+      title: 'Tiền cọc cần chuyển',
+      hint: 'Chuyển cọc trước khi hết hạn giữ chỗ',
+      verb: 'Chuyển',
+    },
+    {
+      // T5 lọc được một trạng thái nên mở không lọc; hóa đơn còn phải trả nằm ở đầu vì kỳ mới xếp trước.
+      to: '/tenant/invoices',
+      count: pendingActions.invoicesToPay,
+      title: 'Hóa đơn cần thanh toán',
+      hint: 'Chưa trả hoặc mới trả một phần',
+      verb: 'Trả',
+    },
+    {
+      to: '/tenant/maintenance-requests?status=ChoNguoiThueXacNhan',
+      count: pendingActions.maintenanceToConfirm,
+      title: 'Sự cố chờ bạn xác nhận',
+      hint: 'Chủ trọ báo đã sửa xong, kiểm tra rồi xác nhận',
+      verb: 'Xác nhận',
     },
     {
       to: '/tenant/invoices?type=ThanhLy&status=ChoNguoiThueXacNhan',
       count: pendingActions.settlementsToConfirm,
       title: 'Bảng thanh lý chờ bạn đồng ý',
       hint: 'Kiểm tra các khoản khấu trừ trước khi đồng ý',
-      emptyHint: 'Không có bảng thanh lý nào chờ bạn',
       verb: 'Xem',
     },
   ]
