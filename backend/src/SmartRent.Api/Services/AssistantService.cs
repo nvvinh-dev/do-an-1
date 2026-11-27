@@ -240,14 +240,16 @@ public class AssistantService
             .ToList();
     }
 
-    /// <summary>12 hóa đơn gần nhất, kỳ mới trước như danh sách hóa đơn (FR-128, api-design mục 9).</summary>
+    /// <summary>
+    /// Mọi hóa đơn còn phải thu (tối đa 50) rồi tới hóa đơn kỳ mới hơn cho đủ 12 (FR-128): lấy 50 hóa đơn đầu theo
+    /// <see cref="AssistantScope.OrderInvoicesToSend"/>, đếm số còn phải thu trong đó, rồi cắt theo
+    /// <see cref="AssistantScope.InvoicesToSend"/>.
+    /// </summary>
     private static async Task<List<InvoiceData>> LoadInvoicesAsync(
         IQueryable<Invoice> owned, CancellationToken cancellationToken)
     {
-        var rows = await owned
-            .OrderByDescending(i => i.PeriodStart)
-            .ThenByDescending(i => i.Id)
-            .Take(AssistantScope.MaxInvoices)
+        var rows = await AssistantScope.OrderInvoicesToSend(owned)
+            .Take(AssistantScope.MaxOutstandingInvoices)
             .Select(i => new
             {
                 i.Id,
@@ -273,7 +275,10 @@ public class AssistantService
             })
             .ToListAsync(cancellationToken);
 
+        var outstandingCount = rows.Count(i => AssistantScope.IsOutstandingToReport(i.Type, i.Status));
+
         return rows
+            .Take(AssistantScope.InvoicesToSend(outstandingCount))
             .Select(i => new InvoiceData(
                 i.Id,
                 i.ContractId,
@@ -385,8 +390,9 @@ public class AssistantService
         var dataRule = role == AssistantAskerRole.Admin
             ? "DỮ LIỆU của Admin không có bản ghi nào. Câu hỏi về hợp đồng, hóa đơn, sự cố, phòng thì từ chối, không " +
               "đưa số liệu và không chỉ tới màn Hợp đồng, Hóa đơn hay Sự cố vì Admin không có các màn này."
-            : $"DỮ LIỆU chỉ gồm hợp đồng chưa kết thúc, {AssistantScope.MaxInvoices} hóa đơn gần nhất và " +
-              $"{AssistantScope.MaxMaintenanceRequests} sự cố gần nhất. Hỏi bản ghi cũ hơn hoặc đã kết thúc thì nói không " +
+            : "DỮ LIỆU chỉ gồm hợp đồng chưa kết thúc; mọi hóa đơn còn phải thu (tối đa " +
+              $"{AssistantScope.MaxOutstandingInvoices}) cùng các hóa đơn gần nhất cho đủ {AssistantScope.MinInvoices} " +
+              $"hóa đơn; {AssistantScope.MaxMaintenanceRequests} sự cố gần nhất. Hỏi bản ghi cũ hơn hoặc đã kết thúc thì nói không " +
               "có trong dữ liệu trợ lý được xem và chỉ tới màn hình tương ứng (Hợp đồng, Hóa đơn, Sự cố).";
 
         return $"""

@@ -12,8 +12,16 @@ public static class AssistantScope
     /// <summary>Câu hỏi không quá 500 ký tự (FR-131).</summary>
     public const int MaxQuestionLength = 500;
 
-    /// <summary>Gửi tối đa 12 hóa đơn gần nhất (FR-128).</summary>
-    public const int MaxInvoices = 12;
+    /// <summary>
+    /// Gửi ít nhất 12 hóa đơn (FR-128): hóa đơn còn phải thu ít hơn 12 thì bù bằng hóa đơn kỳ mới hơn cho đủ 12.
+    /// </summary>
+    public const int MinInvoices = 12;
+
+    /// <summary>
+    /// Hóa đơn còn phải thu gửi hết, tối đa 50 (FR-128) — đủ cho khu trọ vài chục phòng chưa đóng tiền mà câu gửi AI
+    /// vẫn không quá dài.
+    /// </summary>
+    public const int MaxOutstandingInvoices = 50;
 
     /// <summary>Gửi tối đa 20 sự cố gần nhất (FR-128).</summary>
     public const int MaxMaintenanceRequests = 20;
@@ -37,10 +45,42 @@ public static class AssistantScope
     /// </summary>
     public static decimal? RemainingToReport(InvoiceType type, InvoiceStatus status, decimal totalAmount, decimal paidAmount)
     {
-        var outstanding = Invoice.OutstandingStatuses.Contains(status)
-            || (type == InvoiceType.ThanhLy && PendingSettlementStatuses.Contains(status));
+        return IsOutstandingToReport(type, status) ? totalAmount - paidAmount : null;
+    }
 
-        return outstanding ? totalAmount - paidAmount : null;
+    /// <summary>
+    /// Hóa đơn còn khoản phải thu hoặc phải hoàn — cùng điều kiện mà <see cref="RemainingToReport"/> gửi số còn phải trả.
+    /// </summary>
+    public static bool IsOutstandingToReport(InvoiceType type, InvoiceStatus status)
+    {
+        return Invoice.OutstandingStatuses.Contains(status)
+            || (type == InvoiceType.ThanhLy && PendingSettlementStatuses.Contains(status));
+    }
+
+    /// <summary>
+    /// Thứ tự chọn hóa đơn gửi AI (FR-128): hóa đơn còn phải thu (điều kiện của <see cref="IsOutstandingToReport"/>)
+    /// trước, rồi tới kỳ mới hơn, cùng kỳ thì hóa đơn tạo sau trước — để hóa đơn quá hạn cũ không bị các hóa đơn đã trả
+    /// kỳ mới đẩy ra ngoài. Điều kiện viết thẳng trong biểu thức để EF Core dịch được sang SQL.
+    /// </summary>
+    public static IOrderedQueryable<Invoice> OrderInvoicesToSend(IQueryable<Invoice> invoices)
+    {
+        return invoices
+            .OrderBy(i => Invoice.OutstandingStatuses.Contains(i.Status)
+                          || (i.Type == InvoiceType.ThanhLy && PendingSettlementStatuses.Contains(i.Status))
+                ? 0
+                : 1)
+            .ThenByDescending(i => i.PeriodStart)
+            .ThenByDescending(i => i.Id);
+    }
+
+    /// <summary>
+    /// Số hóa đơn gửi AI khi đầu danh sách xếp theo <see cref="OrderInvoicesToSend"/> có
+    /// <paramref name="outstandingCount"/> hóa đơn còn phải thu: gửi hết, tối đa <see cref="MaxOutstandingInvoices"/>,
+    /// và không ít hơn <see cref="MinInvoices"/>.
+    /// </summary>
+    public static int InvoicesToSend(int outstandingCount)
+    {
+        return Math.Max(MinInvoices, Math.Min(outstandingCount, MaxOutstandingInvoices));
     }
 
     /// <summary>

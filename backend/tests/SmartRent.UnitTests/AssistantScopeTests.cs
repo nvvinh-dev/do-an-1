@@ -1,4 +1,5 @@
 using SmartRent.Domain;
+using SmartRent.Domain.Entities;
 using SmartRent.Domain.Enums;
 
 namespace SmartRent.UnitTests;
@@ -113,5 +114,106 @@ public class AssistantScopeTests
     public void RemainingToReport_TrangThaiCuaThanhLy_KhongApChoHoaDonDinhKy(InvoiceStatus status)
     {
         Assert.Null(AssistantScope.RemainingToReport(InvoiceType.DinhKy, status, 3_000_000, 0));
+    }
+
+    private static Invoice NewInvoice(long id, InvoiceType type, InvoiceStatus status, int month) => new()
+    {
+        Id = id,
+        Type = type,
+        Status = status,
+        PeriodStart = new DateOnly(2026, month, 1)
+    };
+
+    [Fact]
+    public void OrderInvoicesToSend_HoaDonConPhaiThuXepTruoc_RoiToiKyMoiHon()
+    {
+        // Ví dụ của dev-chutro-1: #44 quá hạn kỳ 3, #27 thanh lý quá hạn kỳ 2 bị 12 hóa đơn đã trả kỳ mới hơn đẩy ra ngoài.
+        var invoices = new List<Invoice>
+        {
+            NewInvoice(27, InvoiceType.ThanhLy, InvoiceStatus.QuaHan, 2),
+            NewInvoice(44, InvoiceType.DinhKy, InvoiceStatus.QuaHan, 3),
+            NewInvoice(63, InvoiceType.DinhKy, InvoiceStatus.ChuaThanhToan, 11),
+            NewInvoice(70, InvoiceType.ThanhLy, InvoiceStatus.ChoHoanCoc, 6),
+            NewInvoice(71, InvoiceType.DinhKy, InvoiceStatus.DaChuyenThanhLy, 7),
+            NewInvoice(72, InvoiceType.DinhKy, InvoiceStatus.Nhap, 12)
+        };
+        invoices.AddRange(Enumerable.Range(0, 12)
+            .Select(n => NewInvoice(100 + n, InvoiceType.DinhKy, InvoiceStatus.DaThanhToan, 1 + n % 11)));
+
+        var ordered = AssistantScope.OrderInvoicesToSend(invoices.AsQueryable()).Select(i => i.Id).ToList();
+
+        Assert.Equal([63L, 70, 44, 27], ordered.Take(4));
+        Assert.Equal(72, ordered[4]);
+    }
+
+    [Fact]
+    public void OrderInvoicesToSend_CungKy_HoaDonMoiTaoHonXepTruoc()
+    {
+        var invoices = new List<Invoice>
+        {
+            NewInvoice(5, InvoiceType.DinhKy, InvoiceStatus.QuaHan, 3),
+            NewInvoice(9, InvoiceType.DinhKy, InvoiceStatus.QuaHan, 3)
+        };
+
+        var ordered = AssistantScope.OrderInvoicesToSend(invoices.AsQueryable()).Select(i => i.Id);
+
+        Assert.Equal([9L, 5], ordered);
+    }
+
+    public static TheoryData<InvoiceType, InvoiceStatus> AllInvoiceTypeStatusPairs()
+    {
+        var data = new TheoryData<InvoiceType, InvoiceStatus>();
+
+        foreach (var type in Enum.GetValues<InvoiceType>())
+        {
+            foreach (var status in Enum.GetValues<InvoiceStatus>())
+            {
+                data.Add(type, status);
+            }
+        }
+
+        return data;
+    }
+
+    [Theory]
+    [MemberData(nameof(AllInvoiceTypeStatusPairs))]
+    public void OrderInvoicesToSend_XepTruoc_DungKhiIsOutstandingToReport(InvoiceType type, InvoiceStatus status)
+    {
+        // Điều kiện "còn phải thu" viết hai chỗ: IsOutstandingToReport và biểu thức EF Core dịch được trong
+        // OrderInvoicesToSend. Hóa đơn cần kiểm ở kỳ cũ (tháng 1) chỉ đứng trước hóa đơn đã trả kỳ mới (tháng 12) khi
+        // được coi là còn phải thu, nên mọi cặp loại × trạng thái phải cho cùng kết quả ở hai chỗ.
+        var invoices = new List<Invoice>
+        {
+            NewInvoice(1, type, status, 1),
+            NewInvoice(2, InvoiceType.DinhKy, InvoiceStatus.DaThanhToan, 12)
+        };
+
+        var ordered = AssistantScope.OrderInvoicesToSend(invoices.AsQueryable()).ToList();
+
+        Assert.Equal(AssistantScope.IsOutstandingToReport(type, status), ordered[0].Id == 1);
+    }
+
+    [Theory]
+    [InlineData(0, 12)]
+    [InlineData(3, 12)]
+    [InlineData(12, 12)]
+    [InlineData(15, 15)]
+    [InlineData(50, 50)]
+    [InlineData(80, 50)]
+    public void InvoicesToSend_GuiHetHoaDonConPhaiThu_ItNhat12_NhieuNhat50(int outstanding, int expected)
+    {
+        Assert.Equal(expected, AssistantScope.InvoicesToSend(outstanding));
+    }
+
+    [Theory]
+    [InlineData(InvoiceType.DinhKy, InvoiceStatus.QuaHan, true)]
+    [InlineData(InvoiceType.ThanhLy, InvoiceStatus.ChoNguoiThueXacNhan, true)]
+    [InlineData(InvoiceType.DinhKy, InvoiceStatus.ChoHoanCoc, false)]
+    [InlineData(InvoiceType.DinhKy, InvoiceStatus.DaChuyenThanhLy, false)]
+    [InlineData(InvoiceType.DinhKy, InvoiceStatus.Nhap, false)]
+    public void IsOutstandingToReport_CungDieuKienVoiSoConPhaiTra(InvoiceType type, InvoiceStatus status, bool expected)
+    {
+        Assert.Equal(expected, AssistantScope.IsOutstandingToReport(type, status));
+        Assert.Equal(expected, AssistantScope.RemainingToReport(type, status, 1_000_000, 0) is not null);
     }
 }
