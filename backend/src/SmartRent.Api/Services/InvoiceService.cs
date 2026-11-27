@@ -189,6 +189,7 @@ public class InvoiceService
             .AsNoTracking()
             .Include(c => c.ServiceFees)
             .Include(c => c.Invoices)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(
                 c => c.Id == contractId && c.Room.Property.LandlordUserId == landlordUserId,
                 cancellationToken);
@@ -237,7 +238,7 @@ public class InvoiceService
             contract.WaterUnitPrice,
             amounts.WaterAmount,
             amounts.RentAmount,
-            contract.ServiceFees.Select(f => new ContractServiceFeeResponse(f.Name, f.Amount)).ToList(),
+            contract.ServiceFees.OrderBy(f => f.Id).Select(f => new ContractServiceFeeResponse(f.Name, f.Amount)).ToList(),
             amounts.ServiceFeeAmount,
             amounts.AdjustmentAmount,
             amounts.TotalAmount));
