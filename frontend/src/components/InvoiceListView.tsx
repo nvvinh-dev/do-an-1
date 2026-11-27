@@ -17,7 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import type { InvoiceListItem } from '@/types/invoiceTypes'
 import { formatDate } from '@/utils/formatDate'
-import { getInvoiceDisplayStatus } from '@/utils/getInvoiceDisplayStatus'
+import { getInvoiceDisplayStatus, isRefundInvoice } from '@/utils/getInvoiceDisplayStatus'
 import { getInvoiceTypeLabel } from '@/utils/invoiceTypeLabels'
 
 interface InvoiceListViewProps {
@@ -60,11 +60,6 @@ function InvoiceAmount({ invoice, className }: { invoice: InvoiceListItem; class
       className={className}
     />
   )
-}
-
-/** Hóa đơn thanh lý số dư âm là tiền Chủ trọ hoàn, không có khoản thu nào, nên không hiện "Đã thu 0 đ". */
-function isRefundInvoice(invoice: InvoiceListItem): boolean {
-  return invoice.type === 'ThanhLy' && invoice.totalAmount < 0
 }
 
 function InvoiceCards({ invoices, basePath, listSearch, showTenant }: InvoiceListViewProps) {

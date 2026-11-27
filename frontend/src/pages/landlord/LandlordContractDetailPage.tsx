@@ -65,7 +65,7 @@ import { formatCurrency } from '@/utils/formatCurrency'
 import { formatDate } from '@/utils/formatDate'
 import { formatDateTime } from '@/utils/formatDateTime'
 import { formatMeterIndex } from '@/utils/formatMeterIndex'
-import { getInvoiceDisplayStatus } from '@/utils/getInvoiceDisplayStatus'
+import { getInvoiceDisplayStatus, isRefundInvoice } from '@/utils/getInvoiceDisplayStatus'
 import { canShowContractInvoices, getLandlordContractActions } from '@/utils/getLandlordContractActions'
 import { getMoveOutNoticeActions } from '@/utils/getMoveOutNoticeActions'
 import { getVietnamToday } from '@/utils/getVietnamToday'
@@ -649,8 +649,9 @@ function ContractInvoicesSection({ invoices, isPending, error, onRetry }: Contra
                   </span>
                 </span>
                 <span className="flex flex-wrap items-center gap-3 text-sm">
-                  {invoice.type === 'ThanhLy' ? (
-                    // Số dư thanh lý kèm chiều (FR-58): số âm là tiền Chủ trọ hoàn, không phải "Đã thu 0 đ / −… đ".
+                  {isRefundInvoice(invoice) ? (
+                    // Hóa đơn hoàn cọc hiện số dư kèm chiều (FR-58), không phải "Đã thu 0 đ / −… đ". Số dư dương
+                    // trả từng phần được nên giữ "Đã thu x / y".
                     <MoneyText
                       amount={invoice.totalAmount}
                       settlementBalance

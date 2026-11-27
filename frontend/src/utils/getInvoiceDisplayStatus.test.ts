@@ -1,6 +1,21 @@
 import { describe, expect, it } from 'vitest'
-import { getInvoiceDisplayStatus } from '@/utils/getInvoiceDisplayStatus'
+import { getInvoiceDisplayStatus, isRefundInvoice } from '@/utils/getInvoiceDisplayStatus'
 import { getStatusDisplay } from '@/utils/statusLabels'
+
+describe('isRefundInvoice', () => {
+  it('hóa đơn thanh lý Chủ trọ hoàn 2.758.083 đ: hoàn cọc', () => {
+    expect(isRefundInvoice({ type: 'ThanhLy', totalAmount: -2758083 })).toBe(true)
+  })
+
+  it('hóa đơn thanh lý số dư 542.033 đ người thuê trả từng phần: không phải hoàn cọc', () => {
+    expect(isRefundInvoice({ type: 'ThanhLy', totalAmount: 542033 })).toBe(false)
+  })
+
+  it('hóa đơn thanh lý số dư 0 và hóa đơn định kỳ: không phải hoàn cọc', () => {
+    expect(isRefundInvoice({ type: 'ThanhLy', totalAmount: 0 })).toBe(false)
+    expect(isRefundInvoice({ type: 'DinhKy', totalAmount: 3305000 })).toBe(false)
+  })
+})
 
 describe('getInvoiceDisplayStatus', () => {
   it('hóa đơn thanh lý Chủ trọ đã hoàn 2.758.083 đ cọc dư: Đã hoàn cọc', () => {
